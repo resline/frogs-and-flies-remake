@@ -1,7 +1,7 @@
 {
   "name": "frogs-and-flies-remake",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Modern browser remake of Frogs and Flies.",
   "type": "module",
   "scripts": {
