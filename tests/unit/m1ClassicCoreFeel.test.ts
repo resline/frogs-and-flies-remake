@@ -84,10 +84,13 @@ function insertFlyAt(game: GameState, entity: Pick<Entity, 'id' | 'x' | 'y'>): v
 }
 
 function expectTongueReady(game: M1GameState): void {
-  expect(game.player.tongue?.phase).toBe('ready')
-  expect(p1(game).state.tongue.phase).toBe('ready')
-  expect(game.player.tongue?.result).toBeUndefined()
-  expect(p1(game).state.tongue.result).toBeUndefined()
+  expectReadyTongue(game.player.tongue)
+  expectReadyTongue(p1(game).state.tongue)
+}
+
+function expectReadyTongue(tongue: { phase: TonguePhase; result?: TongueResult } | undefined): void {
+  expect(tongue?.phase).toBe('ready')
+  expect(tongue?.result).toBeUndefined()
 }
 
 describe('M1 Classic Core Feel', () => {
@@ -268,19 +271,25 @@ describe('M1 Classic Core Feel', () => {
     expect(game.entities[20]).toBeUndefined()
     expect(game.score).toBe(game.constants.baseFlyScore)
     expect(game.combo).toBe(1)
-    expect(game.player.tongue?.phase).toBe('recovering')
-    expect(p1(game).state.tongue.phase).toBe('recovering')
+    expect(game.player.tongue?.phase).toBe('extended')
+    expect(p1(game).state.tongue.phase).toBe('extended')
     expect(game.player.tongue?.result).toBe('catch')
     expect(p1(game).state.tongue.result).toBe('catch')
     expect(game.player.jump?.phase).toBe('jumping')
     expect(p1(game).state.jump.phase).toBe('jumping')
     expect(game.player.jump?.velocityY).toBe(preCatchVelocityY)
     expect(p1(game).state.jump.velocityY).toBe(preCatchVelocityY)
-    expect(p2(game).state.tongue).toEqual({ phase: 'ready' })
+    expectReadyTongue(p2(game).state.tongue)
 
     advanceFrames(game, 12)
+    expect(game.player.tongue?.phase).toBe('recovering')
+    expect(p1(game).state.tongue.phase).toBe('recovering')
+    expect(game.player.tongue?.result).toBe('catch')
+    expect(p1(game).state.tongue.result).toBe('catch')
+
+    advanceFrames(game, 11)
     expectTongueReady(game)
-    expect(p2(game).state.tongue).toEqual({ phase: 'ready' })
+    expectReadyTongue(p2(game).state.tongue)
   })
 
   it('records a tongue miss, resets combo, and returns the tongue to ready', () => {
@@ -294,16 +303,23 @@ describe('M1 Classic Core Feel', () => {
 
     expect(game.entities[21]).toBeDefined()
     expect(game.score).toBe(45)
+    expect(game.combo).toBe(3)
+    expect(game.player.tongue?.phase).toBe('extended')
+    expect(p1(game).state.tongue.phase).toBe('extended')
+    expect(game.player.tongue?.result).toBeUndefined()
+    expect(p1(game).state.tongue.result).toBeUndefined()
+    expectReadyTongue(p2(game).state.tongue)
+
+    advanceFrames(game, 12)
     expect(game.combo).toBe(0)
     expect(game.player.tongue?.phase).toBe('recovering')
     expect(p1(game).state.tongue.phase).toBe('recovering')
     expect(game.player.tongue?.result).toBe('miss')
     expect(p1(game).state.tongue.result).toBe('miss')
-    expect(p2(game).state.tongue).toEqual({ phase: 'ready' })
 
-    advanceFrames(game, 12)
+    advanceFrames(game, 11)
     expectTongueReady(game)
-    expect(p2(game).state.tongue).toEqual({ phase: 'ready' })
+    expectReadyTongue(p2(game).state.tongue)
   })
 
   it('recovers P2 tongue without mutating P1 tongue', () => {
@@ -318,16 +334,22 @@ describe('M1 Classic Core Feel', () => {
     p2(game).commands.tongue = true
     updateGame(game, STEP_SECONDS)
 
-    expect(p2(game).state.tongue.phase).toBe('recovering')
+    expect(p2(game).state.tongue.phase).toBe('extended')
     expect(p2(game).state.tongue.result).toBe('catch')
-    expect(p1(game).state.tongue).toEqual({ phase: 'ready' })
-    expect(game.player.tongue).toEqual({ phase: 'ready' })
+    expectReadyTongue(p1(game).state.tongue)
+    expectReadyTongue(game.player.tongue)
 
     advanceFrames(game, 12)
+    expect(p2(game).state.tongue.phase).toBe('recovering')
+    expect(p2(game).state.tongue.result).toBe('catch')
+    expectReadyTongue(p1(game).state.tongue)
+    expectReadyTongue(game.player.tongue)
 
-    expect(p2(game).state.tongue).toEqual({ phase: 'ready' })
-    expect(p1(game).state.tongue).toEqual({ phase: 'ready' })
-    expect(game.player.tongue).toEqual({ phase: 'ready' })
+    advanceFrames(game, 11)
+
+    expectReadyTongue(p2(game).state.tongue)
+    expectReadyTongue(p1(game).state.tongue)
+    expectReadyTongue(game.player.tongue)
   })
 
   it('turns a missed lily landing into splash, recovery, and calm states', () => {
