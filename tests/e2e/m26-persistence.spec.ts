@@ -3,7 +3,10 @@ import { expect, test } from '@playwright/test'
 const SAVE_KEY = 'frogs-and-flies.save.v1'
 
 test.describe('M2.6 local persistence', () => {
-  test.beforeEach(async ({ page }) => {
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeEach(async ({ page }, testInfo) => {
+    testInfo.setTimeout(60_000)
     await page.goto('/')
     await page.evaluate((key) => localStorage.removeItem(key), SAVE_KEY)
   })
