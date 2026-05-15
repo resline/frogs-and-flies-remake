@@ -109,27 +109,22 @@ export function applyRuntimeInput(game: GameState, input: RuntimeInputState): vo
 
 export function applyRuntimePointerInput(game: GameState, input: RuntimeInputState, pointerX: number): void {
   const p1Commands = game.players[0]?.commands
-  const x = clamp(pointerX, game.player.radius, game.constants.arenaWidth - game.player.radius)
+  const clampedX = clamp(pointerX, game.player.radius, game.constants.arenaWidth - game.player.radius)
+  const pointsRight = clampedX >= game.player.homeX
+  const pointerCommands: GameCommands = {
+    fire: true,
+    tongue: true,
+    humanInput: true,
+    moveRight: pointsRight,
+    moveLeft: !pointsRight,
+  }
 
   input.pendingP1Fire = true
   input.pendingP1Tongue = true
 
-  game.player.x = x
-  if (game.players[0]) {
-    game.players[0].state.x = x
-  }
-
-  writeCommands(game.commands, {
-    fire: true,
-    tongue: true,
-    humanInput: true,
-  })
+  writeCommands(game.commands, pointerCommands)
   if (p1Commands) {
-    writeCommands(p1Commands, {
-      fire: true,
-      tongue: true,
-      humanInput: true,
-    })
+    writeCommands(p1Commands, pointerCommands)
   }
 }
 

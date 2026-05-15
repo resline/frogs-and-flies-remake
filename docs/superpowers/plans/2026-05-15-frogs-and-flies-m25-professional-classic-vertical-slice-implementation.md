@@ -306,7 +306,7 @@ Expected: only files from this task are changed. Commit message: `feat: anchor c
 - Modify: `tests/unit/m1ClassicCoreFeel.test.ts`
 - Modify: `tests/unit/runtimeInput.test.ts`
 
-- [ ] **Step 1: Write failing jump arc tests**
+- [x] **Step 1: Write failing jump arc tests**
 
 Add tests for charge, release, airborne arc, landing on home lily, and splash/recovery on missed landing. Use fixed `STEP = 1 / 60`.
 
@@ -320,35 +320,35 @@ Required scenarios:
 // forced x outside landing radius triggers splashing, combo reset, then recovering/staged
 ```
 
-- [ ] **Step 2: Run red jump tests**
+- [x] **Step 2: Run red jump tests**
 
 Run: `npm run test:unit -- tests/unit/jumpArc.test.ts`
 
 Expected fail: missing horizontal arc/phase/landing behavior or assertions fail against the compact M2 jump stand-in.
 
-- [ ] **Step 3: Replace free walking with jump intent**
+- [x] **Step 3: Replace free walking with jump intent**
 
 Update `src/game/systems/input.ts` so horizontal keys affect `jump.intentX` or `jump.arcDirection` while staged/charging, not continuous free walking across the arena. Preserve pointer support as a test-only/manual assist by mapping pointer side to jump intent and tongue.
 
-- [ ] **Step 4: Implement named jump constants**
+- [x] **Step 4: Implement named jump constants**
 
 Add constants for min/max charge, min/max jump duration, min/max horizontal travel, arc height, landing tolerance, splash duration, recovery duration, and easy-assist forgiveness. Keep values in `src/game/constants.ts`.
 
-- [ ] **Step 5: Implement deterministic arc updates**
+- [x] **Step 5: Implement deterministic arc updates**
 
 Update `coreFeel.ts` or move player arc updates into `movement.ts`: charge accumulates, release computes deterministic duration/height/travel, airborne position follows a named parabola, landing resolves to staged if inside lily tolerance, otherwise splash/recovery returns to home lily.
 
-- [ ] **Step 6: Render phase stand-ins**
+- [x] **Step 6: Render phase stand-ins**
 
 Update `src/render/entities.ts` so staged, charging, airborne, splashing, and recovering have visible pose/scale/offset differences even before final assets land.
 
-- [ ] **Step 7: Run green jump tests**
+- [x] **Step 7: Run green jump tests**
 
 Run: `npm run test:unit -- tests/unit/jumpArc.test.ts tests/unit/m1ClassicCoreFeel.test.ts tests/unit/runtimeInput.test.ts`
 
 Expected pass: all listed files pass and exit `0`.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 Run: `git status --short`
 

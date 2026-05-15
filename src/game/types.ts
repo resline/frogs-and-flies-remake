@@ -11,6 +11,7 @@ export type MatchWinner = PlayerId | 'tie'
 export type FacingDirection = 'left' | 'right'
 export type HomeLilyId = 'left' | 'right'
 export type PlayerPhase = 'staged' | 'charging' | 'airborne' | 'splashing' | 'recovering'
+export type JumpArcDirection = -1 | 0 | 1
 
 export interface GameCommands {
   start?: boolean
@@ -108,6 +109,15 @@ export interface JumpState {
   velocityY: number
   flightSeconds: number
   landedSeconds: number
+  intentX: JumpArcDirection
+  arcDirection: JumpArcDirection
+  startX: number
+  startY: number
+  targetX: number
+  targetY: number
+  durationSeconds: number
+  travelX: number
+  arcHeight: number
 }
 
 export interface TongueState {

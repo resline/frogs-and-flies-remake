@@ -50,9 +50,9 @@ export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, ass
 
     sprite.visible = true
     sprite.texture = assets.frog
-    sprite.position.set(player.state.x, player.state.y)
-    sprite.width = player.state.radius * 3.2
-    sprite.height = player.state.radius * 3.2
+    sprite.position.set(player.state.x, player.state.y + bitmapPhaseYOffset(player.state))
+    sprite.width = player.state.radius * 3.2 * bitmapPhaseScaleX(player.state)
+    sprite.height = player.state.radius * 3.2 * bitmapPhaseScaleY(player.state)
     sprite.tint = player.matchPlayer.power.remainingSeconds > 0 || (index === 0 && game.power.remainingSeconds > 0) ? 0xdfff9e : playerTint(index)
   }
 
@@ -119,14 +119,86 @@ function drawProceduralPlayer(scene: Graphics, player: PlayerState, matchPlayer:
   const powered = matchPlayer.power.remainingSeconds > 0
   const body = powered ? 0x94f65f : playerTint(index)
   const belly = powered ? 0xe0ffc6 : index === 0 ? 0xbdf49e : 0xbde9f4
+  const pose = proceduralPhasePose(player)
+  const faceSign = player.facing === 'left' ? -1 : 1
 
-  scene.circle(x, y, radius + 10).fill({ color: 0x163e28, alpha: 0.46 })
-  scene.circle(x, y, radius).fill({ color: body })
-  scene.circle(x, y + 8, radius * 0.58).fill({ color: belly, alpha: 0.92 })
-  scene.circle(x - 12, y - 20, 8).fill({ color: 0xf4fbef })
-  scene.circle(x + 12, y - 20, 8).fill({ color: 0xf4fbef })
-  scene.circle(x - 12, y - 20, 3).fill({ color: 0x051416 })
-  scene.circle(x + 12, y - 20, 3).fill({ color: 0x051416 })
+  scene.ellipse(x, y + 18, radius + 10, 9).fill({ color: 0x163e28, alpha: pose.shadowAlpha })
+  scene.ellipse(x, y + pose.bodyOffsetY, radius * pose.scaleX, radius * pose.scaleY).fill({ color: body })
+  scene.ellipse(x, y + 8 + pose.bodyOffsetY, radius * 0.58 * pose.scaleX, radius * 0.5 * pose.scaleY).fill({
+    color: belly,
+    alpha: 0.92,
+  })
+  scene.circle(x - 12, y - 20 + pose.eyeOffsetY, 8).fill({ color: 0xf4fbef })
+  scene.circle(x + 12, y - 20 + pose.eyeOffsetY, 8).fill({ color: 0xf4fbef })
+  scene.circle(x - 12 + faceSign * 2, y - 20 + pose.eyeOffsetY, 3).fill({ color: 0x051416 })
+  scene.circle(x + 12 + faceSign * 2, y - 20 + pose.eyeOffsetY, 3).fill({ color: 0x051416 })
+  if (player.phase === 'splashing' || player.phase === 'recovering') {
+    scene.ellipse(x, player.homeY + 8, radius * 1.5, 10).stroke({ color: 0xbde9f4, alpha: 0.72, width: 3 })
+  }
+}
+
+function proceduralPhasePose(player: PlayerState): {
+  scaleX: number
+  scaleY: number
+  bodyOffsetY: number
+  eyeOffsetY: number
+  shadowAlpha: number
+} {
+  if (player.phase === 'charging') {
+    return { scaleX: 1.14, scaleY: 0.72, bodyOffsetY: 8, eyeOffsetY: 8, shadowAlpha: 0.52 }
+  }
+  if (player.phase === 'airborne') {
+    return { scaleX: 0.92, scaleY: 1.12, bodyOffsetY: -6, eyeOffsetY: -4, shadowAlpha: 0.22 }
+  }
+  if (player.phase === 'splashing') {
+    return { scaleX: 1.22, scaleY: 0.55, bodyOffsetY: 14, eyeOffsetY: 10, shadowAlpha: 0.18 }
+  }
+  if (player.phase === 'recovering') {
+    return { scaleX: 1.04, scaleY: 0.82, bodyOffsetY: 9, eyeOffsetY: 6, shadowAlpha: 0.36 }
+  }
+  return { scaleX: 1, scaleY: 1, bodyOffsetY: 0, eyeOffsetY: 0, shadowAlpha: 0.46 }
+}
+
+function bitmapPhaseYOffset(player: PlayerState): number {
+  if (player.phase === 'charging') {
+    return 6
+  }
+  if (player.phase === 'airborne') {
+    return -8
+  }
+  if (player.phase === 'splashing') {
+    return 12
+  }
+  if (player.phase === 'recovering') {
+    return 7
+  }
+  return 0
+}
+
+function bitmapPhaseScaleX(player: PlayerState): number {
+  if (player.phase === 'charging') {
+    return 1.12
+  }
+  if (player.phase === 'splashing') {
+    return 1.18
+  }
+  return 1
+}
+
+function bitmapPhaseScaleY(player: PlayerState): number {
+  if (player.phase === 'charging') {
+    return 0.76
+  }
+  if (player.phase === 'airborne') {
+    return 1.1
+  }
+  if (player.phase === 'splashing') {
+    return 0.62
+  }
+  if (player.phase === 'recovering') {
+    return 0.86
+  }
+  return 1
 }
 
 function getRenderPlayers(game: GameState): { matchPlayer: MatchPlayerState; state: PlayerState }[] {

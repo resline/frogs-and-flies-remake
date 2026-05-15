@@ -1,12 +1,17 @@
-import type { GameCommands, GameState, PlayerState, WaterState } from '../types'
+import {
+  CLASSIC_JUMP_ARC_HEIGHT,
+  CLASSIC_JUMP_ASSIST_FORGIVENESS,
+  CLASSIC_JUMP_LANDING_TOLERANCE,
+  CLASSIC_JUMP_MAX_CHARGE_SECONDS,
+  CLASSIC_JUMP_MAX_DURATION_SECONDS,
+  CLASSIC_JUMP_MAX_HORIZONTAL_TRAVEL,
+  CLASSIC_JUMP_MIN_DURATION_SECONDS,
+  CLASSIC_JUMP_MIN_HORIZONTAL_TRAVEL,
+  CLASSIC_JUMP_RECOVERY_SECONDS,
+  CLASSIC_JUMP_SPLASH_SECONDS,
+} from '../constants'
+import type { GameCommands, GameState, JumpArcDirection, PlayerState, WaterState } from '../types'
 
-const MAX_CHARGE_SECONDS = 0.45
-const BASE_JUMP_VELOCITY_Y = -560
-const CHARGE_JUMP_VELOCITY_Y = -240
-const JUMP_GRAVITY = 900
-const LANDED_SECONDS = 0.2
-const SPLASH_SECONDS = 0.3
-const WATER_RECOVERY_SECONDS = 0.35
 const TONGUE_RECOVERY_SECONDS = 0.18
 const EPSILON_SECONDS = 0.000001
 
@@ -20,8 +25,8 @@ export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
   for (const [index, matchPlayer] of game.players.entries()) {
     const commands = index === 0 ? mergePrimaryCommands(game) : matchPlayer.commands
 
-    updateJump(commands, matchPlayer.state, matchPlayer.water, deltaSeconds)
-    updateWater(matchPlayer.water, deltaSeconds)
+    updateJump(commands, matchPlayer.state, matchPlayer.water, deltaSeconds, matchPlayer, game)
+    updateWater(matchPlayer, matchPlayer.water, deltaSeconds)
     updateTongue(matchPlayer.state, deltaSeconds)
   }
 
@@ -29,100 +34,200 @@ export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
   game.water = primaryPlayer?.water ?? game.water
 }
 
-function updateJump(commands: GameCommands, player: PlayerState, water: WaterState, deltaSeconds: number): void {
+function updateJump(
+  commands: GameCommands,
+  player: PlayerState,
+  water: WaterState,
+  deltaSeconds: number,
+  matchPlayer?: GameState['players'][number],
+  game?: GameState,
+): void {
   const { jump } = player
 
   if (jump.phase === 'charging') {
+    player.phase = 'charging'
+    player.x = player.homeX
+    player.y = player.homeY
     if (commands.releaseJump) {
       startJump(player)
-      advanceJump(player, water, deltaSeconds)
+      advanceJump(player, water, deltaSeconds, matchPlayer, game)
       return
     }
 
     if (commands.chargeJump) {
-      jump.chargeSeconds = Math.min(MAX_CHARGE_SECONDS, jump.chargeSeconds + deltaSeconds)
+      jump.chargeSeconds = Math.min(CLASSIC_JUMP_MAX_CHARGE_SECONDS, jump.chargeSeconds + deltaSeconds)
     }
     return
   }
 
   if (jump.phase === 'idle') {
-    player.y = player.groundY
+    player.phase = 'staged'
+    player.x = player.homeX
+    player.y = player.homeY
     jump.airborne = false
     jump.velocityY = 0
     jump.flightSeconds = 0
     jump.landedSeconds = 0
+    jump.startX = player.homeX
+    jump.startY = player.homeY
+    jump.targetX = player.homeX
+    jump.targetY = player.homeY
+    jump.durationSeconds = 0
+    jump.travelX = 0
+    jump.arcHeight = 0
 
     if (commands.chargeJump) {
       jump.phase = 'charging'
-      jump.chargeSeconds = Math.min(MAX_CHARGE_SECONDS, deltaSeconds)
+      player.phase = 'charging'
+      jump.chargeSeconds = Math.min(CLASSIC_JUMP_MAX_CHARGE_SECONDS, deltaSeconds)
+      if (jump.arcDirection === 0) {
+        jump.arcDirection = facingDirectionSign(player)
+      }
     }
     return
   }
 
   if (jump.phase === 'jumping') {
-    advanceJump(player, water, deltaSeconds)
+    advanceJump(player, water, deltaSeconds, matchPlayer, game)
     return
   }
 
-  jump.landedSeconds += deltaSeconds
-  if (jump.landedSeconds + EPSILON_SECONDS >= LANDED_SECONDS) {
-    jump.phase = 'idle'
-    jump.chargeSeconds = 0
-    jump.landedSeconds = 0
+  if (player.phase === 'splashing') {
+    return
+  }
+
+  if (player.phase === 'recovering') {
+    return
   }
 }
 
 function startJump(player: PlayerState): void {
   const { jump } = player
+  const chargeRatio = clamp01(jump.chargeSeconds / CLASSIC_JUMP_MAX_CHARGE_SECONDS)
+  const direction = jump.arcDirection === 0 ? facingDirectionSign(player) : jump.arcDirection
+  const travelX = lerp(CLASSIC_JUMP_MIN_HORIZONTAL_TRAVEL, CLASSIC_JUMP_MAX_HORIZONTAL_TRAVEL, chargeRatio)
+
+  player.phase = 'airborne'
   jump.phase = 'jumping'
   jump.airborne = true
-  jump.velocityY = BASE_JUMP_VELOCITY_Y + CHARGE_JUMP_VELOCITY_Y * Math.min(jump.chargeSeconds, MAX_CHARGE_SECONDS)
+  jump.velocityY = -CLASSIC_JUMP_ARC_HEIGHT
   jump.flightSeconds = 0
   jump.landedSeconds = 0
+  jump.arcDirection = direction
+  jump.startX = player.homeX
+  jump.startY = player.homeY
+  jump.targetX = player.homeX + travelX * direction
+  jump.targetY = player.homeY
+  jump.durationSeconds = lerp(CLASSIC_JUMP_MIN_DURATION_SECONDS, CLASSIC_JUMP_MAX_DURATION_SECONDS, chargeRatio)
+  jump.travelX = Math.abs(jump.targetX - jump.startX)
+  jump.arcHeight = CLASSIC_JUMP_ARC_HEIGHT
 }
 
-function advanceJump(player: PlayerState, water: WaterState, deltaSeconds: number): void {
+function advanceJump(
+  player: PlayerState,
+  water: WaterState,
+  deltaSeconds: number,
+  matchPlayer?: GameState['players'][number],
+  game?: GameState,
+): void {
   const { jump } = player
+  player.phase = 'airborne'
   jump.flightSeconds += deltaSeconds
 
-  const flightY = jump.velocityY * jump.flightSeconds + 0.5 * JUMP_GRAVITY * jump.flightSeconds * jump.flightSeconds
-  player.y = player.groundY + flightY
+  const progress = clamp01(jump.flightSeconds / Math.max(jump.durationSeconds, EPSILON_SECONDS))
+  player.x = lerp(jump.startX, jump.targetX, progress)
+  player.y = lerp(jump.startY, jump.targetY, progress) - jump.arcHeight * Math.sin(Math.PI * progress)
 
-  if (player.y >= player.groundY) {
-    player.y = player.groundY
-    jump.phase = 'landed'
-    jump.airborne = false
-    jump.velocityY = 0
-    jump.flightSeconds = 0
-    jump.landedSeconds = 0
-    startWaterSplash(water)
+  if (progress + EPSILON_SECONDS < 1) {
+    return
   }
+
+  const landingDistance = Math.abs(player.x - player.homeX)
+  if (landingDistance <= CLASSIC_JUMP_LANDING_TOLERANCE + CLASSIC_JUMP_ASSIST_FORGIVENESS) {
+    finishStagedLanding(player, water)
+    return
+  }
+
+  startMissedLanding(player, water, matchPlayer, game)
 }
 
-function startWaterSplash(water: WaterState): void {
-  water.phase = 'splash'
+function finishStagedLanding(player: PlayerState, water: WaterState): void {
+  const { jump } = player
+  player.phase = 'staged'
+  player.x = player.homeX
+  player.y = player.homeY
+  jump.phase = 'idle'
+  jump.chargeSeconds = 0
+  jump.airborne = false
+  jump.velocityY = 0
+  jump.flightSeconds = 0
+  jump.landedSeconds = 0
+  jump.intentX = 0
+  jump.arcDirection = 0
+  water.phase = 'calm'
   water.splashSeconds = 0
   water.recoverySeconds = 0
 }
 
-function updateWater(water: WaterState, deltaSeconds: number): void {
+function startMissedLanding(
+  player: PlayerState,
+  water: WaterState,
+  matchPlayer?: GameState['players'][number],
+  game?: GameState,
+): void {
+  const { jump } = player
+  player.phase = 'splashing'
+  player.y = player.homeY
+  jump.phase = 'landed'
+  jump.airborne = false
+  jump.velocityY = 0
+  jump.flightSeconds = 0
+  jump.landedSeconds = 0
+  water.phase = 'splash'
+  water.splashSeconds = 0
+  water.recoverySeconds = 0
+  if (matchPlayer) {
+    matchPlayer.stats.combo = 0
+  }
+  if (game) {
+    game.combo = 0
+  }
+}
+
+function updateWater(matchPlayer: GameState['players'][number], water: WaterState, deltaSeconds: number): void {
   if (water.phase === 'splash') {
     water.splashSeconds += deltaSeconds
-    if (water.splashSeconds + EPSILON_SECONDS >= SPLASH_SECONDS) {
+    matchPlayer.state.phase = 'splashing'
+    if (water.splashSeconds + EPSILON_SECONDS >= CLASSIC_JUMP_SPLASH_SECONDS) {
       water.phase = 'recovery'
       water.recoverySeconds = 0
+      matchPlayer.state.phase = 'recovering'
     }
     return
   }
 
   if (water.phase === 'recovery') {
     water.recoverySeconds += deltaSeconds
-    if (water.recoverySeconds + EPSILON_SECONDS >= WATER_RECOVERY_SECONDS) {
+    matchPlayer.state.phase = 'recovering'
+    if (water.recoverySeconds + EPSILON_SECONDS >= CLASSIC_JUMP_RECOVERY_SECONDS) {
       water.phase = 'calm'
       water.splashSeconds = 0
       water.recoverySeconds = 0
+      finishStagedLanding(matchPlayer.state, water)
     }
   }
+}
+
+function facingDirectionSign(player: PlayerState): JumpArcDirection {
+  return player.facing === 'left' ? -1 : 1
+}
+
+function lerp(start: number, end: number, t: number): number {
+  return start + (end - start) * t
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value))
 }
 
 function updateTongue(player: PlayerState, deltaSeconds: number): void {

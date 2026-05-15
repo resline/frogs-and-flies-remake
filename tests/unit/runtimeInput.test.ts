@@ -169,20 +169,23 @@ describe('runtime input mapper', () => {
     const { createRuntimeInputState, applyRuntimePointerInput } = await loadRuntimeInput()
     const input = createRuntimeInputState()
     const game = createGame({ mode: 'local-versus' })
+    const initialP1X = game.players[0].state.x
     const initialP2X = game.players[1].state.x
 
     applyRuntimePointerInput(game, input, 160)
 
-    expect(game.player.x).toBe(160)
-    expect(game.players[0].state.x).toBe(160)
+    expect(game.player.x).toBe(initialP1X)
+    expect(game.players[0].state.x).toBe(initialP1X)
     expect(game.commands).toMatchObject({
       fire: true,
       tongue: true,
+      moveRight: true,
       humanInput: true,
     })
     expect(game.players[0].commands).toMatchObject({
       fire: true,
       tongue: true,
+      moveRight: true,
       humanInput: true,
     })
     expect(game.players[1].commands).toEqual({})
