@@ -110,7 +110,10 @@ export async function startRuntime(
   })
   const audio = createAudioManager({
     muted: currentRuntimeParams.options.mute,
-    volume: currentRuntimeParams.options.volume,
+    masterVolume: currentRuntimeParams.options.masterVolume,
+    sfxVolume: currentRuntimeParams.options.sfxVolume,
+    musicVolume: currentRuntimeParams.options.musicVolume,
+    monoAudio: currentRuntimeParams.options.monoAudio,
   })
   let scene: RenderScene | undefined
   let destroyed = false
@@ -220,7 +223,10 @@ export async function startRuntime(
         reducedMotion: currentRuntimeParams.options.reducedMotion,
         highContrast: currentRuntimeParams.options.highContrast,
         mute: currentRuntimeParams.options.mute,
-        masterVolume: currentRuntimeParams.options.volume,
+        masterVolume: currentRuntimeParams.options.masterVolume,
+        sfxVolume: currentRuntimeParams.options.sfxVolume,
+        musicVolume: currentRuntimeParams.options.musicVolume,
+        monoAudio: currentRuntimeParams.options.monoAudio,
       },
     })
   }
@@ -336,7 +342,13 @@ export async function startRuntime(
   const handleReducedMotionChange = () => updateRuntimeOptions({ reducedMotion: dom.reducedMotionInput.checked })
   const handleHighContrastChange = () => updateRuntimeOptions({ highContrast: dom.highContrastInput.checked })
   const handleMuteChange = () => updateRuntimeOptions({ mute: dom.muteInput.checked })
-  const handleVolumeInput = () => updateRuntimeOptions({ volume: Number.parseFloat(dom.volumeInput.value) })
+  const handleVolumeInput = () => {
+    const masterVolume = Number.parseFloat(dom.volumeInput.value)
+    updateRuntimeOptions({ volume: masterVolume, masterVolume })
+  }
+  const handleSfxVolumeInput = () => updateRuntimeOptions({ sfxVolume: Number.parseFloat(dom.sfxVolumeInput.value) })
+  const handleMusicVolumeInput = () => updateRuntimeOptions({ musicVolume: Number.parseFloat(dom.musicVolumeInput.value) })
+  const handleMonoAudioChange = () => updateRuntimeOptions({ monoAudio: dom.monoAudioInput.checked })
   const handleInputProfileChange = () => {
     persistSave({
       ...saveData,
@@ -393,7 +405,10 @@ export async function startRuntime(
 
   function syncAudioOptions(): void {
     audio.setMuted(currentRuntimeParams.options.mute)
-    audio.setVolume(currentRuntimeParams.options.volume)
+    audio.setMasterVolume(currentRuntimeParams.options.masterVolume)
+    audio.setSfxVolume(currentRuntimeParams.options.sfxVolume)
+    audio.setMusicVolume(currentRuntimeParams.options.musicVolume)
+    audio.setMonoAudio(currentRuntimeParams.options.monoAudio)
   }
 
   dom.playButton.addEventListener('click', handlePlayClick)
@@ -421,6 +436,9 @@ export async function startRuntime(
   dom.highContrastInput.addEventListener('change', handleHighContrastChange)
   dom.muteInput.addEventListener('change', handleMuteChange)
   dom.volumeInput.addEventListener('input', handleVolumeInput)
+  dom.sfxVolumeInput.addEventListener('input', handleSfxVolumeInput)
+  dom.musicVolumeInput.addEventListener('input', handleMusicVolumeInput)
+  dom.monoAudioInput.addEventListener('change', handleMonoAudioChange)
   dom.inputProfileSelect.addEventListener('change', handleInputProfileChange)
   dom.settingsPanel.addEventListener('click', handleInputRemapClick)
   dom.resetInputProfileButton.addEventListener('click', handleResetInputProfileClick)
@@ -561,6 +579,9 @@ export async function startRuntime(
       dom.highContrastInput.removeEventListener('change', handleHighContrastChange)
       dom.muteInput.removeEventListener('change', handleMuteChange)
       dom.volumeInput.removeEventListener('input', handleVolumeInput)
+      dom.sfxVolumeInput.removeEventListener('input', handleSfxVolumeInput)
+      dom.musicVolumeInput.removeEventListener('input', handleMusicVolumeInput)
+      dom.monoAudioInput.removeEventListener('change', handleMonoAudioChange)
       dom.inputProfileSelect.removeEventListener('change', handleInputProfileChange)
       dom.settingsPanel.removeEventListener('click', handleInputRemapClick)
       dom.resetInputProfileButton.removeEventListener('click', handleResetInputProfileClick)

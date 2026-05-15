@@ -5,6 +5,12 @@ export type AudioManagerState = {
   unlocked: boolean
   muted: boolean
   volume: number
+  masterVolume: number
+  sfxVolume: number
+  musicVolume: number
+  monoAudio: boolean
+  musicPlaying: boolean
+  musicTrackName?: AudioMusicTrackName
   pendingSfxCount: number
 }
 
@@ -13,13 +19,33 @@ export type AudioManager = {
   unlock: () => Promise<boolean>
   setMuted: (muted: boolean) => void
   setVolume: (volume: number) => void
+  setMasterVolume: (volume: number) => void
+  setSfxVolume: (volume: number) => void
+  setMusicVolume: (volume: number) => void
+  setMonoAudio: (enabled: boolean) => void
+  playMusic: (trackName: AudioMusicTrackName) => void
+  stopMusic: () => void
   playSfx: (eventName: GameplayAudioEventName) => void
+}
+
+export type AudioBusName = 'master' | 'sfx' | 'music' | 'ui'
+export type AudioMusicTrackName = 'homePondLoop'
+
+export interface AudioAssetRegistry {
+  sfx: Partial<Record<GameplayAudioEventName, readonly string[]>>
+  music: Partial<Record<AudioMusicTrackName, readonly string[]>>
 }
 
 export interface AudioManagerOptions {
   contextFactory?: () => AudioContext
   muted?: boolean
   volume?: number
+  masterVolume?: number
+  sfxVolume?: number
+  musicVolume?: number
+  monoAudio?: boolean
+  assetRegistry?: AudioAssetRegistry
+  fetchArrayBuffer?: (path: string) => Promise<ArrayBuffer>
 }
 
 type SfxShape = {
@@ -30,6 +56,23 @@ type SfxShape = {
 }
 
 const MAX_PENDING_SFX = 16
+
+export const LOCAL_AUDIO_ASSET_REGISTRY: AudioAssetRegistry = {
+  sfx: {
+    jump: ['/audio/sfx/jump.mp3'],
+    tongue: ['/audio/sfx/tongue.mp3'],
+    catch: ['/audio/sfx/catch.mp3'],
+    miss: ['/audio/sfx/miss.mp3'],
+    splash: ['/audio/sfx/splash.mp3'],
+    power: ['/audio/sfx/power.mp3'],
+    start: ['/audio/sfx/start.mp3'],
+    pause: ['/audio/sfx/pause.mp3'],
+    results: ['/audio/sfx/results.mp3'],
+  },
+  music: {
+    homePondLoop: ['/audio/music/home-pond-loop.mp3'],
+  },
+}
 
 const SFX_SHAPES: Record<GameplayAudioEventName, SfxShape> = {
   jump: { duration: 0.12, frequency: 420, gain: 0.09, type: 'triangle' },
@@ -47,12 +90,19 @@ const SFX_SHAPES: Record<GameplayAudioEventName, SfxShape> = {
 
 export function createAudioManager(options: AudioManagerOptions = {}): AudioManager {
   const contextFactory = options.contextFactory ?? createBrowserAudioContext
+  const assetRegistry = options.assetRegistry ?? LOCAL_AUDIO_ASSET_REGISTRY
+  const fetchArrayBuffer = options.fetchArrayBuffer
   const pendingSfx: GameplayAudioEventName[] = []
   let context: AudioContext | undefined
   let available = true
   let unlocked = false
   let muted = Boolean(options.muted)
-  let volume = clamp01(options.volume ?? 1)
+  let masterVolume = clamp01(options.masterVolume ?? options.volume ?? 1)
+  let sfxVolume = clamp01(options.sfxVolume ?? 1)
+  let musicVolume = clamp01(options.musicVolume ?? 0.8)
+  let monoAudio = Boolean(options.monoAudio)
+  let musicPlaying = false
+  let musicTrackName: AudioMusicTrackName | undefined
 
   const ensureContext = (): AudioContext | undefined => {
     if (!available) {
@@ -73,8 +123,13 @@ export function createAudioManager(options: AudioManagerOptions = {}): AudioMana
   }
 
   const playNow = (eventName: GameplayAudioEventName): void => {
-    if (muted || volume <= 0) {
+    if (muted || masterVolume <= 0 || sfxVolume <= 0) {
       return
+    }
+
+    const assetPaths = assetRegistry.sfx[eventName] ?? []
+    if (fetchArrayBuffer && assetPaths.length > 0) {
+      void fetchArrayBuffer(assetPaths[0]).catch(() => undefined)
     }
 
     const audioContext = ensureContext()
@@ -90,7 +145,7 @@ export function createAudioManager(options: AudioManagerOptions = {}): AudioMana
 
       oscillator.type = shape.type
       oscillator.frequency.setValueAtTime(shape.frequency, now)
-      gain.gain.setValueAtTime(shape.gain * volume, now)
+      gain.gain.setValueAtTime(shape.gain * masterVolume * sfxVolume, now)
       oscillator.connect(gain)
       gain.connect(audioContext.destination)
       oscillator.start(now)
@@ -112,7 +167,13 @@ export function createAudioManager(options: AudioManagerOptions = {}): AudioMana
       available,
       unlocked,
       muted,
-      volume,
+      volume: masterVolume,
+      masterVolume,
+      sfxVolume,
+      musicVolume,
+      monoAudio,
+      musicPlaying,
+      musicTrackName,
       pendingSfxCount: pendingSfx.length,
     }),
     unlock: async () => {
@@ -137,13 +198,60 @@ export function createAudioManager(options: AudioManagerOptions = {}): AudioMana
       muted = nextMuted
       if (muted) {
         pendingSfx.splice(0, pendingSfx.length)
+        musicPlaying = false
+        musicTrackName = undefined
       }
     },
     setVolume: (nextVolume) => {
-      volume = clamp01(nextVolume)
+      masterVolume = clamp01(nextVolume)
+      if (masterVolume <= 0) {
+        musicPlaying = false
+        musicTrackName = undefined
+      }
+    },
+    setMasterVolume: (nextVolume) => {
+      masterVolume = clamp01(nextVolume)
+      if (masterVolume <= 0) {
+        musicPlaying = false
+        musicTrackName = undefined
+      }
+    },
+    setSfxVolume: (nextVolume) => {
+      sfxVolume = clamp01(nextVolume)
+    },
+    setMusicVolume: (nextVolume) => {
+      musicVolume = clamp01(nextVolume)
+      if (musicVolume <= 0) {
+        musicPlaying = false
+        musicTrackName = undefined
+      }
+    },
+    setMonoAudio: (enabled) => {
+      monoAudio = enabled
+    },
+    playMusic: (trackName) => {
+      if (!unlocked || muted || masterVolume <= 0 || musicVolume <= 0) {
+        return
+      }
+
+      const assetPaths = assetRegistry.music[trackName] ?? []
+      if (fetchArrayBuffer && assetPaths.length > 0) {
+        void fetchArrayBuffer(assetPaths[0]).catch(() => undefined)
+      }
+
+      if (!ensureContext()) {
+        return
+      }
+
+      musicPlaying = true
+      musicTrackName = trackName
+    },
+    stopMusic: () => {
+      musicPlaying = false
+      musicTrackName = undefined
     },
     playSfx: (eventName) => {
-      if (muted || volume <= 0) {
+      if (muted || masterVolume <= 0 || sfxVolume <= 0) {
         return
       }
 

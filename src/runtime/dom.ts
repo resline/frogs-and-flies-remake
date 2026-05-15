@@ -57,6 +57,9 @@ export type DomState = {
   highContrastInput: HTMLInputElement
   muteInput: HTMLInputElement
   volumeInput: HTMLInputElement
+  sfxVolumeInput: HTMLInputElement
+  musicVolumeInput: HTMLInputElement
+  monoAudioInput: HTMLInputElement
   inputProfileSelect: HTMLSelectElement
   inputRemapStatus: HTMLElement
   resetInputProfileButton: HTMLElement
@@ -147,7 +150,10 @@ export function createDomState(root: HTMLElement): DomState {
   const mainMenuModeButton = getOrCreateButton(root, 'shell-mode-main-menu', 'Main Menu', modeSelectPanel)
   const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', gameplayPanel)
   const muteInput = getOrCreateCheckbox(root, 'option-mute', 'Mute', audioControls)
-  const volumeInput = getOrCreateRange(root, 'option-volume', 'Volume', audioControls)
+  const volumeInput = getOrCreateRange(root, 'option-volume', 'Master volume', audioControls)
+  const sfxVolumeInput = getOrCreateRange(root, 'option-sfx-volume', 'SFX volume', audioControls)
+  const musicVolumeInput = getOrCreateRange(root, 'option-music-volume', 'Music volume', audioControls)
+  const monoAudioInput = getOrCreateCheckbox(root, 'option-mono-audio', 'Mono audio', audioControls)
   const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', replayControls)
   const changeModeButton = getOrCreateButton(root, 'change-mode', 'Change Mode', resultsActions)
   const mainMenuResultsButton = getOrCreateButton(root, 'results-main-menu', 'Main Menu', resultsActions)
@@ -232,6 +238,9 @@ export function createDomState(root: HTMLElement): DomState {
     highContrastInput,
     muteInput,
     volumeInput,
+    sfxVolumeInput,
+    musicVolumeInput,
+    monoAudioInput,
     inputProfileSelect,
     inputRemapStatus,
     resetInputProfileButton,
@@ -299,12 +308,21 @@ export function syncDom(
     showTimer: true,
     mute: false,
     volume: 1,
+    masterVolume: 1,
+    sfxVolume: 1,
+    musicVolume: 0.8,
+    monoAudio: false,
   }
   const audioMarkers = audioState ?? {
     available: true,
     unlocked: false,
     muted: options.mute,
     volume: options.volume,
+    masterVolume: options.masterVolume,
+    sfxVolume: options.sfxVolume,
+    musicVolume: options.musicVolume,
+    monoAudio: options.monoAudio,
+    musicPlaying: false,
     pendingSfxCount: 0,
   }
 
@@ -367,8 +385,13 @@ export function syncDom(
   syncCheckboxControl(dom.reducedMotionInput, options.reducedMotion)
   syncCheckboxControl(dom.highContrastInput, options.highContrast)
   syncCheckboxControl(dom.muteInput, options.mute)
+  syncCheckboxControl(dom.monoAudioInput, options.monoAudio)
   dom.volumeInput.value = String(options.volume)
   dom.volumeInput.setAttribute('aria-valuenow', String(options.volume))
+  dom.sfxVolumeInput.value = String(options.sfxVolume)
+  dom.sfxVolumeInput.setAttribute('aria-valuenow', String(options.sfxVolume))
+  dom.musicVolumeInput.value = String(options.musicVolume)
+  dom.musicVolumeInput.setAttribute('aria-valuenow', String(options.musicVolume))
   syncInputProfileControl(dom.inputProfileSelect, shellSync?.save)
   if (shellSync) {
     syncShellDom(dom, shellSync)
@@ -561,6 +584,8 @@ function syncAudioUnlockControl(element: HTMLElement, audioState: AudioManagerSt
   element.setAttribute('data-audio-unlocked', String(audioState.unlocked))
   element.setAttribute('data-audio-available', String(audioState.available))
   element.setAttribute('data-pending-sfx-count', String(audioState.pendingSfxCount))
+  element.setAttribute('data-audio-music-playing', String(audioState.musicPlaying))
+  element.setAttribute('data-audio-mono', String(audioState.monoAudio))
 }
 
 function syncRuntimeOptionMarkers(element: HTMLElement, options: RuntimeOptions, audioState: AudioManagerState): void {
@@ -570,9 +595,18 @@ function syncRuntimeOptionMarkers(element: HTMLElement, options: RuntimeOptions,
   element.setAttribute('data-show-timer', String(options.showTimer))
   element.setAttribute('data-muted', String(options.mute))
   element.setAttribute('data-volume', options.volume.toFixed(2))
+  element.setAttribute('data-master-volume', options.masterVolume.toFixed(2))
+  element.setAttribute('data-sfx-volume', options.sfxVolume.toFixed(2))
+  element.setAttribute('data-music-volume', options.musicVolume.toFixed(2))
+  element.setAttribute('data-mono-audio', String(options.monoAudio))
   element.setAttribute('data-audio-unlocked', String(audioState.unlocked))
   element.setAttribute('data-audio-muted', String(audioState.muted))
   element.setAttribute('data-audio-volume', audioState.volume.toFixed(2))
+  element.setAttribute('data-audio-master-volume', audioState.masterVolume.toFixed(2))
+  element.setAttribute('data-audio-sfx-volume', audioState.sfxVolume.toFixed(2))
+  element.setAttribute('data-audio-music-volume', audioState.musicVolume.toFixed(2))
+  element.setAttribute('data-audio-mono', String(audioState.monoAudio))
+  element.setAttribute('data-audio-music-playing', String(audioState.musicPlaying))
 }
 
 function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {

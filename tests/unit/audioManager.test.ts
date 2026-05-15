@@ -10,21 +10,33 @@ type FakeAudioNode = {
   connect: ReturnType<typeof vi.fn>
 }
 
+type AudioManagerV1 = ReturnType<typeof createAudioManager> & {
+  setMasterVolume?: (volume: number) => void
+  setSfxVolume?: (volume: number) => void
+  setMusicVolume?: (volume: number) => void
+  setMonoAudio?: (enabled: boolean) => void
+  playMusic?: (trackName: 'homePondLoop') => void
+  stopMusic?: () => void
+}
+
 class FakeAudioContext {
   currentTime = 0
   destination: FakeAudioNode = { connect: vi.fn() }
   resumeCalls = 0
   createdOscillators: FakeAudioNode[] = []
+  createdGains: (FakeAudioNode & { gain: { value: number; setValueAtTime: ReturnType<typeof vi.fn> } })[] = []
   state: AudioContextState = 'suspended'
 
   createGain(): FakeAudioNode & { gain: { value: number; setValueAtTime: ReturnType<typeof vi.fn> } } {
-    return {
+    const gain = {
       connect: vi.fn(),
       gain: {
         value: 1,
         setValueAtTime: vi.fn(),
       },
     }
+    this.createdGains.push(gain)
+    return gain
   }
 
   createOscillator(): FakeAudioNode & {
@@ -49,6 +61,10 @@ class FakeAudioContext {
     this.state = 'running'
     return Promise.resolve()
   }
+}
+
+function asAudioManagerV1(audio: ReturnType<typeof createAudioManager>): AudioManagerV1 {
+  return audio as AudioManagerV1
 }
 
 function startGame(seed = 1) {
@@ -117,6 +133,102 @@ describe('audio manager', () => {
 
     expect(audio.getState().muted).toBe(false)
     expect(context.createdOscillators).toHaveLength(1)
+  })
+
+  it('clamps master, SFX, and music buses independently', () => {
+    const audio = asAudioManagerV1(createAudioManager())
+
+    expect(typeof audio.setMasterVolume).toBe('function')
+    expect(typeof audio.setSfxVolume).toBe('function')
+    expect(typeof audio.setMusicVolume).toBe('function')
+
+    audio.setMasterVolume?.(1.8)
+    audio.setSfxVolume?.(-0.25)
+    audio.setMusicVolume?.(0.45)
+
+    expect(audio.getState()).toMatchObject({
+      masterVolume: 1,
+      sfxVolume: 0,
+      musicVolume: 0.45,
+    })
+  })
+
+  it('mutes master output for both SFX and music without losing bus levels', async () => {
+    const context = new FakeAudioContext()
+    const audio = asAudioManagerV1(
+      createAudioManager({
+        contextFactory: () => context as unknown as AudioContext,
+        masterVolume: 0.75,
+        sfxVolume: 0.5,
+        musicVolume: 0.25,
+      } as Parameters<typeof createAudioManager>[0]),
+    )
+
+    await audio.unlock()
+    audio.setMuted(true)
+    audio.playSfx('catch')
+    audio.playMusic?.('homePondLoop')
+
+    expect(context.createdOscillators).toHaveLength(0)
+    expect(audio.getState()).toMatchObject({
+      muted: true,
+      masterVolume: 0.75,
+      sfxVolume: 0.5,
+      musicVolume: 0.25,
+      musicPlaying: false,
+    })
+  })
+
+  it('stores mono audio preference in manager state', () => {
+    const audio = asAudioManagerV1(createAudioManager())
+
+    expect(typeof audio.setMonoAudio).toBe('function')
+
+    audio.setMonoAudio?.(true)
+
+    expect(audio.getState()).toMatchObject({
+      monoAudio: true,
+    })
+  })
+
+  it('falls back to procedural SFX when registered local audio assets are missing', async () => {
+    const context = new FakeAudioContext()
+    const audio = createAudioManager({
+      contextFactory: () => context as unknown as AudioContext,
+      assetRegistry: {
+        sfx: { jump: ['/audio/sfx/missing-jump.mp3'] },
+        music: { homePondLoop: ['/audio/music/missing-loop.mp3'] },
+      },
+      fetchArrayBuffer: () => Promise.reject(new Error('missing asset')),
+    } as Parameters<typeof createAudioManager>[0])
+
+    await audio.unlock()
+
+    expect(() => audio.playSfx('jump')).not.toThrow()
+    expect(context.createdOscillators).toHaveLength(1)
+  })
+
+  it('keeps unlock gesture-driven when music is requested before unlock', () => {
+    const context = new FakeAudioContext()
+    const audio = asAudioManagerV1(createAudioManager({ contextFactory: () => context as unknown as AudioContext }))
+
+    audio.playMusic?.('homePondLoop')
+
+    expect(audio.getState()).toMatchObject({
+      unlocked: false,
+      musicPlaying: false,
+    })
+    expect(context.resumeCalls).toBe(0)
+  })
+
+  it('keeps the queued SFX limit when locked', () => {
+    const audio = createAudioManager()
+
+    for (let index = 0; index < 18; index += 1) {
+      audio.playSfx('jump')
+    }
+
+    expect(audio.getState().pendingSfxCount).toBe(16)
   })
 
   it('does not throw when audio context creation or playback fails', async () => {

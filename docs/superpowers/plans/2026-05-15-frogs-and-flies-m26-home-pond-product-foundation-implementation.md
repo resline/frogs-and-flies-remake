@@ -672,7 +672,7 @@ Expected: input binding/gamepad/runtime input/save/shell/CSS/test files only. Co
 - Optional modify only if local files are added: `ASSET_MANIFEST.md`
 - Avoid modifying: `package.json`, `package-lock.json` unless Howler is explicitly accepted.
 
-- [ ] **Step 1: Record Web Audio vs Howler decision**
+- [x] **Step 1: Record Web Audio vs Howler decision**
 
 Run:
 
@@ -683,7 +683,7 @@ npm run build
 
 Expected: Howler is absent. Prefer current direct Web Audio because M2.6 can add buffers, buses, mono, unlock, and fallback without a runtime dependency. Do not install Howler unless this step is deliberately reversed with measured bundle impact.
 
-- [ ] **Step 2: Write failing audio bus tests**
+- [x] **Step 2: Write failing audio bus tests**
 
 Extend `tests/unit/audioManager.test.ts` to cover:
 
@@ -694,7 +694,7 @@ Extend `tests/unit/audioManager.test.ts` to cover:
 - Unlock remains gesture-driven.
 - Queued SFX limit still applies.
 
-- [ ] **Step 3: Run red audio bus tests**
+- [x] **Step 3: Run red audio bus tests**
 
 Run:
 
@@ -704,7 +704,7 @@ npm run test:unit -- tests/unit/audioManager.test.ts
 
 Expected fail: current manager has only `volume`, not buses/music/mono/local asset fallback.
 
-- [ ] **Step 4: Implement Web Audio bus model**
+- [x] **Step 4: Implement Web Audio bus model**
 
 Modify `src/runtime/audio.ts` to add:
 
@@ -715,7 +715,7 @@ Modify `src/runtime/audio.ts` to add:
 - Local asset registry support.
 - Graceful fallback to procedural SFX when assets are missing or decoding fails.
 
-- [ ] **Step 5: Define local audio placeholder registry**
+- [x] **Step 5: Define local audio placeholder registry**
 
 Define registry paths without requiring generated/live API assets:
 
@@ -740,11 +740,11 @@ Define registry paths without requiring generated/live API assets:
 
 If files are not present, tests should prove gameplay continues silently or procedurally. Do not make live OpenAI audio API calls.
 
-- [ ] **Step 6: Persist audio settings**
+- [x] **Step 6: Persist audio settings**
 
 Modify SaveManager/options/DOM so settings include mute, master volume, SFX volume, music volume, mono audio, and audio unlock state marker. Do not persist browser unlock itself as unlocked; persist only user preferences.
 
-- [ ] **Step 7: Add audio E2E tests**
+- [x] **Step 7: Add audio E2E tests**
 
 Create `tests/e2e/m26-audio.spec.ts` covering markers only, not audible output:
 
@@ -753,7 +753,7 @@ Create `tests/e2e/m26-audio.spec.ts` covering markers only, not audible output:
 - Missing optional audio files do not block gameplay.
 - Unlock button reports available/unavailable state.
 
-- [ ] **Step 8: Run focused audio tests**
+- [x] **Step 8: Run focused audio tests**
 
 Run:
 
@@ -764,11 +764,11 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-audi
 
 Expected pass: audio unit and marker E2E tests pass.
 
-- [ ] **Step 9: Optional local audio asset documentation**
+- [x] **Step 9: Optional local audio asset documentation**
 
 If local audio files were added, update `ASSET_MANIFEST.md` with file paths, provenance, size, and explicit note that no live OpenAI audio API calls were made.
 
-- [ ] **Step 10: Commit boundary**
+- [x] **Step 10: Commit boundary**
 
 Run:
 

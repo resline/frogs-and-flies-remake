@@ -9,6 +9,10 @@ export interface RuntimeOptions {
   showTimer: boolean
   mute: boolean
   volume: number
+  masterVolume: number
+  sfxVolume: number
+  musicVolume: number
+  monoAudio: boolean
 }
 
 export type RuntimeOptionsDefaults = Partial<RuntimeOptions> | Partial<SaveSettings>
@@ -17,16 +21,29 @@ export function createRuntimeOptions(
   overrides: Partial<RuntimeOptions> = {},
   savedDefaults: RuntimeOptionsDefaults = {},
 ): RuntimeOptions {
-  return {
+  const options: RuntimeOptions = {
     difficulty: 'classic-standard',
     reducedMotion: false,
     highContrast: false,
     showTimer: true,
     mute: false,
     volume: 1,
+    masterVolume: 1,
+    sfxVolume: 1,
+    musicVolume: 0.8,
+    monoAudio: false,
     ...normalizeRuntimeDefaults(savedDefaults),
     ...overrides,
   }
+
+  if (typeof overrides.volume === 'number' && typeof overrides.masterVolume !== 'number') {
+    options.masterVolume = options.volume
+  }
+  if (typeof overrides.masterVolume === 'number' && typeof overrides.volume !== 'number') {
+    options.volume = options.masterVolume
+  }
+
+  return options
 }
 
 export function readRuntimeOptions(
@@ -42,7 +59,11 @@ export function readRuntimeOptions(
       highContrast: readBooleanFlag(searchParams.get('highContrast'), defaults.highContrast),
       showTimer: readBooleanFlag(searchParams.get('showTimer'), defaults.showTimer),
       mute: readBooleanFlag(searchParams.get('mute'), defaults.mute),
-      volume: readVolume(searchParams.get('volume'), defaults.volume),
+      volume: readVolume(searchParams.get('masterVolume') ?? searchParams.get('volume'), defaults.masterVolume),
+      masterVolume: readVolume(searchParams.get('masterVolume') ?? searchParams.get('volume'), defaults.masterVolume),
+      sfxVolume: readVolume(searchParams.get('sfxVolume'), defaults.sfxVolume),
+      musicVolume: readVolume(searchParams.get('musicVolume'), defaults.musicVolume),
+      monoAudio: readBooleanFlag(searchParams.get('monoAudio'), defaults.monoAudio),
     },
     defaults,
   )
@@ -69,8 +90,19 @@ function normalizeRuntimeDefaults(savedDefaults: RuntimeOptionsDefaults): Partia
   }
   if (typeof defaults.masterVolume === 'number') {
     normalized.volume = clampVolume(defaults.masterVolume)
+    normalized.masterVolume = normalized.volume
   } else if (typeof defaults.volume === 'number') {
     normalized.volume = clampVolume(defaults.volume)
+    normalized.masterVolume = normalized.volume
+  }
+  if (typeof defaults.sfxVolume === 'number') {
+    normalized.sfxVolume = clampVolume(defaults.sfxVolume)
+  }
+  if (typeof defaults.musicVolume === 'number') {
+    normalized.musicVolume = clampVolume(defaults.musicVolume)
+  }
+  if (typeof defaults.monoAudio === 'boolean') {
+    normalized.monoAudio = defaults.monoAudio
   }
 
   return normalized
