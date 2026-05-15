@@ -17,6 +17,7 @@ import { loadGeneratedGameplayAssets } from './assets'
 import { createDomState, mountCanvas, syncDom } from './dom'
 import type { RuntimeParams } from './params'
 import type { GameState } from '../game/types'
+import type { RuntimeOptions } from './options'
 
 const RUNTIME_PREVENT_DEFAULT_CODES = new Set([
   'ArrowLeft',
@@ -57,7 +58,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     if (destroyed) {
       return
     }
-    syncDom(dom, game)
+    syncDom(dom, game, currentRuntimeParams.options)
     if (scene) {
       syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game))
     }
@@ -117,15 +118,46 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   }
   const handleClassicSingleClick = () => resetGame({ ...currentRuntimeParams, mode: 'classic-single' })
   const handleLocalVersusClick = () => resetGame({ ...currentRuntimeParams, mode: 'local-versus' })
+  const handleAssistDifficultyClick = () => resetDifficulty('classic-assist')
+  const handleStandardDifficultyClick = () => resetDifficulty('classic-standard')
+  const handleExpertDifficultyClick = () => resetDifficulty('classic-expert')
   const handlePauseClick = () => runCommand('pause')
   const handleResumeClick = () => runCommand('resume')
+  const handleShowTimerChange = () => updateRuntimeOptions({ showTimer: dom.showTimerInput.checked })
+  const handleReducedMotionChange = () => updateRuntimeOptions({ reducedMotion: dom.reducedMotionInput.checked })
+  const handleHighContrastChange = () => updateRuntimeOptions({ highContrast: dom.highContrastInput.checked })
+  const handleMuteChange = () => updateRuntimeOptions({ mute: dom.muteInput.checked })
+  const handleVolumeInput = () => updateRuntimeOptions({ volume: Number.parseFloat(dom.volumeInput.value) })
+
+  function resetDifficulty(difficulty: RuntimeOptions['difficulty']): void {
+    resetGame({ ...currentRuntimeParams, options: { ...currentRuntimeParams.options, difficulty } })
+  }
+
+  function updateRuntimeOptions(options: Partial<RuntimeOptions>): void {
+    currentRuntimeParams = {
+      ...currentRuntimeParams,
+      options: {
+        ...currentRuntimeParams.options,
+        ...options,
+      },
+    }
+    refresh()
+  }
 
   dom.classicSingleButton.addEventListener('click', handleClassicSingleClick)
   dom.localVersusButton.addEventListener('click', handleLocalVersusClick)
+  dom.difficultyClassicAssistButton.addEventListener('click', handleAssistDifficultyClick)
+  dom.difficultyClassicStandardButton.addEventListener('click', handleStandardDifficultyClick)
+  dom.difficultyClassicExpertButton.addEventListener('click', handleExpertDifficultyClick)
   dom.startButton.addEventListener('click', handleStartClick)
   dom.pauseButton.addEventListener('click', handlePauseClick)
   dom.resumeButton.addEventListener('click', handleResumeClick)
   dom.replayButton.addEventListener('click', replay)
+  dom.showTimerInput.addEventListener('change', handleShowTimerChange)
+  dom.reducedMotionInput.addEventListener('change', handleReducedMotionChange)
+  dom.highContrastInput.addEventListener('change', handleHighContrastChange)
+  dom.muteInput.addEventListener('change', handleMuteChange)
+  dom.volumeInput.addEventListener('input', handleVolumeInput)
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (RUNTIME_PREVENT_DEFAULT_CODES.has(event.code)) {
@@ -207,10 +239,18 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
       destroyed = true
       dom.classicSingleButton.removeEventListener('click', handleClassicSingleClick)
       dom.localVersusButton.removeEventListener('click', handleLocalVersusClick)
+      dom.difficultyClassicAssistButton.removeEventListener('click', handleAssistDifficultyClick)
+      dom.difficultyClassicStandardButton.removeEventListener('click', handleStandardDifficultyClick)
+      dom.difficultyClassicExpertButton.removeEventListener('click', handleExpertDifficultyClick)
       dom.startButton.removeEventListener('click', handleStartClick)
       dom.pauseButton.removeEventListener('click', handlePauseClick)
       dom.resumeButton.removeEventListener('click', handleResumeClick)
       dom.replayButton.removeEventListener('click', replay)
+      dom.showTimerInput.removeEventListener('change', handleShowTimerChange)
+      dom.reducedMotionInput.removeEventListener('change', handleReducedMotionChange)
+      dom.highContrastInput.removeEventListener('change', handleHighContrastChange)
+      dom.muteInput.removeEventListener('change', handleMuteChange)
+      dom.volumeInput.removeEventListener('input', handleVolumeInput)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       app.canvas.removeEventListener('pointerdown', handlePointerDown)

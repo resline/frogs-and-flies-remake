@@ -11,7 +11,7 @@ export function updateSpawn(game: GameState, deltaSeconds: number): void {
       id: game.nextEntityId,
       kind: 'fly',
       x: game.prng.int(48, game.constants.arenaWidth - 48),
-      y: -24,
+      y: game.prng.int(game.options.flyBand.minY, game.options.flyBand.maxY),
       vx: game.prng.int(-30, 30),
       vy: game.prng.int(55, 95),
       radius: 14,

@@ -26,6 +26,8 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - `Enter`: start, resume from pause, or replay after results.
 - `P`: pause/resume.
 - On-screen controls: `Start`, `Pause`, `Resume`, `Replay`.
+- Difficulty options: `Classic Assist`, `Classic Standard`, and `Classic Expert`.
+- Options UI includes timer visibility, reduced motion, high contrast, mute, and volume controls.
 
 ## Determinism And Smoke Parameters
 
@@ -37,6 +39,7 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
   - `/?smokeState=results&seed=123`
   - `/?durationSeconds=2&theEndSeconds=1&simulationSpeed=20`
 - Supported M2 smoke params: `mode`, `seed`, `smokeElapsedSeconds`, `smokeState`, `durationSeconds`, `theEndSeconds`, `simulationSpeed`.
+- Supported M2.5 option params: `difficulty=classic-assist|classic-standard|classic-expert`, `showTimer=0|1`, `reducedMotion=0|1`, `highContrast=0|1`, `mute=0|1`, and `volume=0..1`.
 
 ## Local Development
 

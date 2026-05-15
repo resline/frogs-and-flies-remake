@@ -1,4 +1,5 @@
 import type { GamePhase } from '../game/types'
+import { readRuntimeOptions, type RuntimeOptions } from './options'
 
 export type RuntimeMode = 'classic-single' | 'local-versus'
 
@@ -10,6 +11,7 @@ export type RuntimeParams = {
   smokeState?: GamePhase
   smokeElapsedSeconds?: number
   simulationSpeed: number
+  options: RuntimeOptions
 }
 
 export function readRuntimeParams(searchParams: URLSearchParams): RuntimeParams {
@@ -21,6 +23,7 @@ export function readRuntimeParams(searchParams: URLSearchParams): RuntimeParams 
     durationSeconds: readNonNegativeNumber(searchParams.get('durationSeconds')),
     theEndSeconds: readNonNegativeNumber(searchParams.get('theEndSeconds')),
     simulationSpeed: readPositiveNumber(searchParams.get('simulationSpeed'), 1),
+    options: readRuntimeOptions(searchParams),
   }
 }
 

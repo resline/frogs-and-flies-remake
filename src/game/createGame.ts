@@ -4,23 +4,25 @@ import {
   BASE_CATCH_RADIUS,
   BASE_FLY_SCORE,
   COMBO_BONUS_SCORE,
-  FLY_SPAWN_SECONDS,
   POWER_SPAWN_SECONDS,
   ROUND_DURATION_SECONDS,
   RUSH_CATCH_RADIUS,
   RUSH_SECONDS,
   THE_END_SECONDS,
 } from './constants'
+import { getClassicDifficulty } from './difficulty'
 import { createPlayers } from './match'
 import { createActivePower, createWaterState } from './player'
 import { createPrng } from './prng'
-import type { GameState, MatchMode } from './types'
+import type { ClassicOptions, DifficultyMode, GameState, MatchMode } from './types'
 
 export interface CreateGameOptions {
   seed?: number
   mode?: MatchMode
   durationSeconds?: number
   theEndSeconds?: number
+  difficulty?: DifficultyMode
+  options?: Pick<ClassicOptions, 'difficulty'>
 }
 
 export function createGame(options: CreateGameOptions): GameState {
@@ -28,6 +30,7 @@ export function createGame(options: CreateGameOptions): GameState {
   const mode = options.mode ?? 'classic-single'
   const durationSeconds = options.durationSeconds ?? ROUND_DURATION_SECONDS
   const theEndSeconds = options.theEndSeconds ?? THE_END_SECONDS
+  const classicOptions = getClassicDifficulty(options.options?.difficulty ?? options.difficulty)
   const players = createPlayers(mode)
   const primaryPlayer = players[0]
 
@@ -44,9 +47,10 @@ export function createGame(options: CreateGameOptions): GameState {
       rushSeconds: RUSH_SECONDS,
       baseFlyScore: BASE_FLY_SCORE,
       comboBonusScore: COMBO_BONUS_SCORE,
-      flySpawnSeconds: FLY_SPAWN_SECONDS,
+      flySpawnSeconds: classicOptions.flySpawnSeconds,
       powerSpawnSeconds: POWER_SPAWN_SECONDS,
     },
+    options: classicOptions,
     mode,
     phase: 'start',
     timeOfDay: 'day',

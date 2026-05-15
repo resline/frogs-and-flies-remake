@@ -1,5 +1,5 @@
 import { removeEntity } from '../entities'
-import { findFirstTongueHit, syncTongueSegment } from '../tongue'
+import { findFirstTongueHit, isEntityInTongueRange, syncTongueSegment } from '../tongue'
 import { activateRush } from './power'
 import type { GameCommands, GameState, MatchPlayerState, PlayerState } from '../types'
 
@@ -93,11 +93,22 @@ function getCollisionActors(game: GameState): CollisionActor[] {
 }
 
 function getCatchActors(game: GameState): CollisionActor[] {
-  return getCollisionActors(game).filter((actor) => hasCatchCommand(actor.commands))
+  return getCollisionActors(game).filter((actor) => hasCatchCommand(actor.commands) || hasAutoTongueTarget(game, actor))
 }
 
 function hasCatchCommand(commands: GameCommands): boolean {
   return Boolean(commands.fire || commands.tongue)
+}
+
+function hasAutoTongueTarget(game: GameState, actor: CollisionActor): boolean {
+  if (!game.options.autoTongue || actor.state.tongue.phase !== 'ready') {
+    return false
+  }
+
+  return game.entityIds.some((id) => {
+    const entity = game.entities[id]
+    return entity?.kind === 'fly' && isEntityInTongueRange(actor.state, entity, actor.player.catchRadius)
+  })
 }
 
 function mergeCommands(primaryCommands: GameCommands, playerCommands: GameCommands): GameCommands {

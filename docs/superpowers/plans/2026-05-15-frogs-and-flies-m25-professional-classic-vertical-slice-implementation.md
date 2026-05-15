@@ -439,7 +439,7 @@ Expected: only tongue/collision/AI/render files plus tests. Commit message: `fea
 - Modify: `src/style.css`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write failing difficulty tests**
+- [x] **Step 1: Write failing difficulty tests**
 
 Add tests that `classic-assist`, `classic-standard`, and optional `classic-expert` produce deterministic fly bands, auto-tongue settings, and jump forgiveness.
 
@@ -451,29 +451,29 @@ expect(getClassicDifficulty('classic-assist').autoTongue).toBe(true)
 expect(getClassicDifficulty('classic-standard').autoTongue).toBe(false)
 ```
 
-- [ ] **Step 2: Write failing runtime options tests**
+- [x] **Step 2: Write failing runtime options tests**
 
 Add tests that URL params parse `difficulty=classic-assist`, `reducedMotion=1`, `highContrast=1`, `showTimer=0`, `mute=1`, and `volume=0.35` into stable defaults and clamps.
 
-- [ ] **Step 3: Run red options tests**
+- [x] **Step 3: Run red options tests**
 
 Run: `npm run test:unit -- tests/unit/difficultyOptions.test.ts tests/unit/runtimeOptions.test.ts`
 
 Expected fail: missing `difficulty.ts`, `options.ts`, or params fields.
 
-- [ ] **Step 4: Implement difficulty model**
+- [x] **Step 4: Implement difficulty model**
 
 Create `src/game/difficulty.ts` with named, typed definitions. Keep defaults to `classic-standard`; include `classic-assist` and add `classic-expert` only if it remains a small constant-table variation.
 
-- [ ] **Step 5: Apply difficulty to spawn and assist**
+- [x] **Step 5: Apply difficulty to spawn and assist**
 
 Update `createGame` and `spawn.ts` so fly y ranges, spawn rate adjustments, and auto-tongue eligibility use options from game state. Keep spawns seeded and deterministic.
 
-- [ ] **Step 6: Implement options parser**
+- [x] **Step 6: Implement options parser**
 
 Create `src/runtime/options.ts`; update `src/runtime/params.ts` so runtime params carry game options without breaking existing M2 params.
 
-- [ ] **Step 7: Add options UI controls**
+- [x] **Step 7: Add options UI controls**
 
 Update `src/runtime/dom.ts` and `src/style.css` with semantic controls and test ids:
 
@@ -488,13 +488,13 @@ Update `src/runtime/dom.ts` and `src/style.css` with semantic controls and test 
 
 Use `aria-pressed`, `aria-checked`, or native form controls with visible focus states.
 
-- [ ] **Step 8: Run green options tests**
+- [x] **Step 8: Run green options tests**
 
 Run: `npm run test:unit -- tests/unit/difficultyOptions.test.ts tests/unit/runtimeOptions.test.ts tests/unit/spawn.test.ts`
 
 Expected pass: all listed files pass and exit `0`.
 
-- [ ] **Step 9: Commit boundary**
+- [x] **Step 9: Commit boundary**
 
 Run: `git status --short`
 

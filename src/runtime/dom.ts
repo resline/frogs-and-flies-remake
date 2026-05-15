@@ -1,5 +1,6 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
+import type { RuntimeOptions } from './options'
 
 export type DomState = {
   shell: HTMLElement
@@ -23,6 +24,14 @@ export type DomState = {
   pauseButton: HTMLElement
   resumeButton: HTMLElement
   replayButton: HTMLElement
+  difficultyClassicAssistButton: HTMLElement
+  difficultyClassicStandardButton: HTMLElement
+  difficultyClassicExpertButton: HTMLElement
+  showTimerInput: HTMLInputElement
+  reducedMotionInput: HTMLInputElement
+  highContrastInput: HTMLInputElement
+  muteInput: HTMLInputElement
+  volumeInput: HTMLInputElement
 }
 
 export function createDomState(root: HTMLElement): DomState {
@@ -61,6 +70,17 @@ export function createDomState(root: HTMLElement): DomState {
   const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', controls)
   const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', controls)
   const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', controls)
+  const options = getOrCreate(root, 'div', 'm25-options', controls)
+  const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', options)
+  const difficultyClassicStandardButton = getOrCreateButton(root, 'difficulty-classic-standard', 'Standard', options)
+  const difficultyClassicExpertButton = getOrCreateButton(root, 'difficulty-classic-expert', 'Expert', options)
+  const showTimerInput = getOrCreateCheckbox(root, 'option-show-timer', 'Timer', options)
+  const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', options)
+  const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', options)
+  const muteInput = getOrCreateCheckbox(root, 'option-mute', 'Mute', options)
+  const volumeInput = getOrCreateRange(root, 'option-volume', 'Volume', options)
+
+  options.classList.add('m25-options')
 
   return {
     shell,
@@ -83,6 +103,14 @@ export function createDomState(root: HTMLElement): DomState {
     pauseButton,
     resumeButton,
     replayButton,
+    difficultyClassicAssistButton,
+    difficultyClassicStandardButton,
+    difficultyClassicExpertButton,
+    showTimerInput,
+    reducedMotionInput,
+    highContrastInput,
+    muteInput,
+    volumeInput,
   }
 }
 
@@ -121,10 +149,20 @@ export function mountCanvas(gameHost: HTMLElement, canvas: HTMLCanvasElement): (
   return () => window.removeEventListener('resize', resize)
 }
 
-export function syncDom(dom: DomState, game: GameState): void {
+export function syncDom(dom: DomState, game: GameState, runtimeOptions?: RuntimeOptions): void {
+  const options = runtimeOptions ?? {
+    difficulty: game.options.difficulty,
+    reducedMotion: false,
+    highContrast: false,
+    showTimer: true,
+    mute: false,
+    volume: 1,
+  }
+
   dom.state.setAttribute('data-state', game.phase)
   dom.state.setAttribute('data-mode', game.mode)
   dom.state.setAttribute('data-time-of-day', game.timeOfDay)
+  dom.state.setAttribute('data-difficulty', game.options.difficulty)
   syncM1RuntimeMarkers(dom.state, game)
   syncPlayerArenaMarkers(dom.state, game)
   if (dom.canvas) {
@@ -132,7 +170,10 @@ export function syncDom(dom: DomState, game: GameState): void {
     syncPlayerArenaMarkers(dom.canvas, game)
     dom.canvas.setAttribute('data-testid', 'game-canvas')
     dom.canvas.setAttribute('data-runtime-markers', 'm2')
+    syncRuntimeOptionMarkers(dom.canvas, options)
   }
+  syncRuntimeOptionMarkers(dom.shell, options)
+  syncRuntimeOptionMarkers(dom.state, options)
   dom.state.textContent = `State: ${game.phase}`
 
   const remainingSeconds = Math.ceil(game.remainingSeconds)
@@ -153,6 +194,7 @@ export function syncDom(dom: DomState, game: GameState): void {
     element.textContent = timerText
     element.setAttribute('data-target-seconds', String(game.durationSeconds))
     element.setAttribute('data-remaining-seconds', String(remainingSeconds))
+    element.hidden = !options.showTimer
   }
 
   for (const element of [dom.seed, dom.seedAlias]) {
@@ -166,6 +208,15 @@ export function syncDom(dom: DomState, game: GameState): void {
   syncResults(dom.results, game)
   syncModeControl(dom.classicSingleButton, game.mode, 'classic-single')
   syncModeControl(dom.localVersusButton, game.mode, 'local-versus')
+  syncDifficultyControl(dom.difficultyClassicAssistButton, game.options.difficulty, 'classic-assist')
+  syncDifficultyControl(dom.difficultyClassicStandardButton, game.options.difficulty, 'classic-standard')
+  syncDifficultyControl(dom.difficultyClassicExpertButton, game.options.difficulty, 'classic-expert')
+  syncCheckboxControl(dom.showTimerInput, options.showTimer)
+  syncCheckboxControl(dom.reducedMotionInput, options.reducedMotion)
+  syncCheckboxControl(dom.highContrastInput, options.highContrast)
+  syncCheckboxControl(dom.muteInput, options.mute)
+  dom.volumeInput.value = String(options.volume)
+  dom.volumeInput.setAttribute('aria-valuenow', String(options.volume))
 
   for (const element of [
     dom.state,
@@ -254,6 +305,27 @@ function syncModeControl(element: HTMLElement, currentMode: MatchMode, mode: Mat
   element.setAttribute('aria-pressed', String(selected))
 }
 
+function syncDifficultyControl(element: HTMLElement, currentMode: RuntimeOptions['difficulty'], mode: RuntimeOptions['difficulty']): void {
+  const selected = currentMode === mode
+
+  element.setAttribute('data-selected', String(selected))
+  element.setAttribute('aria-pressed', String(selected))
+}
+
+function syncCheckboxControl(element: HTMLInputElement, checked: boolean): void {
+  element.checked = checked
+  element.setAttribute('aria-checked', String(checked))
+}
+
+function syncRuntimeOptionMarkers(element: HTMLElement, options: RuntimeOptions): void {
+  element.setAttribute('data-difficulty', options.difficulty)
+  element.setAttribute('data-reduced-motion', String(options.reducedMotion))
+  element.setAttribute('data-high-contrast', String(options.highContrast))
+  element.setAttribute('data-show-timer', String(options.showTimer))
+  element.setAttribute('data-muted', String(options.mute))
+  element.setAttribute('data-volume', options.volume.toFixed(2))
+}
+
 function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {
   element.setAttribute('data-jump-phase', game.player.jump.phase)
   element.setAttribute('data-jump-airborne', String(game.player.jump.airborne))
@@ -326,6 +398,45 @@ function getOrCreateButton(root: HTMLElement, testId: string, label: string, par
   }
 
   return button
+}
+
+function getOrCreateCheckbox(root: HTMLElement, testId: string, label: string, parent: HTMLElement): HTMLInputElement {
+  const input = getOrCreateLabeledInput(root, testId, label, 'checkbox', parent)
+  input.setAttribute('role', 'checkbox')
+  return input
+}
+
+function getOrCreateRange(root: HTMLElement, testId: string, label: string, parent: HTMLElement): HTMLInputElement {
+  const input = getOrCreateLabeledInput(root, testId, label, 'range', parent)
+  input.min = '0'
+  input.max = '1'
+  input.step = '0.05'
+  input.setAttribute('aria-label', label)
+  return input
+}
+
+function getOrCreateLabeledInput(
+  root: HTMLElement,
+  testId: string,
+  label: string,
+  type: HTMLInputElement['type'],
+  parent: HTMLElement,
+): HTMLInputElement {
+  const existing = root.querySelector<HTMLInputElement>(`[data-testid="${testId}"]`)
+  if (existing) {
+    return existing
+  }
+
+  const wrapper = document.createElement('label')
+  wrapper.className = 'm25-option-control'
+  const input = document.createElement('input')
+  const text = document.createElement('span')
+  input.type = type
+  input.setAttribute('data-testid', testId)
+  text.textContent = label
+  wrapper.append(input, text)
+  parent.appendChild(wrapper)
+  return input
 }
 
 function styleHud(hud: HTMLElement): void {

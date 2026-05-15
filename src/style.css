@@ -46,7 +46,8 @@ body {
 }
 
 button,
-canvas {
+canvas,
+input {
   font: inherit;
 }
 
@@ -79,6 +80,11 @@ button:active {
 }
 
 button:focus-visible {
+  outline: 3px solid rgba(255, 217, 106, 0.7);
+  outline-offset: 3px;
+}
+
+input:focus-visible {
   outline: 3px solid rgba(255, 217, 106, 0.7);
   outline-offset: 3px;
 }
@@ -193,6 +199,46 @@ button[data-selected="true"] {
   color: var(--accent);
   font-weight: 900;
   letter-spacing: 0;
+}
+
+.m25-options {
+  align-items: center;
+  background: rgba(5, 20, 22, 0.74);
+  border: 1px solid rgba(229, 255, 224, 0.2);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 8px;
+}
+
+.m25-options button {
+  min-height: 36px;
+  min-width: 88px;
+  padding: 0 12px;
+}
+
+.m25-option-control {
+  align-items: center;
+  color: var(--text-primary);
+  display: inline-flex;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 4px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.72);
+  white-space: nowrap;
+}
+
+.m25-option-control input[type="checkbox"] {
+  accent-color: var(--accent);
+  height: 18px;
+  width: 18px;
+}
+
+.m25-option-control input[type="range"] {
+  accent-color: var(--accent);
+  width: 96px;
 }
 
 @media (max-width: 720px), (max-height: 460px) {

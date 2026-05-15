@@ -12,6 +12,20 @@ export type FacingDirection = 'left' | 'right'
 export type HomeLilyId = 'left' | 'right'
 export type PlayerPhase = 'staged' | 'charging' | 'airborne' | 'splashing' | 'recovering'
 export type JumpArcDirection = -1 | 0 | 1
+export type DifficultyMode = 'classic-assist' | 'classic-standard' | 'classic-expert'
+
+export interface FlyBand {
+  minY: number
+  maxY: number
+}
+
+export interface ClassicOptions {
+  difficulty: DifficultyMode
+  flyBand: FlyBand
+  autoTongue: boolean
+  jumpForgiveness: number
+  flySpawnSeconds: number
+}
 
 export interface GameCommands {
   start?: boolean
@@ -154,6 +168,7 @@ export interface GameState {
   readonly seed: number
   readonly prng: Prng
   readonly constants: GameConstants
+  readonly options: ClassicOptions
   mode: MatchMode
   phase: GamePhase
   timeOfDay: TimeOfDay
