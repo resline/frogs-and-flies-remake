@@ -1,14 +1,14 @@
 # Frogs & Flies Remake
 
-M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round. It is a deterministic 60 second single-player slice with fixed-step simulation, seeded spawning, scoring, a Rush power-up, round-state UI, and generated sprite rendering with procedural fallback and overlays.
+M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round. It is a deterministic local multiplayer-capable slice with fixed-step simulation, seeded spawning, scoring, a Rush power-up, round-state UI, and generated sprite rendering with procedural fallback and overlays.
 
-## Current M0
+## Current M2
 
 - PixiJS v8 runtime mounted from Vite.
 - Fixed 1/60 second gameplay step with a seeded PRNG.
-- Default 60 second round: `start` -> `gameplay` -> `the-end` -> `results`.
+- Default 180 second round: `start` -> `gameplay` -> `the-end` -> `results`.
 - Day, dusk, night, and THE END visual states driven by remaining time.
-- One controllable frog that moves horizontally and catches flies within a catch radius.
+- Classic Single starts with `P1` as a human player and `P2` as `cpu-opponent`; Local Versus supports two human-controlled frogs.
 - Procedural fly and Rush power-up spawning from the deterministic seed.
 - Score, combo bonus, and 5 second Rush radius boost.
 - Responsive canvas sizing and smoke-test DOM markers for automation.
@@ -20,7 +20,8 @@ M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - Modes: `Classic Single` and `Local Versus`.
 - `P1`: `A/D or arrows` move, `Space` jumps, and `KeyT` fires the tongue.
 - `P2`: `J/L` move, `I` jumps, and `O` fires the tongue in Local Versus.
-- AI takeover controls the second frog in Classic Single.
+- In Classic Single, `P2` is the `cpu-opponent`.
+- AI takeover is for idle human players.
 - Pointer/touch on the canvas: move to the pointer x-position and fire; from the start state it also starts the round.
 - `Enter`: start, resume from pause, or replay after results.
 - `P`: pause/resume.
@@ -74,4 +75,4 @@ The Docker image builds the app with Node 22 Alpine and serves `dist` from nginx
 
 ## Assets
 
-Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). In the current verified M0, `public/assets/pond-arena.png`, `frog.png`, `fly.png`, and `power.png` are loaded into gameplay through Pixi `Assets`; procedural rendering remains available as fallback and for overlays. `public/favicon.png` is referenced by the app shell.
+Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). In the current verified M2, `public/assets/pond-arena.png`, `frog.png`, `fly.png`, and `power.png` are loaded into gameplay through Pixi `Assets`; procedural rendering remains available as fallback and for overlays. `public/favicon.png` is referenced by the app shell.

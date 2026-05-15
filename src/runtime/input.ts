@@ -96,7 +96,7 @@ export function applyRuntimeInput(game: GameState, input: RuntimeInputState): vo
   if (p1Commands) {
     writeCommands(p1Commands, p1)
   }
-  if (p2Commands) {
+  if (game.mode === 'local-versus' && p2Commands) {
     writeCommands(p2Commands, p2)
   }
 

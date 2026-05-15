@@ -15,18 +15,18 @@ type RuntimeTongueState = PlayerState['tongue'] & {
 }
 
 export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
-  const player = game.players[0]?.state ?? game.player
-  const water = game.players[0]?.water ?? game.water
-  const commands = mergePrimaryCommands(game)
+  const primaryPlayer = game.players[0]
 
-  updateJump(commands, player, water, deltaSeconds)
-  updateWater(water, deltaSeconds)
-  for (const matchPlayer of game.players) {
+  for (const [index, matchPlayer] of game.players.entries()) {
+    const commands = index === 0 ? mergePrimaryCommands(game) : matchPlayer.commands
+
+    updateJump(commands, matchPlayer.state, matchPlayer.water, deltaSeconds)
+    updateWater(matchPlayer.water, deltaSeconds)
     updateTongue(matchPlayer.state, deltaSeconds)
   }
 
-  game.player = player
-  game.water = water
+  game.player = primaryPlayer?.state ?? game.player
+  game.water = primaryPlayer?.water ?? game.water
 }
 
 function updateJump(commands: GameCommands, player: PlayerState, water: WaterState, deltaSeconds: number): void {

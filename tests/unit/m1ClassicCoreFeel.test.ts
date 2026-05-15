@@ -45,6 +45,13 @@ function startGame(seed = 101): M1GameState {
   return game
 }
 
+function startLocalVersus(seed = 101): M1GameState {
+  const game = createGame({ mode: 'local-versus', seed }) as M1GameState
+  game.commands.start = true
+  updateGame(game, STEP_SECONDS)
+  return game
+}
+
 function commands(game: GameState): M1Commands {
   return game.commands as M1Commands
 }
@@ -146,6 +153,48 @@ describe('M1 Classic Core Feel', () => {
     expect(game.player.jump?.phase).toBe('jumping')
     expect(p1(game).state.jump.velocityY).toBeLessThan(0)
     expect(p2(game).state.jump).toEqual(p2Jump)
+  })
+
+  it('updates P2 charged jump and water from P2 local-versus commands without changing P1 mirrors', () => {
+    const game = startLocalVersus()
+    const p1Jump = { ...p1(game).state.jump }
+    const p1Water = { ...p1(game).water }
+    const mirrorJump = { ...game.player.jump }
+    const mirrorWater = { ...game.water }
+
+    advanceFrames(game, 18, () => {
+      p2(game).commands.chargeJump = true
+    })
+    expect(p2(game).state.jump.phase).toBe('charging')
+    expect(p2(game).state.jump.chargeSeconds).toBeCloseTo(0.3, 5)
+    expect(p1(game).state.jump).toEqual(p1Jump)
+    expect(game.player.jump).toEqual(mirrorJump)
+
+    p2(game).commands.releaseJump = true
+    updateGame(game, STEP_SECONDS)
+    expect(p2(game).state.jump.phase).toBe('jumping')
+    expect(p2(game).state.jump.velocityY).toBeLessThan(0)
+    expect(p1(game).state.jump).toEqual(p1Jump)
+    expect(game.player.jump).toEqual(mirrorJump)
+
+    advanceFrames(game, 90)
+    expect(p2(game).state.jump.phase).toBe('landed')
+    expect(p2(game).water.phase).toBe('splash')
+    expect(p2(game).water.splashSeconds).toBeGreaterThan(0)
+    expect(p1(game).water).toEqual(p1Water)
+    expect(game.water).toEqual(mirrorWater)
+
+    advanceFrames(game, 18)
+    expect(p2(game).water.phase).toBe('recovery')
+    expect(p2(game).water.recoverySeconds).toBeGreaterThan(0)
+    expect(p1(game).water).toEqual(p1Water)
+    expect(game.water).toEqual(mirrorWater)
+
+    advanceFrames(game, 24)
+    expect(p2(game).state.jump.phase).toBe('idle')
+    expect(p2(game).water.phase).toBe('calm')
+    expect(p1(game).state.jump).toEqual(p1Jump)
+    expect(game.player.jump).toEqual(mirrorJump)
   })
 
   it('transitions charged jump through idle, charging, jumping, landed, and recovery idle', () => {

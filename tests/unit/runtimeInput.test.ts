@@ -115,6 +115,24 @@ describe('runtime input mapper', () => {
     })
   })
 
+  it('ignores P2 local-versus keys in classic single so the CPU opponent stays autonomous', async () => {
+    const { createRuntimeInputState, handleRuntimeKeyDown, applyRuntimeInput } = await loadRuntimeInput()
+    const input = createRuntimeInputState()
+    const game = startGame('classic-single')
+
+    handleRuntimeKeyDown(input, 'KeyJ')
+    handleRuntimeKeyDown(input, 'KeyL')
+    handleRuntimeKeyDown(input, 'KeyI')
+    handleRuntimeKeyDown(input, 'KeyO')
+    applyRuntimeInput(game, input)
+
+    expect(game.players[1].commands).toEqual({})
+
+    updateGame(game, STEP_SECONDS)
+
+    expect(game.players[1].controlSource).toBe('cpu-opponent')
+  })
+
   it('maps jump release separately for P1 and P2', async () => {
     const { createRuntimeInputState, handleRuntimeKeyDown, handleRuntimeKeyUp, applyRuntimeInput } = await loadRuntimeInput()
     const input = createRuntimeInputState()
