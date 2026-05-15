@@ -56,11 +56,24 @@ export interface PlayerState {
   tongue: TongueState
 }
 
+export interface PlayerStats {
+  score: number
+  combo: number
+  catches: number
+  misses: number
+}
+
 export interface MatchPlayerState {
   id: PlayerId
   label: string
   controlSource: PlayerControlSource
   score: number
+  stats: PlayerStats
+  commands: GameCommands
+  state: PlayerState
+  water: WaterState
+  power: ActivePower
+  catchRadius: number
 }
 
 export interface MatchResults {

@@ -1,10 +1,76 @@
-import type { MatchPlayerState, PlayerControlSource, PlayerId } from './types'
+import { ARENA_HEIGHT, ARENA_WIDTH, BASE_CATCH_RADIUS } from './constants'
+import type {
+  ActivePower,
+  GameCommands,
+  MatchPlayerState,
+  PlayerControlSource,
+  PlayerId,
+  PlayerState,
+  PlayerStats,
+  WaterState,
+} from './types'
 
 export function createPlayer(id: PlayerId, label: string, controlSource: PlayerControlSource): MatchPlayerState {
+  const stats = createPlayerStats()
+
   return {
     id,
     label,
     controlSource,
+    score: stats.score,
+    stats,
+    commands: createPlayerCommands(),
+    state: createPlayerState(),
+    water: createWaterState(),
+    power: createActivePower(),
+    catchRadius: BASE_CATCH_RADIUS,
+  }
+}
+
+export function createPlayerStats(): PlayerStats {
+  return {
     score: 0,
+    combo: 0,
+    catches: 0,
+    misses: 0,
+  }
+}
+
+export function createPlayerCommands(): GameCommands {
+  return {}
+}
+
+export function createPlayerState(): PlayerState {
+  return {
+    x: ARENA_WIDTH / 2,
+    y: ARENA_HEIGHT - 100,
+    groundY: ARENA_HEIGHT - 100,
+    radius: 28,
+    speed: 320,
+    jump: {
+      phase: 'idle',
+      chargeSeconds: 0,
+      airborne: false,
+      velocityY: 0,
+      flightSeconds: 0,
+      landedSeconds: 0,
+    },
+    tongue: {
+      phase: 'ready',
+    },
+  }
+}
+
+export function createWaterState(): WaterState {
+  return {
+    phase: 'calm',
+    splashSeconds: 0,
+    recoverySeconds: 0,
+  }
+}
+
+export function createActivePower(): ActivePower {
+  return {
+    remainingSeconds: 0,
   }
 }

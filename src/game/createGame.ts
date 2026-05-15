@@ -12,6 +12,7 @@ import {
   THE_END_SECONDS,
 } from './constants'
 import { createPlayers } from './match'
+import { createActivePower, createPlayerState, createWaterState } from './player'
 import { createPrng } from './prng'
 import type { GameState, MatchMode } from './types'
 
@@ -52,24 +53,7 @@ export function createGame(options: CreateGameOptions): GameState {
     theEndSeconds,
     theEndElapsedSeconds: 0,
     players: createPlayers(mode),
-    player: {
-      x: ARENA_WIDTH / 2,
-      y: ARENA_HEIGHT - 100,
-      groundY: ARENA_HEIGHT - 100,
-      radius: 28,
-      speed: 320,
-      jump: {
-        phase: 'idle',
-        chargeSeconds: 0,
-        airborne: false,
-        velocityY: 0,
-        flightSeconds: 0,
-        landedSeconds: 0,
-      },
-      tongue: {
-        phase: 'ready',
-      },
-    },
+    player: createPlayerState(),
     entities: {},
     entityIds: [],
     nextEntityId: 1,
@@ -79,14 +63,8 @@ export function createGame(options: CreateGameOptions): GameState {
     },
     score: 0,
     combo: 0,
-    power: {
-      remainingSeconds: 0,
-    },
+    power: createActivePower(),
     catchRadius: BASE_CATCH_RADIUS,
-    water: {
-      phase: 'calm',
-      splashSeconds: 0,
-      recoverySeconds: 0,
-    },
+    water: createWaterState(),
   }
 }
