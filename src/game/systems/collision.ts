@@ -34,6 +34,7 @@ function collectPower(game: GameState): void {
       if (distance(actor.state.x, actor.state.y, entity.x, entity.y) <= actor.state.radius + entity.radius) {
         if (entity.powerKind === 'rush') {
           activateRush(game, actor.player)
+          game.audioEvents.push('power')
         }
         removeEntity(game, id)
         break
@@ -56,6 +57,7 @@ function startTongueAttempt(game: GameState, actor: CollisionActor): void {
   actor.state.tongue.activeSeconds = 0
   actor.state.tongue.recoverySeconds = 0
   actor.state.tongue.autoFired = Boolean(actor.commands.fire && !actor.commands.tongue)
+  game.audioEvents.push('tongue')
 }
 
 function resolveActiveTongueHit(game: GameState, actor: CollisionActor): void {
@@ -77,6 +79,7 @@ function resolveActiveTongueHit(game: GameState, actor: CollisionActor): void {
   syncLegacyScoreFromPrimaryPlayer(game, actor)
   removeEntity(game, caught.id)
   actor.state.tongue.result = 'catch'
+  game.audioEvents.push('catch')
 }
 
 function distance(ax: number, ay: number, bx: number, by: number): number {

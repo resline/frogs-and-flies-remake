@@ -6,10 +6,11 @@ import { updateMovement } from './systems/movement'
 import { updatePower } from './systems/power'
 import { updateSpawn } from './systems/spawn'
 import { updateTimer } from './systems/timer'
-import type { GameState } from './types'
+import type { GameplayAudioEventName, GameState } from './types'
 
 export function updateGame(game: GameState, deltaSeconds: number): void {
   const previousScore = game.score
+  const previousPhase = game.phase
 
   applyCommands(game)
   processHumanInputMarkers(game)
@@ -25,7 +26,16 @@ export function updateGame(game: GameState, deltaSeconds: number): void {
   }
   syncPrimaryPlayerScore(game, previousScore)
   updateTimer(game, deltaSeconds)
+  queueTimerAudioEvents(game, previousPhase)
   clearCommands(game)
+}
+
+export function queueGameplayAudioEvent(game: GameState, eventName: GameplayAudioEventName): void {
+  game.audioEvents.push(eventName)
+}
+
+export function drainGameplayAudioEvents(game: GameState): GameplayAudioEventName[] {
+  return game.audioEvents.splice(0, game.audioEvents.length)
 }
 
 function applyCommands(game: GameState): void {
@@ -35,14 +45,27 @@ function applyCommands(game: GameState): void {
     game.elapsedSeconds = 0
     game.theEndElapsedSeconds = 0
     game.results = undefined
+    queueGameplayAudioEvent(game, 'start')
   }
 
   if (game.commands.pause && game.phase === 'gameplay') {
     game.phase = 'pause'
+    queueGameplayAudioEvent(game, 'pause')
   }
 
   if (game.commands.resume && game.phase === 'pause') {
     game.phase = 'gameplay'
+    queueGameplayAudioEvent(game, 'resume')
+  }
+}
+
+function queueTimerAudioEvents(game: GameState, previousPhase: GameState['phase']): void {
+  if (previousPhase !== 'the-end' && game.phase === 'the-end') {
+    queueGameplayAudioEvent(game, 'the-end')
+  }
+
+  if (previousPhase !== 'results' && game.phase === 'results') {
+    queueGameplayAudioEvent(game, 'results')
   }
 }
 

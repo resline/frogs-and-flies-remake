@@ -115,6 +115,18 @@ export type JumpPhase = 'idle' | 'charging' | 'jumping' | 'landed'
 export type TonguePhase = 'ready' | 'extended' | 'recovering'
 export type TongueResult = 'catch' | 'miss'
 export type WaterPhase = 'calm' | 'splash' | 'recovery'
+export type GameplayAudioEventName =
+  | 'jump'
+  | 'tongue'
+  | 'catch'
+  | 'miss'
+  | 'splash'
+  | 'power'
+  | 'start'
+  | 'pause'
+  | 'resume'
+  | 'the-end'
+  | 'results'
 
 export interface JumpState {
   phase: JumpPhase
@@ -173,6 +185,7 @@ export interface GameState {
   phase: GamePhase
   timeOfDay: TimeOfDay
   commands: GameCommands
+  audioEvents: GameplayAudioEventName[]
   elapsedSeconds: number
   durationSeconds: number
   remainingSeconds: number

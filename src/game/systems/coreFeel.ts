@@ -48,6 +48,7 @@ function updateJump(
     player.y = player.homeY
     if (commands.releaseJump) {
       startJump(player)
+      game?.audioEvents.push('jump')
       advanceJump(player, water, deltaSeconds, matchPlayer, game)
       return
     }
@@ -189,6 +190,7 @@ function startMissedLanding(
   }
   if (game) {
     game.combo = 0
+    game.audioEvents.push('splash')
   }
 }
 
@@ -247,6 +249,7 @@ function updateTongue(matchPlayer: MatchPlayerState, game: GameState, isPrimary:
         game.combo = 0
       }
       tongue.result = 'miss'
+      game.audioEvents.push('miss')
     }
 
     tongue.phase = 'recovering'

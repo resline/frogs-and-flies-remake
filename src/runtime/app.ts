@@ -3,7 +3,7 @@ import { ARENA_HEIGHT, ARENA_WIDTH, FIXED_TIMESTEP_SECONDS } from '../game/const
 import { createGame } from '../game/createGame'
 import { createFixedStep } from '../game/fixedStep'
 import { buildResults } from '../game/match'
-import { updateGame } from '../game/update'
+import { drainGameplayAudioEvents, updateGame } from '../game/update'
 import {
   applyRuntimeInput,
   applyRuntimePointerInput,
@@ -13,6 +13,7 @@ import {
   type RuntimeInputAction,
 } from './input'
 import { createRenderScene, renderScene, type RenderFrameMarkers, type RenderScene } from '../render/scene'
+import { createAudioManager } from './audio'
 import { loadGeneratedGameplayAssets } from './assets'
 import { createDomState, mountCanvas, syncDom } from './dom'
 import type { RuntimeParams } from './params'
@@ -50,6 +51,10 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   let game = createInitialGame(currentRuntimeParams)
   let fixedStep = createRuntimeFixedStep(currentRuntimeParams)
   const runtimeInput = createRuntimeInputState()
+  const audio = createAudioManager({
+    muted: currentRuntimeParams.options.mute,
+    volume: currentRuntimeParams.options.volume,
+  })
   let scene: RenderScene | undefined
   let destroyed = false
   let removeResizeListener: (() => void) | undefined
@@ -58,26 +63,38 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     if (destroyed) {
       return
     }
-    syncDom(dom, game, currentRuntimeParams.options)
+    syncDom(dom, game, currentRuntimeParams.options, audio.getState())
     if (scene) {
       syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game))
     }
   }
 
+  const playGameplayAudioEvents = () => {
+    for (const eventName of drainGameplayAudioEvents(game)) {
+      audio.playSfx(eventName)
+    }
+  }
+
+  const updateGameAndAudio = (deltaSeconds: number) => {
+    updateGame(game, deltaSeconds)
+    playGameplayAudioEvents()
+  }
+
   const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
     currentRuntimeParams = nextRuntimeParams
+    syncAudioOptions()
     game = createGame(currentRuntimeParams)
     fixedStep = createRuntimeFixedStep(currentRuntimeParams)
     if (start) {
       game.commands.start = true
-      updateGame(game, 0)
+      updateGameAndAudio(0)
     }
     refresh()
   }
 
   const runCommand = (command: 'start' | 'pause' | 'resume') => {
     game.commands[command] = true
-    updateGame(game, 0)
+    updateGameAndAudio(0)
     refresh()
   }
 
@@ -128,6 +145,9 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   const handleHighContrastChange = () => updateRuntimeOptions({ highContrast: dom.highContrastInput.checked })
   const handleMuteChange = () => updateRuntimeOptions({ mute: dom.muteInput.checked })
   const handleVolumeInput = () => updateRuntimeOptions({ volume: Number.parseFloat(dom.volumeInput.value) })
+  const handleAudioUnlockClick = () => {
+    void audio.unlock().then(refresh)
+  }
 
   function resetDifficulty(difficulty: RuntimeOptions['difficulty']): void {
     resetGame({ ...currentRuntimeParams, options: { ...currentRuntimeParams.options, difficulty } })
@@ -141,7 +161,13 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
         ...options,
       },
     }
+    syncAudioOptions()
     refresh()
+  }
+
+  function syncAudioOptions(): void {
+    audio.setMuted(currentRuntimeParams.options.mute)
+    audio.setVolume(currentRuntimeParams.options.volume)
   }
 
   dom.classicSingleButton.addEventListener('click', handleClassicSingleClick)
@@ -158,6 +184,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   dom.highContrastInput.addEventListener('change', handleHighContrastChange)
   dom.muteInput.addEventListener('change', handleMuteChange)
   dom.volumeInput.addEventListener('input', handleVolumeInput)
+  dom.audioUnlockButton.addEventListener('click', handleAudioUnlockClick)
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (RUNTIME_PREVENT_DEFAULT_CODES.has(event.code)) {
@@ -223,7 +250,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
 
     fixedStep.advance(simulationDeltaSeconds, () => {
       applyRuntimeInput(game, runtimeInput)
-      updateGame(game, FIXED_TIMESTEP_SECONDS)
+      updateGameAndAudio(FIXED_TIMESTEP_SECONDS)
     })
 
     refresh()
@@ -251,6 +278,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
       dom.highContrastInput.removeEventListener('change', handleHighContrastChange)
       dom.muteInput.removeEventListener('change', handleMuteChange)
       dom.volumeInput.removeEventListener('input', handleVolumeInput)
+      dom.audioUnlockButton.removeEventListener('click', handleAudioUnlockClick)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       app.canvas.removeEventListener('pointerdown', handlePointerDown)

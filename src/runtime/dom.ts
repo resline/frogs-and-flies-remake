@@ -1,5 +1,6 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
+import type { AudioManagerState } from './audio'
 import type { RuntimeOptions } from './options'
 
 export type DomState = {
@@ -27,6 +28,7 @@ export type DomState = {
   difficultyClassicAssistButton: HTMLElement
   difficultyClassicStandardButton: HTMLElement
   difficultyClassicExpertButton: HTMLElement
+  audioUnlockButton: HTMLElement
   showTimerInput: HTMLInputElement
   reducedMotionInput: HTMLInputElement
   highContrastInput: HTMLInputElement
@@ -74,6 +76,8 @@ export function createDomState(root: HTMLElement): DomState {
   const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', options)
   const difficultyClassicStandardButton = getOrCreateButton(root, 'difficulty-classic-standard', 'Standard', options)
   const difficultyClassicExpertButton = getOrCreateButton(root, 'difficulty-classic-expert', 'Expert', options)
+  const audioUnlockButton = getOrCreateButton(root, 'audio-unlock', 'Enable Audio', options)
+  audioUnlockButton.classList.add('m25-audio-unlock')
   const showTimerInput = getOrCreateCheckbox(root, 'option-show-timer', 'Timer', options)
   const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', options)
   const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', options)
@@ -106,6 +110,7 @@ export function createDomState(root: HTMLElement): DomState {
     difficultyClassicAssistButton,
     difficultyClassicStandardButton,
     difficultyClassicExpertButton,
+    audioUnlockButton,
     showTimerInput,
     reducedMotionInput,
     highContrastInput,
@@ -149,7 +154,12 @@ export function mountCanvas(gameHost: HTMLElement, canvas: HTMLCanvasElement): (
   return () => window.removeEventListener('resize', resize)
 }
 
-export function syncDom(dom: DomState, game: GameState, runtimeOptions?: RuntimeOptions): void {
+export function syncDom(
+  dom: DomState,
+  game: GameState,
+  runtimeOptions?: RuntimeOptions,
+  audioState?: AudioManagerState,
+): void {
   const options = runtimeOptions ?? {
     difficulty: game.options.difficulty,
     reducedMotion: false,
@@ -157,6 +167,13 @@ export function syncDom(dom: DomState, game: GameState, runtimeOptions?: Runtime
     showTimer: true,
     mute: false,
     volume: 1,
+  }
+  const audioMarkers = audioState ?? {
+    available: true,
+    unlocked: false,
+    muted: options.mute,
+    volume: options.volume,
+    pendingSfxCount: 0,
   }
 
   dom.state.setAttribute('data-state', game.phase)
@@ -170,10 +187,10 @@ export function syncDom(dom: DomState, game: GameState, runtimeOptions?: Runtime
     syncPlayerArenaMarkers(dom.canvas, game)
     dom.canvas.setAttribute('data-testid', 'game-canvas')
     dom.canvas.setAttribute('data-runtime-markers', 'm2')
-    syncRuntimeOptionMarkers(dom.canvas, options)
+    syncRuntimeOptionMarkers(dom.canvas, options, audioMarkers)
   }
-  syncRuntimeOptionMarkers(dom.shell, options)
-  syncRuntimeOptionMarkers(dom.state, options)
+  syncRuntimeOptionMarkers(dom.shell, options, audioMarkers)
+  syncRuntimeOptionMarkers(dom.state, options, audioMarkers)
   dom.state.textContent = `State: ${game.phase}`
 
   const remainingSeconds = Math.ceil(game.remainingSeconds)
@@ -211,6 +228,7 @@ export function syncDom(dom: DomState, game: GameState, runtimeOptions?: Runtime
   syncDifficultyControl(dom.difficultyClassicAssistButton, game.options.difficulty, 'classic-assist')
   syncDifficultyControl(dom.difficultyClassicStandardButton, game.options.difficulty, 'classic-standard')
   syncDifficultyControl(dom.difficultyClassicExpertButton, game.options.difficulty, 'classic-expert')
+  syncAudioUnlockControl(dom.audioUnlockButton, audioMarkers)
   syncCheckboxControl(dom.showTimerInput, options.showTimer)
   syncCheckboxControl(dom.reducedMotionInput, options.reducedMotion)
   syncCheckboxControl(dom.highContrastInput, options.highContrast)
@@ -317,13 +335,24 @@ function syncCheckboxControl(element: HTMLInputElement, checked: boolean): void 
   element.setAttribute('aria-checked', String(checked))
 }
 
-function syncRuntimeOptionMarkers(element: HTMLElement, options: RuntimeOptions): void {
+function syncAudioUnlockControl(element: HTMLElement, audioState: AudioManagerState): void {
+  element.textContent = audioState.unlocked ? 'Audio On' : 'Enable Audio'
+  element.setAttribute('aria-pressed', String(audioState.unlocked))
+  element.setAttribute('data-audio-unlocked', String(audioState.unlocked))
+  element.setAttribute('data-audio-available', String(audioState.available))
+  element.setAttribute('data-pending-sfx-count', String(audioState.pendingSfxCount))
+}
+
+function syncRuntimeOptionMarkers(element: HTMLElement, options: RuntimeOptions, audioState: AudioManagerState): void {
   element.setAttribute('data-difficulty', options.difficulty)
   element.setAttribute('data-reduced-motion', String(options.reducedMotion))
   element.setAttribute('data-high-contrast', String(options.highContrast))
   element.setAttribute('data-show-timer', String(options.showTimer))
   element.setAttribute('data-muted', String(options.mute))
   element.setAttribute('data-volume', options.volume.toFixed(2))
+  element.setAttribute('data-audio-unlocked', String(audioState.unlocked))
+  element.setAttribute('data-audio-muted', String(audioState.muted))
+  element.setAttribute('data-audio-volume', audioState.volume.toFixed(2))
 }
 
 function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {

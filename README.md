@@ -27,7 +27,8 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - `P`: pause/resume.
 - On-screen controls: `Start`, `Pause`, `Resume`, `Replay`.
 - Difficulty options: `Classic Assist`, `Classic Standard`, and `Classic Expert`.
-- Options UI includes timer visibility, reduced motion, high contrast, mute, and volume controls.
+- Options UI includes timer visibility, reduced motion, high contrast, mute, volume, and an `Enable Audio` control.
+- Audio uses an autoplay-safe Web Audio baseline. SFX unlock only after the explicit audio button is pressed, and queued gameplay sounds are dropped safely if browser audio is unavailable.
 
 ## Determinism And Smoke Parameters
 
@@ -40,6 +41,7 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
   - `/?durationSeconds=2&theEndSeconds=1&simulationSpeed=20`
 - Supported M2 smoke params: `mode`, `seed`, `smokeElapsedSeconds`, `smokeState`, `durationSeconds`, `theEndSeconds`, `simulationSpeed`.
 - Supported M2.5 option params: `difficulty=classic-assist|classic-standard|classic-expert`, `showTimer=0|1`, `reducedMotion=0|1`, `highContrast=0|1`, `mute=0|1`, and `volume=0..1`.
+- Runtime audio markers include `data-audio-unlocked`, `data-audio-muted`, and `data-audio-volume` on the shell/canvas for smoke automation.
 
 ## Local Development
 

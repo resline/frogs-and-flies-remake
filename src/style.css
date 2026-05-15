@@ -219,6 +219,11 @@ button[data-selected="true"] {
   padding: 0 12px;
 }
 
+.m25-audio-unlock[data-audio-unlocked="true"] {
+  background: #bff7c5;
+  border-color: rgba(191, 247, 197, 0.84);
+}
+
 .m25-option-control {
   align-items: center;
   color: var(--text-primary);

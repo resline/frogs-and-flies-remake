@@ -650,41 +650,41 @@ Expected: asset PNGs, asset SVG sources, `scripts/build-m25-assets.mjs`, manifes
 - Optional create: `public/audio/*.wav` or `public/audio/*.mp3`
 - Optional modify: `package.json`, `package-lock.json` only if adding Howler.js.
 
-- [ ] **Step 1: Decide Web Audio vs Howler**
+- [x] **Step 1: Decide Web Audio vs Howler**
 
 Run: `npm ls howler`
 
 Expected if absent: command exits non-zero or reports empty. Prefer direct Web Audio API unless Howler is explicitly chosen with dependency update and bundle impact noted.
 
-- [ ] **Step 2: Write failing audio unit tests**
+- [x] **Step 2: Write failing audio unit tests**
 
 Add `tests/unit/audioManager.test.ts` with mocked `AudioContext` or a no-audio adapter. Cover initial locked state, unlock on explicit gesture, mute toggle, volume clamp, SFX event queue, and no throw when audio context creation fails.
 
-- [ ] **Step 3: Run red audio tests**
+- [x] **Step 3: Run red audio tests**
 
 Run: `npm run test:unit -- tests/unit/audioManager.test.ts`
 
 Expected fail: missing `src/runtime/audio.ts`.
 
-- [ ] **Step 4: Implement audio manager**
+- [x] **Step 4: Implement audio manager**
 
 Create `src/runtime/audio.ts` with `createAudioManager`, `unlock`, `setMuted`, `setVolume`, `playSfx`, and state markers. Playback failure must not throw into gameplay.
 
-- [ ] **Step 5: Emit gameplay audio events**
+- [x] **Step 5: Emit gameplay audio events**
 
 Add narrow event names for `jump`, `tongue`, `catch`, `miss`, `splash`, `power`, `start`, `pause`, `resume`, `the-end`, and `results`. Consume them in runtime after each update.
 
-- [ ] **Step 6: Add audio UI**
+- [x] **Step 6: Add audio UI**
 
 Add `data-testid="audio-unlock"`, `data-testid="option-mute"`, and `data-testid="option-volume"` controls. Reflect `data-audio-unlocked`, `data-audio-muted`, and `data-audio-volume` markers.
 
-- [ ] **Step 7: Run green audio tests**
+- [x] **Step 7: Run green audio tests**
 
 Run: `npm run test:unit -- tests/unit/audioManager.test.ts tests/unit/runtimeOptions.test.ts`
 
 Expected pass: all listed tests pass and exit `0`.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 Run: `git status --short`
 
