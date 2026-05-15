@@ -10,6 +10,9 @@ export interface GameCommands {
   pause?: boolean
   resume?: boolean
   fire?: boolean
+  tongue?: boolean
+  chargeJump?: boolean
+  releaseJump?: boolean
   moveLeft?: boolean
   moveRight?: boolean
 }
@@ -42,8 +45,36 @@ export interface Entity {
 export interface PlayerState {
   x: number
   y: number
+  groundY: number
   radius: number
   speed: number
+  jump: JumpState
+  tongue: TongueState
+}
+
+export type JumpPhase = 'idle' | 'charging' | 'jumping' | 'landed'
+export type TonguePhase = 'ready' | 'extended' | 'recovering'
+export type TongueResult = 'catch' | 'miss'
+export type WaterPhase = 'calm' | 'splash' | 'recovery'
+
+export interface JumpState {
+  phase: JumpPhase
+  chargeSeconds: number
+  airborne: boolean
+  velocityY: number
+  flightSeconds: number
+  landedSeconds: number
+}
+
+export interface TongueState {
+  phase: TonguePhase
+  result?: TongueResult
+}
+
+export interface WaterState {
+  phase: WaterPhase
+  splashSeconds: number
+  recoverySeconds: number
 }
 
 export interface ActivePower {
@@ -76,4 +107,5 @@ export interface GameState {
   combo: number
   power: ActivePower
   catchRadius: number
+  water: WaterState
 }

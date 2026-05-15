@@ -1,4 +1,5 @@
 import { updateCollision } from './systems/collision'
+import { updateCoreFeel } from './systems/coreFeel'
 import { applyInput } from './systems/input'
 import { updateMovement } from './systems/movement'
 import { updatePower } from './systems/power'
@@ -14,6 +15,7 @@ export function updateGame(game: GameState, deltaSeconds: number): void {
     updateCollision(game)
     updateSpawn(game, deltaSeconds)
     updateMovement(game, deltaSeconds)
+    updateCoreFeel(game, deltaSeconds)
   }
   updateTimer(game, deltaSeconds)
   clearCommands(game)

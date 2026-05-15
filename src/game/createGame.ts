@@ -50,8 +50,20 @@ export function createGame(options: CreateGameOptions): GameState {
     player: {
       x: ARENA_WIDTH / 2,
       y: ARENA_HEIGHT - 100,
+      groundY: ARENA_HEIGHT - 100,
       radius: 28,
       speed: 320,
+      jump: {
+        phase: 'idle',
+        chargeSeconds: 0,
+        airborne: false,
+        velocityY: 0,
+        flightSeconds: 0,
+        landedSeconds: 0,
+      },
+      tongue: {
+        phase: 'ready',
+      },
     },
     entities: {},
     entityIds: [],
@@ -66,5 +78,10 @@ export function createGame(options: CreateGameOptions): GameState {
       remainingSeconds: 0,
     },
     catchRadius: BASE_CATCH_RADIUS,
+    water: {
+      phase: 'calm',
+      splashSeconds: 0,
+      recoverySeconds: 0,
+    },
   }
 }

@@ -16,6 +16,7 @@ type RuntimeParams = Required<Pick<CreateGameOptions, 'seed'>> &
 type DomState = {
   shell: HTMLElement
   gameHost: HTMLElement
+  canvas?: HTMLCanvasElement
   state: HTMLElement
   score: HTMLElement
   timer: HTMLElement
@@ -71,7 +72,10 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
   let game = createInitialGame(runtimeParams)
   let fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
   let pendingFire = false
+  let pendingTongue = false
+  let pendingJumpRelease = false
   const heldKeys = new Set<string>()
+  const heldJumpKeys = new Set<string>()
   let scene: RenderScene | undefined
 
   const refresh = () => {
@@ -127,12 +131,23 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
 
     if (event.code === 'Space') {
       event.preventDefault()
-      pendingFire = true
+      heldJumpKeys.add(event.code)
+    }
+
+    if (event.code === 'KeyT') {
+      event.preventDefault()
+      pendingTongue = true
     }
   })
 
   window.addEventListener('keyup', (event) => {
     heldKeys.delete(event.code)
+
+    if (event.code === 'Space') {
+      event.preventDefault()
+      heldJumpKeys.delete(event.code)
+      pendingJumpRelease = true
+    }
   })
 
   const app = new Application()
@@ -148,6 +163,7 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
   scene = createRenderScene()
   app.stage.addChild(scene.root)
   mountCanvas(dom.gameHost, app.canvas)
+  dom.canvas = app.canvas
   void loadGeneratedGameplayAssets(app.canvas).then((assets) => {
     if (!assets || !scene) {
       return
@@ -167,6 +183,7 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
 
     game.player.x = clamp(pointerX, game.player.radius, game.constants.arenaWidth - game.player.radius)
     pendingFire = true
+    pendingTongue = true
 
     if (game.phase === 'start') {
       runCommand('start')
@@ -181,7 +198,12 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
     fixedStep.advance(deltaSeconds, () => {
       game.commands.moveLeft = heldKeys.has('ArrowLeft') || heldKeys.has('KeyA')
       game.commands.moveRight = heldKeys.has('ArrowRight') || heldKeys.has('KeyD')
+      game.commands.chargeJump = heldJumpKeys.size > 0
+      game.commands.releaseJump = pendingJumpRelease
+      game.commands.tongue = pendingTongue
       game.commands.fire = pendingFire
+      pendingJumpRelease = false
+      pendingTongue = false
       pendingFire = false
       updateGame(game, FIXED_TIMESTEP_SECONDS)
     })
@@ -465,6 +487,12 @@ function styleControls(controls: HTMLElement): void {
 function syncDom(dom: DomState, game: GameState): void {
   dom.state.setAttribute('data-state', game.phase)
   dom.state.setAttribute('data-time-of-day', game.timeOfDay)
+  syncM1RuntimeMarkers(dom.state, game)
+  if (dom.canvas) {
+    syncM1RuntimeMarkers(dom.canvas, game)
+    dom.canvas.setAttribute('data-testid', 'game-canvas')
+    dom.canvas.setAttribute('data-runtime-markers', 'm1')
+  }
   dom.state.textContent = `State: ${game.phase}`
 
   const remainingSeconds = Math.ceil(game.remainingSeconds)
@@ -474,6 +502,7 @@ function syncDom(dom: DomState, game: GameState): void {
 
   dom.score.textContent = scoreText
   dom.score.setAttribute('data-score', String(game.score))
+  dom.score.setAttribute('data-combo', String(game.combo))
 
   for (const element of [dom.timer, dom.timerAlias]) {
     element.textContent = timerText
@@ -500,6 +529,22 @@ function syncDom(dom: DomState, game: GameState): void {
   styleMarker(dom.seedAlias)
   styleMarker(dom.results)
   styleTheEnd(dom.theEnd)
+}
+
+function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {
+  element.setAttribute('data-jump-phase', game.player.jump.phase)
+  element.setAttribute('data-jump-airborne', String(game.player.jump.airborne))
+  element.setAttribute('data-jump-charge-seconds', formatMarkerSeconds(game.player.jump.chargeSeconds))
+  element.setAttribute('data-tongue-phase', game.player.tongue.phase)
+  element.setAttribute('data-tongue-result', game.player.tongue.result ?? 'none')
+  element.setAttribute('data-combo', String(game.combo))
+  element.setAttribute('data-water-phase', game.water.phase)
+  element.setAttribute('data-water-splash-seconds', formatMarkerSeconds(game.water.splashSeconds))
+  element.setAttribute('data-water-recovery-seconds', formatMarkerSeconds(game.water.recoverySeconds))
+}
+
+function formatMarkerSeconds(seconds: number): string {
+  return seconds.toFixed(3)
 }
 
 function styleMarker(element: HTMLElement): void {
