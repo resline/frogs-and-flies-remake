@@ -4,6 +4,10 @@ export type GamePhase = 'start' | 'gameplay' | 'pause' | 'the-end' | 'results'
 export type TimeOfDay = 'day' | 'dusk' | 'night' | 'the-end'
 export type EntityKind = 'fly' | 'power'
 export type PowerKind = 'rush'
+export type MatchMode = 'classic-single' | 'local-versus'
+export type PlayerId = 'p1' | 'p2'
+export type PlayerControlSource = 'human' | 'cpu-opponent' | 'ai-takeover'
+export type MatchWinner = PlayerId | 'tie'
 
 export interface GameCommands {
   start?: boolean
@@ -52,6 +56,21 @@ export interface PlayerState {
   tongue: TongueState
 }
 
+export interface MatchPlayerState {
+  id: PlayerId
+  label: string
+  controlSource: PlayerControlSource
+  score: number
+}
+
+export interface MatchResults {
+  winner: MatchWinner
+  players: readonly {
+    id: PlayerId
+    score: number
+  }[]
+}
+
 export type JumpPhase = 'idle' | 'charging' | 'jumping' | 'landed'
 export type TonguePhase = 'ready' | 'extended' | 'recovering'
 export type TongueResult = 'catch' | 'miss'
@@ -91,6 +110,7 @@ export interface GameState {
   readonly seed: number
   readonly prng: Prng
   readonly constants: GameConstants
+  mode: MatchMode
   phase: GamePhase
   timeOfDay: TimeOfDay
   commands: GameCommands
@@ -98,6 +118,8 @@ export interface GameState {
   remainingSeconds: number
   theEndSeconds: number
   theEndElapsedSeconds: number
+  players: MatchPlayerState[]
+  results?: MatchResults
   player: PlayerState
   entities: Record<number, Entity>
   entityIds: number[]

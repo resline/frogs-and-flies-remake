@@ -1,3 +1,4 @@
+import { buildResults } from '../match'
 import type { GameState, TimeOfDay } from '../types'
 
 export function updateTimer(game: GameState, deltaSeconds: number): void {
@@ -6,6 +7,7 @@ export function updateTimer(game: GameState, deltaSeconds: number): void {
     if (game.remainingSeconds === 0) {
       game.phase = 'the-end'
       game.theEndElapsedSeconds = 0
+      game.results ??= buildResults(game)
     }
   } else if (game.phase === 'the-end') {
     game.theEndElapsedSeconds += deltaSeconds
@@ -22,11 +24,13 @@ function getTimeOfDay(game: GameState): TimeOfDay {
     return 'the-end'
   }
 
-  if (game.remainingSeconds > 30) {
+  const elapsedRatio = game.durationSeconds > 0 ? (game.durationSeconds - game.remainingSeconds) / game.durationSeconds : 1
+
+  if (elapsedRatio < 0.5) {
     return 'day'
   }
 
-  if (game.remainingSeconds > 10) {
+  if (elapsedRatio < 5 / 6) {
     return 'dusk'
   }
 

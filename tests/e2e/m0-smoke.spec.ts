@@ -8,7 +8,7 @@ test.describe('Frogs and Flies 2 M0', () => {
     await expect(page.locator('canvas')).toBeVisible()
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'start')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-time-of-day', 'day')
-    await expect(page.getByTestId('round-timer')).toHaveAttribute('data-target-seconds', '60')
+    await expect(page.getByTestId('round-timer')).toHaveAttribute('data-target-seconds', '180')
     await expect(page.getByTestId('round-seed')).toBeVisible()
     await expect(page.getByTestId('start-game')).toBeVisible()
     await expect(page.getByTestId('pause-game')).toBeVisible()
@@ -114,18 +114,19 @@ test.describe('Frogs and Flies 2 M0', () => {
 
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results')
     await expect(page.getByTestId('results')).toBeVisible()
+    await expect(page.getByTestId('results')).toHaveAttribute('data-winner', 'tie')
 
     await expect(page.getByTestId('replay-game')).toBeVisible()
     await page.getByTestId('replay-game').click()
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
   })
 
-  test('accepts deterministic 60 second day, dusk, night, and THE END simulation states', async ({ page }) => {
+  test('accepts deterministic 180 second day, dusk, night, and THE END simulation states', async ({ page }) => {
     const cases = [
       { elapsed: 0, phase: 'gameplay', timeOfDay: 'day' },
-      { elapsed: 30, phase: 'gameplay', timeOfDay: 'dusk' },
-      { elapsed: 50, phase: 'gameplay', timeOfDay: 'night' },
-      { elapsed: 60, phase: 'the-end', timeOfDay: 'the-end' },
+      { elapsed: 90, phase: 'gameplay', timeOfDay: 'dusk' },
+      { elapsed: 150, phase: 'gameplay', timeOfDay: 'night' },
+      { elapsed: 180, phase: 'the-end', timeOfDay: 'the-end' },
     ] as const
 
     for (const state of cases) {
@@ -144,5 +145,6 @@ test.describe('Frogs and Flies 2 M0', () => {
     await expect(page.getByText('THE END')).toBeVisible()
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
     await expect(page.getByTestId('results')).toBeVisible()
+    await expect(page.getByTestId('results')).toHaveAttribute('data-winner', 'tie')
   })
 })

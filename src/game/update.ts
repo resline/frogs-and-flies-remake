@@ -8,6 +8,8 @@ import { updateTimer } from './systems/timer'
 import type { GameState } from './types'
 
 export function updateGame(game: GameState, deltaSeconds: number): void {
+  const previousScore = game.score
+
   applyCommands(game)
   if (game.phase === 'gameplay') {
     applyInput(game, deltaSeconds)
@@ -17,6 +19,7 @@ export function updateGame(game: GameState, deltaSeconds: number): void {
     updateMovement(game, deltaSeconds)
     updateCoreFeel(game, deltaSeconds)
   }
+  syncPrimaryPlayerScore(game, previousScore)
   updateTimer(game, deltaSeconds)
   clearCommands(game)
 }
@@ -26,6 +29,7 @@ function applyCommands(game: GameState): void {
     game.phase = 'gameplay'
     game.remainingSeconds = game.durationSeconds
     game.theEndElapsedSeconds = 0
+    game.results = undefined
   }
 
   if (game.commands.pause && game.phase === 'gameplay') {
@@ -39,4 +43,10 @@ function applyCommands(game: GameState): void {
 
 function clearCommands(game: GameState): void {
   game.commands = {}
+}
+
+function syncPrimaryPlayerScore(game: GameState, previousScore: number): void {
+  if (game.score !== previousScore) {
+    game.players[0].score = game.score
+  }
 }

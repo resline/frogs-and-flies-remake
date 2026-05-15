@@ -11,16 +11,19 @@ import {
   RUSH_SECONDS,
   THE_END_SECONDS,
 } from './constants'
+import { createPlayers } from './match'
 import { createPrng } from './prng'
-import type { GameState } from './types'
+import type { GameState, MatchMode } from './types'
 
 export interface CreateGameOptions {
   seed: number
+  mode?: MatchMode
   durationSeconds?: number
   theEndSeconds?: number
 }
 
 export function createGame(options: CreateGameOptions): GameState {
+  const mode = options.mode ?? 'classic-single'
   const durationSeconds = options.durationSeconds ?? ROUND_DURATION_SECONDS
   const theEndSeconds = options.theEndSeconds ?? THE_END_SECONDS
 
@@ -40,6 +43,7 @@ export function createGame(options: CreateGameOptions): GameState {
       flySpawnSeconds: FLY_SPAWN_SECONDS,
       powerSpawnSeconds: POWER_SPAWN_SECONDS,
     },
+    mode,
     phase: 'start',
     timeOfDay: 'day',
     commands: {},
@@ -47,6 +51,7 @@ export function createGame(options: CreateGameOptions): GameState {
     remainingSeconds: durationSeconds,
     theEndSeconds,
     theEndElapsedSeconds: 0,
+    players: createPlayers(mode),
     player: {
       x: ARENA_WIDTH / 2,
       y: ARENA_HEIGHT - 100,

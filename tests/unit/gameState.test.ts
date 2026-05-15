@@ -3,11 +3,11 @@ import { createGame } from '../../src/game/createGame'
 import { updateGame } from '../../src/game/update'
 
 describe('M0 game state', () => {
-  it('starts in the start state with a 60 second target', () => {
+  it('starts in the start state with a 180 second target', () => {
     const game = createGame({ seed: 100 })
     expect(game.phase).toBe('start')
-    expect(game.durationSeconds).toBe(60)
-    expect(game.remainingSeconds).toBe(60)
+    expect(game.durationSeconds).toBe(180)
+    expect(game.remainingSeconds).toBe(180)
   })
 
   it('can start, pause, resume, reach THE END, and show results', () => {
@@ -24,7 +24,7 @@ describe('M0 game state', () => {
     updateGame(game, 1 / 60)
     expect(game.phase).toBe('gameplay')
 
-    updateGame(game, 60)
+    updateGame(game, 180)
     expect(game.phase).toBe('the-end')
     expect(game.remainingSeconds).toBe(0)
 
@@ -33,22 +33,22 @@ describe('M0 game state', () => {
     expect(game.remainingSeconds).toBe(0)
   })
 
-  it('advances the 60 second round through day, dusk, night, THE END, and results', () => {
+  it('advances the 180 second round through day, dusk, night, THE END, and results', () => {
     const game = createGame({ seed: 100 })
     game.commands.start = true
     updateGame(game, 1 / 60)
     expect(game.phase).toBe('gameplay')
     expect(game.timeOfDay).toBe('day')
 
-    updateGame(game, 30)
+    updateGame(game, 90)
     expect(game.phase).toBe('gameplay')
     expect(game.timeOfDay).toBe('dusk')
 
-    updateGame(game, 20)
+    updateGame(game, 60)
     expect(game.phase).toBe('gameplay')
     expect(game.timeOfDay).toBe('night')
 
-    updateGame(game, 10)
+    updateGame(game, 30)
     expect(game.phase).toBe('the-end')
     expect(game.timeOfDay).toBe('the-end')
 

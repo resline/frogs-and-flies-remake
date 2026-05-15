@@ -3,6 +3,7 @@ import './style.css'
 import { ARENA_HEIGHT, ARENA_WIDTH, FIXED_TIMESTEP_SECONDS } from './game/constants'
 import { createGame } from './game/createGame'
 import { createFixedStep } from './game/fixedStep'
+import { buildResults } from './game/match'
 import { updateGame } from './game/update'
 import { readRuntimeParams, type RuntimeParams } from './runtime/params'
 import type { GameState, TimeOfDay } from './game/types'
@@ -222,6 +223,7 @@ function createInitialGame(runtimeParams: RuntimeParams): GameState {
     if (game.phase === 'results') {
       game.remainingSeconds = 0
       game.timeOfDay = 'the-end'
+      game.results ??= buildResults(game)
     }
   }
 
@@ -479,6 +481,11 @@ function syncDom(dom: DomState, game: GameState): void {
   dom.theEnd.style.display = game.phase === 'the-end' ? 'block' : 'none'
 
   dom.results.textContent = `Results: ${game.score}`
+  if (game.results) {
+    dom.results.setAttribute('data-winner', game.results.winner)
+  } else {
+    dom.results.removeAttribute('data-winner')
+  }
   dom.results.style.display = game.phase === 'results' ? 'block' : 'none'
 
   styleMarker(dom.state)

@@ -1,5 +1,5 @@
 export const FIXED_TIMESTEP_SECONDS = 1 / 60
-export const ROUND_DURATION_SECONDS = 60
+export const ROUND_DURATION_SECONDS = 180
 export const THE_END_SECONDS = 2
 export const ARENA_WIDTH = 800
 export const ARENA_HEIGHT = 600
