@@ -17,8 +17,10 @@ M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 
 ## Controls
 
-- `A` / `D` or `Left` / `Right`: move the frog.
-- `Space`: fire the tongue while gameplay is active.
+- Modes: `Classic Single` and `Local Versus`.
+- `P1`: `A/D or arrows` move, `Space` jumps, and `KeyT` fires the tongue.
+- `P2`: `J/L` move, `I` jumps, and `O` fires the tongue in Local Versus.
+- AI takeover controls the second frog in Classic Single.
 - Pointer/touch on the canvas: move to the pointer x-position and fire; from the start state it also starts the round.
 - `Enter`: start, resume from pause, or replay after results.
 - `P`: pause/resume.
@@ -27,11 +29,13 @@ M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 ## Determinism And Smoke Parameters
 
 - Default seed: `1`.
+- Override mode: `/?mode=local-versus` or `/?mode=classic-single`.
 - Override seed: `/?seed=123`.
 - E2E smoke states can force deterministic elapsed/phase checks:
   - `/?seed=123&smokeElapsedSeconds=30`
   - `/?smokeState=results&seed=123`
-  - `/?durationSeconds=2&theEndSeconds=1`
+  - `/?durationSeconds=2&theEndSeconds=1&simulationSpeed=20`
+- Supported M2 smoke params: `mode`, `seed`, `smokeElapsedSeconds`, `smokeState`, `durationSeconds`, `theEndSeconds`, `simulationSpeed`.
 
 ## Local Development
 
@@ -43,6 +47,7 @@ npm run dev
 ## Verification
 
 ```bash
+npm run build
 npm run test:unit
 npm run test:e2e
 npm test
