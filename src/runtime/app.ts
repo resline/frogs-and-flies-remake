@@ -75,6 +75,7 @@ export async function startRuntime(
   let saveStatus: SaveLoadStatus | SaveWriteStatus = persistence.saveStatus ?? 'defaulted'
   let storageAvailable = saveStatus !== 'storage-unavailable'
   let shellState: ShellState = createInitialShellState(currentRuntimeParams.mode)
+  const runtimeSessionId = createRuntimeSessionId()
   let roundCounter = 0
   let activeRoundId = ''
   let roundRecorded = false
@@ -127,7 +128,7 @@ export async function startRuntime(
 
   function beginRound(): void {
     roundCounter += 1
-    activeRoundId = `${currentRuntimeParams.mode}:${currentRuntimeParams.seed}:${roundCounter}`
+    activeRoundId = `${runtimeSessionId}:${currentRuntimeParams.mode}:${currentRuntimeParams.seed}:${roundCounter}`
     roundRecorded = false
     highScoreStatus = 'Local high score status pending.'
     persistSave(recordRoundStarted(saveData, activeRoundId))
@@ -143,7 +144,7 @@ export async function startRuntime(
   }
 
   function showResultsIfNeeded(): void {
-    if (shellState.screen === 'gameplay' || shellState.screen === 'pause') {
+    if (shellState.screen !== 'results') {
       transitionShell({ type: 'showResults' })
     }
   }
@@ -234,8 +235,8 @@ export async function startRuntime(
         runCommand('resume')
       } else if (game.phase === 'results') {
         replay()
-      } else {
-        runCommand('start')
+      } else if (game.phase === 'start') {
+        startGameplay()
       }
       return
     }
@@ -273,7 +274,7 @@ export async function startRuntime(
   }
   const handleChangeModeClick = () => {
     transitionShell({ type: 'changeMode' })
-    refresh()
+    resetGame(currentRuntimeParams)
   }
   const handleClassicSingleClick = () => selectMode('classic-single')
   const handleLocalVersusClick = () => selectMode('local-versus')
@@ -407,7 +408,7 @@ export async function startRuntime(
     applyRuntimePointerInput(game, runtimeInput, pointerX)
 
     if (game.phase === 'start') {
-      runCommand('start')
+      startGameplay()
     }
   }
 
@@ -495,6 +496,15 @@ function createInitialGame(runtimeParams: RuntimeParams): GameState {
   }
 
   return game
+}
+
+function createRuntimeSessionId(): string {
+  const cryptoApi = globalThis.crypto
+  if (typeof cryptoApi?.randomUUID === 'function') {
+    return cryptoApi.randomUUID()
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
 function advanceByFixedStep(game: GameState, fixedStep: ReturnType<typeof createFixedStep>, elapsedSeconds: number): void {

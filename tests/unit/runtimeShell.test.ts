@@ -59,6 +59,13 @@ describe('M2.6 runtime shell state', () => {
     expect(state.screen).toBe('main-menu')
   })
 
+  it('allows compatibility start and forced-results transitions from the main menu', () => {
+    const state = createInitialShellState()
+
+    expect(apply(state, { type: 'startGameplay' }).screen).toBe('gameplay')
+    expect(apply(state, { type: 'showResults' }).screen).toBe('results')
+  })
+
   it('returns unchanged state and a typed error for invalid transitions', () => {
     const state = createInitialShellState()
 

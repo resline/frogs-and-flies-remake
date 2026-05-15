@@ -80,7 +80,7 @@ export function reduceShellState(state: ShellState, action: ShellAction): ShellT
     case 'openHighScores':
       return { state: { ...state, screen: 'high-scores' } }
     case 'startGameplay':
-      return state.screen === 'mode-select' || state.screen === 'results' || state.screen === 'pause'
+      return state.screen === 'main-menu' || state.screen === 'mode-select' || state.screen === 'results' || state.screen === 'pause'
         ? { state: { ...state, screen: 'gameplay' } }
         : invalid(state, action.type, 'invalid-transition')
     case 'pause':
@@ -88,7 +88,7 @@ export function reduceShellState(state: ShellState, action: ShellAction): ShellT
     case 'resume':
       return state.screen === 'pause' ? { state: { ...state, screen: 'gameplay' } } : invalid(state, action.type, 'invalid-transition')
     case 'showResults':
-      return state.screen === 'gameplay' || state.screen === 'pause'
+      return state.screen === 'main-menu' || state.screen === 'gameplay' || state.screen === 'pause'
         ? { state: { ...state, screen: 'results' } }
         : invalid(state, action.type, 'invalid-transition')
     case 'replay':

@@ -23,6 +23,16 @@ async function expectSelectedModeControl(page: Page, testId: string): Promise<vo
   expect(selected).toBe(true)
 }
 
+async function openModeSelect(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'mode-select')
+}
+
+async function startFromShell(page: Page): Promise<void> {
+  await openModeSelect(page)
+  await page.getByTestId('start-game').click()
+}
+
 test.describe('Frogs and Flies 2 M2 Classic Match', () => {
   test('render exposes M2 canvas layer and effect markers', async ({ page }) => {
     await page.goto('/?mode=classic-single&seed=123')
@@ -32,7 +42,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(canvas).toHaveAttribute('data-runtime-markers', 'm2')
     await expect(canvas).toHaveAttribute('data-render-layers', 'background gameplay effects ui')
 
-    await page.getByTestId('start-game').click()
+    await startFromShell(page)
     await page.keyboard.press('KeyT')
 
     await expect(canvas).toHaveAttribute('data-last-effect', /^(catch|miss|splash|score)$/)
@@ -63,7 +73,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(page.getByTestId('p1-control-source')).toHaveAttribute('data-control-source', 'human')
     await expect(page.getByTestId('p2-control-source')).toHaveAttribute('data-control-source', 'cpu-opponent')
 
-    await page.getByTestId('start-game').click()
+    await startFromShell(page)
     await expect(state).toHaveAttribute('data-state', 'gameplay')
   })
 
@@ -78,6 +88,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(page.getByTestId('p1-control-source')).toHaveAttribute('data-control-source', 'human')
     await expect(page.getByTestId('p2-control-source')).toHaveAttribute('data-control-source', 'human')
 
+    await openModeSelect(page)
     await expect(localVersusControl).toBeVisible()
     await expect(classicSingleControl).toBeVisible()
     await expectSelectedModeControl(page, MATCH_MODE_CONTROLS.localVersus)
@@ -109,6 +120,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     const p2ControlSource = page.getByTestId('p2-control-source')
 
     await expect(state).toHaveAttribute('data-state', 'start')
+    await openModeSelect(page)
     await expect(localVersusControl).toBeVisible()
     await expect(classicSingleControl).toBeVisible()
 
@@ -142,9 +154,9 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(page.getByTestId('results-p2-score')).toBeVisible()
     await expect(page.getByTestId('results-p2-score')).toContainText(/P2: \d+/)
     await expect(page.getByTestId('results-p1-stats')).toBeVisible()
-    await expect(page.getByTestId('results-p1-stats')).toContainText(/caught \d+\/\d+ .* accuracy \d+\.\d%/)
+    await expect(page.getByTestId('results-p1-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
     await expect(page.getByTestId('results-p2-stats')).toBeVisible()
-    await expect(page.getByTestId('results-p2-stats')).toContainText(/caught \d+\/\d+ .* accuracy \d+\.\d%/)
+    await expect(page.getByTestId('results-p2-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
   })
 
   test('reaches visible results with winner and final player scores when simulationSpeed accelerates a long round', async ({
@@ -152,7 +164,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
   }) => {
     await page.goto('/?seed=123&durationSeconds=20&theEndSeconds=0.1&simulationSpeed=20')
 
-    await page.getByTestId('start-game').click()
+    await startFromShell(page)
 
     const results = page.getByTestId('results')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
@@ -163,8 +175,8 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(page.getByTestId('results-winner')).toContainText(/Winner: (P1|P2|Tie)/)
     await expect(page.getByTestId('results-p1-score')).toContainText(/P1: \d+/)
     await expect(page.getByTestId('results-p2-score')).toContainText(/P2: \d+/)
-    await expect(page.getByTestId('results-p1-stats')).toContainText(/caught \d+\/\d+ .* accuracy \d+\.\d%/)
-    await expect(page.getByTestId('results-p2-stats')).toContainText(/caught \d+\/\d+ .* accuracy \d+\.\d%/)
+    await expect(page.getByTestId('results-p1-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
+    await expect(page.getByTestId('results-p2-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
     await expect(page.getByTestId('p1-score')).toBeVisible()
     await expect(page.getByTestId('p2-score')).toBeVisible()
     await expect(page.getByTestId('p1-score')).toHaveAttribute('data-score', /.+/)
@@ -179,6 +191,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
 
     await expect(state).toHaveAttribute('data-state', 'results')
 
+    await page.getByRole('button', { name: 'Change Mode' }).click()
     await page.getByTestId(MATCH_MODE_CONTROLS.localVersus).click()
 
     await expect(state).toHaveAttribute('data-state', 'start')

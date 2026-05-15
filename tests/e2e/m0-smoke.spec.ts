@@ -11,6 +11,16 @@ async function clickControl(page: Page, testId: string): Promise<void> {
   await control.click(CONTROL_CLICK_OPTIONS)
 }
 
+async function openModeSelect(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'mode-select')
+}
+
+async function startFromShell(page: Page): Promise<void> {
+  await openModeSelect(page)
+  await clickControl(page, 'start-game')
+}
+
 test.describe('Frogs and Flies 2 M0', () => {
   test.describe.configure({ mode: 'serial' })
 
@@ -22,10 +32,12 @@ test.describe('Frogs and Flies 2 M0', () => {
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-time-of-day', 'day')
     await expect(page.getByTestId('round-timer')).toHaveAttribute('data-target-seconds', '180')
     await expect(page.getByTestId('round-seed')).toBeVisible()
+    await expect(page.getByTestId('shell-play')).toBeVisible()
+
+    await openModeSelect(page)
     await expect(page.getByTestId('start-game')).toBeVisible()
-    await expect(page.getByTestId('pause-game')).toBeVisible()
-    await expect(page.getByTestId('resume-game')).toBeVisible()
-    await expect(page.getByTestId('replay-game')).toBeVisible()
+    await expect(page.getByTestId('mode-classic-single')).toBeVisible()
+    await expect(page.getByTestId('mode-local-versus')).toBeVisible()
   })
 
   test('renders nonblank canvas content that fits the desktop viewport', async ({ page }) => {
@@ -86,7 +98,7 @@ test.describe('Frogs and Flies 2 M0', () => {
   test('starts, pauses, resumes, and replays a round from DOM controls', async ({ page }) => {
     await page.goto('/?seed=123')
 
-    await clickControl(page, 'start-game')
+    await startFromShell(page)
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
 
     await clickControl(page, 'pause-game')
@@ -98,7 +110,7 @@ test.describe('Frogs and Flies 2 M0', () => {
     await clickControl(page, 'pause-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'pause')
 
-    await clickControl(page, 'replay-game')
+    await clickControl(page, 'restart-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
   })
 
@@ -149,7 +161,7 @@ test.describe('Frogs and Flies 2 M0', () => {
   test('plays through THE END and reaches results without a forced results state', async ({ page }) => {
     await page.goto('/?seed=123&durationSeconds=2&theEndSeconds=10&simulationSpeed=20')
 
-    await clickControl(page, 'start-game')
+    await startFromShell(page)
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'the-end', { timeout: 10_000 })
     await expect(page.getByText('THE END')).toBeVisible()
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })

@@ -100,6 +100,29 @@ test.describe('M2.6 local persistence', () => {
     await expect(page.getByTestId('high-scores-panel')).toContainText(/Seed 33/i)
   })
 
+  test('treats same-seed rounds across reloads as distinct saved rounds', async ({ page }) => {
+    await completeShortRoundFromKeyboard(page, 36)
+    const firstSave = await readSavedRoundTracking(page)
+
+    await completeShortRoundFromKeyboard(page, 36)
+    const secondSave = await readSavedRoundTracking(page)
+
+    expect(firstSave).toMatchObject({
+      roundsStarted: 1,
+      roundsCompleted: 1,
+      startedRoundCount: 1,
+      completedRoundCount: 1,
+    })
+    expect(secondSave).toMatchObject({
+      roundsStarted: 2,
+      roundsCompleted: 2,
+      startedRoundCount: 2,
+      completedRoundCount: 2,
+    })
+    expect(new Set(secondSave.startedRoundIds).size).toBe(2)
+    expect(new Set(secondSave.completedRoundIds).size).toBe(2)
+  })
+
   test('replay and change mode do not duplicate completed-round stats', async ({ page }) => {
     await completeShortRound(page, 34, 2, 2)
     const firstStats = await readSavedStats(page)
@@ -110,12 +133,16 @@ test.describe('M2.6 local persistence', () => {
 
     await page.goto('/?seed=34&durationSeconds=1&theEndSeconds=0.1&simulationSpeed=20')
     await completeShortRound(page, 34, 2, 2)
+    const secondStats = await readSavedStats(page)
+    expect(secondStats.roundsStarted).toBe(firstStats.roundsStarted + 1)
+    expect(secondStats.roundsCompleted).toBe(firstStats.roundsCompleted + 1)
+
     await page.getByRole('button', { name: 'Replay' }).click()
     await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'gameplay')
     const replayStats = await readSavedStats(page)
-    expect(replayStats.roundsStarted).toBe(firstStats.roundsStarted + 1)
-    expect(replayStats.roundsCompleted).toBe(firstStats.roundsCompleted)
-    expect(replayStats.totalPlaySeconds).toBe(firstStats.totalPlaySeconds)
+    expect(replayStats.roundsStarted).toBe(secondStats.roundsStarted + 1)
+    expect(replayStats.roundsCompleted).toBe(secondStats.roundsCompleted)
+    expect(replayStats.totalPlaySeconds).toBe(secondStats.totalPlaySeconds)
   })
 
   test('boots with defaults and unavailable-storage marker when localStorage is disabled', async ({ page }) => {
@@ -152,6 +179,7 @@ async function completeShortRound(
 }
 
 async function readSavedStats(page: import('@playwright/test').Page): Promise<{
+  roundsStarted: number
   roundsCompleted: number
   totalCatches: number
   totalAttempts: number
@@ -165,5 +193,36 @@ async function readSavedStats(page: import('@playwright/test').Page): Promise<{
       throw new Error('missing save data')
     }
     return JSON.parse(raw).stats
+  }, SAVE_KEY)
+}
+
+async function completeShortRoundFromKeyboard(page: import('@playwright/test').Page, seed: number): Promise<void> {
+  await page.goto(`/?seed=${seed}&durationSeconds=0.25&theEndSeconds=0.1&simulationSpeed=120`)
+  await page.keyboard.press('Enter')
+  await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 5_000 })
+}
+
+async function readSavedRoundTracking(page: import('@playwright/test').Page): Promise<{
+  roundsStarted: number
+  roundsCompleted: number
+  startedRoundCount: number
+  completedRoundCount: number
+  startedRoundIds: string[]
+  completedRoundIds: string[]
+}> {
+  return page.evaluate((key) => {
+    const raw = localStorage.getItem(key)
+    if (!raw) {
+      throw new Error('missing save data')
+    }
+    const save = JSON.parse(raw)
+    return {
+      roundsStarted: save.stats.roundsStarted,
+      roundsCompleted: save.stats.roundsCompleted,
+      startedRoundCount: save.startedRoundIds.length,
+      completedRoundCount: save.completedRoundIds.length,
+      startedRoundIds: save.startedRoundIds,
+      completedRoundIds: save.completedRoundIds,
+    }
   }, SAVE_KEY)
 }

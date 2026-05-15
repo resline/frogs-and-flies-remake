@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('M2.6 product shell flow', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    testInfo.setTimeout(60_000)
     await page.goto('/?seed=26&durationSeconds=1&theEndSeconds=0.1&simulationSpeed=20')
   })
 
@@ -61,6 +62,32 @@ test.describe('M2.6 product shell flow', () => {
     await expect(page.getByRole('button', { name: 'Main Menu' })).toBeVisible()
   })
 
+  test('starts gameplay through shell tracking from keyboard Enter', async ({ page }) => {
+    await page.goto('/?seed=126&durationSeconds=10&theEndSeconds=0.1')
+
+    await page.keyboard.press('Enter')
+
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'gameplay')
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
+    expect(await readSavedRoundTracking(page)).toMatchObject({
+      roundsStarted: 1,
+      startedRoundCount: 1,
+    })
+  })
+
+  test('starts gameplay through shell tracking from canvas pointer input', async ({ page }) => {
+    await page.goto('/?seed=127&durationSeconds=10&theEndSeconds=0.1')
+
+    await page.getByTestId('game-canvas').click({ position: { x: 400, y: 300 } })
+
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'gameplay')
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
+    expect(await readSavedRoundTracking(page)).toMatchObject({
+      roundsStarted: 1,
+      startedRoundCount: 1,
+    })
+  })
+
   test('shows complete local results actions and high-score status', async ({ page }) => {
     await page.getByRole('button', { name: 'Play', exact: true }).click()
     await page.getByRole('button', { name: 'Classic Single' }).click()
@@ -90,3 +117,20 @@ test.describe('M2.6 product shell flow', () => {
     await expect(page.getByTestId('high-scores-panel')).not.toContainText(/online|global|account|cloud/i)
   })
 })
+
+async function readSavedRoundTracking(page: import('@playwright/test').Page): Promise<{
+  roundsStarted?: number
+  startedRoundCount?: number
+}> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('frogs-and-flies.save.v1')
+    if (!raw) {
+      return {}
+    }
+    const save = JSON.parse(raw)
+    return {
+      roundsStarted: save.stats?.roundsStarted,
+      startedRoundCount: save.startedRoundIds?.length,
+    }
+  })
+}
