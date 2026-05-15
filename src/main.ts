@@ -1,17 +1,12 @@
 import { Application, Assets, Container, Graphics, Sprite } from 'pixi.js'
 import './style.css'
 import { ARENA_HEIGHT, ARENA_WIDTH, FIXED_TIMESTEP_SECONDS } from './game/constants'
-import { createGame, type CreateGameOptions } from './game/createGame'
+import { createGame } from './game/createGame'
 import { createFixedStep } from './game/fixedStep'
 import { updateGame } from './game/update'
-import type { GamePhase, GameState, TimeOfDay } from './game/types'
+import { readRuntimeParams, type RuntimeParams } from './runtime/params'
+import type { GameState, TimeOfDay } from './game/types'
 import type { Texture } from 'pixi.js'
-
-type RuntimeParams = Required<Pick<CreateGameOptions, 'seed'>> &
-  Pick<CreateGameOptions, 'durationSeconds' | 'theEndSeconds'> & {
-    smokeState?: GamePhase
-    smokeElapsedSeconds?: number
-  }
 
 type DomState = {
   shell: HTMLElement
@@ -244,41 +239,6 @@ function advanceByFixedStep(game: GameState, fixedStep: ReturnType<typeof create
   if (remainingSeconds > 0) {
     fixedStep.advance(remainingSeconds, () => updateGame(game, FIXED_TIMESTEP_SECONDS))
   }
-}
-
-function readRuntimeParams(searchParams: URLSearchParams): RuntimeParams {
-  return {
-    seed: readPositiveInteger(searchParams.get('seed'), 1),
-    smokeState: readPhase(searchParams.get('smokeState')),
-    smokeElapsedSeconds: readNonNegativeNumber(searchParams.get('smokeElapsedSeconds')),
-    durationSeconds: readNonNegativeNumber(searchParams.get('durationSeconds')),
-    theEndSeconds: readNonNegativeNumber(searchParams.get('theEndSeconds')),
-  }
-}
-
-function readPositiveInteger(value: string | null, fallback: number): number {
-  if (!value) {
-    return fallback
-  }
-
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
-}
-
-function readNonNegativeNumber(value: string | null): number | undefined {
-  if (!value) {
-    return undefined
-  }
-
-  const parsed = Number.parseFloat(value)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
-}
-
-function readPhase(value: string | null): GamePhase | undefined {
-  if (value === 'start' || value === 'gameplay' || value === 'pause' || value === 'the-end' || value === 'results') {
-    return value
-  }
-  return undefined
 }
 
 function createDomState(root: HTMLElement): DomState {
