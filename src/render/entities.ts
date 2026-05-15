@@ -132,6 +132,9 @@ function drawProceduralPlayer(scene: Graphics, player: PlayerState, matchPlayer:
   scene.circle(x + 12, y - 20 + pose.eyeOffsetY, 8).fill({ color: 0xf4fbef })
   scene.circle(x - 12 + faceSign * 2, y - 20 + pose.eyeOffsetY, 3).fill({ color: 0x051416 })
   scene.circle(x + 12 + faceSign * 2, y - 20 + pose.eyeOffsetY, 3).fill({ color: 0x051416 })
+  if (player.tongue.phase === 'extended') {
+    scene.ellipse(x + faceSign * (radius * 0.58), y - 3 + pose.bodyOffsetY, 7, 3).fill({ color: 0xff9eb6, alpha: 0.86 })
+  }
   if (player.phase === 'splashing' || player.phase === 'recovering') {
     scene.ellipse(x, player.homeY + 8, radius * 1.5, 10).stroke({ color: 0xbde9f4, alpha: 0.72, width: 3 })
   }

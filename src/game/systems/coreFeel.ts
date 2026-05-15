@@ -9,15 +9,13 @@ import {
   CLASSIC_JUMP_MIN_HORIZONTAL_TRAVEL,
   CLASSIC_JUMP_RECOVERY_SECONDS,
   CLASSIC_JUMP_SPLASH_SECONDS,
+  CLASSIC_TONGUE_ACTIVE_SECONDS,
+  CLASSIC_TONGUE_RECOVERY_SECONDS,
 } from '../constants'
-import type { GameCommands, GameState, JumpArcDirection, PlayerState, WaterState } from '../types'
+import { syncTongueSegment } from '../tongue'
+import type { GameCommands, GameState, JumpArcDirection, MatchPlayerState, PlayerState, WaterState } from '../types'
 
-const TONGUE_RECOVERY_SECONDS = 0.18
 const EPSILON_SECONDS = 0.000001
-
-type RuntimeTongueState = PlayerState['tongue'] & {
-  recoverySeconds?: number
-}
 
 export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
   const primaryPlayer = game.players[0]
@@ -27,7 +25,7 @@ export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
 
     updateJump(commands, matchPlayer.state, matchPlayer.water, deltaSeconds, matchPlayer, game)
     updateWater(matchPlayer, matchPlayer.water, deltaSeconds)
-    updateTongue(matchPlayer.state, deltaSeconds)
+    updateTongue(matchPlayer, game, index === 0, deltaSeconds)
   }
 
   game.player = primaryPlayer?.state ?? game.player
@@ -230,21 +228,46 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value))
 }
 
-function updateTongue(player: PlayerState, deltaSeconds: number): void {
-  const tongue = player.tongue as RuntimeTongueState
+function updateTongue(matchPlayer: MatchPlayerState, game: GameState, isPrimary: boolean, deltaSeconds: number): void {
+  const player = matchPlayer.state
+  const tongue = player.tongue
+  syncTongueSegment(player, matchPlayer.catchRadius)
+
+  if (tongue.phase === 'extended') {
+    tongue.activeSeconds += deltaSeconds
+    if (tongue.activeSeconds + EPSILON_SECONDS < CLASSIC_TONGUE_ACTIVE_SECONDS) {
+      return
+    }
+
+    if (!tongue.result) {
+      matchPlayer.stats.combo = 0
+      matchPlayer.stats.misses += 1
+      matchPlayer.stats.score = matchPlayer.score
+      if (isPrimary) {
+        game.combo = 0
+      }
+      tongue.result = 'miss'
+    }
+
+    tongue.phase = 'recovering'
+    tongue.recoverySeconds = 0
+    return
+  }
 
   if (tongue.phase !== 'recovering') {
     return
   }
 
-  tongue.recoverySeconds = (tongue.recoverySeconds ?? 0) + deltaSeconds
-  if (tongue.recoverySeconds + EPSILON_SECONDS < TONGUE_RECOVERY_SECONDS) {
+  tongue.recoverySeconds += deltaSeconds
+  if (tongue.recoverySeconds + EPSILON_SECONDS < CLASSIC_TONGUE_RECOVERY_SECONDS) {
     return
   }
 
   tongue.phase = 'ready'
+  tongue.activeSeconds = 0
+  tongue.recoverySeconds = 0
   delete tongue.result
-  delete tongue.recoverySeconds
+  delete tongue.autoFired
 }
 
 function mergePrimaryCommands(game: GameState): GameCommands {

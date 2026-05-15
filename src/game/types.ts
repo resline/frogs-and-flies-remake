@@ -123,6 +123,15 @@ export interface JumpState {
 export interface TongueState {
   phase: TonguePhase
   result?: TongueResult
+  activeSeconds: number
+  recoverySeconds: number
+  range: number
+  width: number
+  originX: number
+  originY: number
+  tipX: number
+  tipY: number
+  autoFired?: boolean
 }
 
 export interface WaterState {

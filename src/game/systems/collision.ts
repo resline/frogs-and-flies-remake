@@ -1,10 +1,7 @@
 import { removeEntity } from '../entities'
+import { findFirstTongueHit, syncTongueSegment } from '../tongue'
 import { activateRush } from './power'
-import type { Entity, GameCommands, GameState, MatchPlayerState, PlayerState } from '../types'
-
-type RuntimeTongueState = GameState['player']['tongue'] & {
-  recoverySeconds?: number
-}
+import type { GameCommands, GameState, MatchPlayerState, PlayerState } from '../types'
 
 interface CollisionActor {
   player: MatchPlayerState
@@ -17,7 +14,11 @@ export function updateCollision(game: GameState): void {
   collectPower(game)
 
   for (const actor of getCatchActors(game)) {
-    catchFly(game, actor)
+    startTongueAttempt(game, actor)
+  }
+
+  for (const actor of getCollisionActors(game)) {
+    resolveActiveTongueHit(game, actor)
     clearPerPlayerCatchCommands(actor)
   }
 }
@@ -41,17 +42,30 @@ function collectPower(game: GameState): void {
   }
 }
 
-function catchFly(game: GameState, actor: CollisionActor): void {
+function startTongueAttempt(game: GameState, actor: CollisionActor): void {
+  if (actor.state.tongue.phase !== 'ready') {
+    return
+  }
+
   syncPrimaryPlayerFromLegacyScore(game, actor)
   actor.player.stats.attempts += 1
+  syncPlayerScoreStats(actor.player)
+  syncTongueSegment(actor.state, actor.player.catchRadius)
+  actor.state.tongue.phase = 'extended'
+  actor.state.tongue.result = undefined
+  actor.state.tongue.activeSeconds = 0
+  actor.state.tongue.recoverySeconds = 0
+  actor.state.tongue.autoFired = Boolean(actor.commands.fire && !actor.commands.tongue)
+}
 
-  const caught = firstCatchableFly(game, actor)
+function resolveActiveTongueHit(game: GameState, actor: CollisionActor): void {
+  if (actor.state.tongue.phase !== 'extended' || actor.state.tongue.result) {
+    return
+  }
+
+  syncTongueSegment(actor.state, actor.player.catchRadius)
+  const caught = findFirstTongueHit(game, actor.state, actor.player.catchRadius)
   if (!caught) {
-    actor.player.stats.combo = 0
-    actor.player.stats.misses += 1
-    syncPlayerScoreStats(actor.player)
-    syncLegacyScoreFromPrimaryPlayer(game, actor)
-    recordTongue(actor, 'miss')
     return
   }
 
@@ -62,32 +76,11 @@ function catchFly(game: GameState, actor: CollisionActor): void {
   syncPlayerScoreStats(actor.player)
   syncLegacyScoreFromPrimaryPlayer(game, actor)
   removeEntity(game, caught.id)
-  recordTongue(actor, 'catch')
-}
-
-function firstCatchableFly(game: GameState, actor: CollisionActor): Entity | undefined {
-  for (const id of game.entityIds) {
-    const entity = game.entities[id]
-    if (entity?.kind === 'fly' && distance(actor.state.x, actor.state.y, entity.x, entity.y) <= actor.player.catchRadius) {
-      return entity
-    }
-  }
-  return undefined
+  actor.state.tongue.result = 'catch'
 }
 
 function distance(ax: number, ay: number, bx: number, by: number): number {
   return Math.hypot(ax - bx, ay - by)
-}
-
-function recordTongue(actor: CollisionActor, result: 'catch' | 'miss'): void {
-  if (!actor.commands.tongue) {
-    return
-  }
-
-  const tongue = actor.state.tongue as RuntimeTongueState
-  tongue.phase = 'recovering'
-  tongue.result = result
-  tongue.recoverySeconds = 0
 }
 
 function getCollisionActors(game: GameState): CollisionActor[] {

@@ -13,6 +13,20 @@ function startGame(seed = 1) {
   return game
 }
 
+function advanceFrames(game: ReturnType<typeof createGame>, frames: number): void {
+  for (let frame = 0; frame < frames; frame += 1) {
+    updateGame(game, STEP_SECONDS)
+  }
+}
+
+function advancePastTongueRecovery(game: ReturnType<typeof createGame>): void {
+  advanceFrames(game, 24)
+}
+
+function advancePastTongueActiveWindow(game: ReturnType<typeof createGame>): void {
+  updateGame(game, 0.22)
+}
+
 describe('M0 scoring and power', () => {
   it('adds score when a tongue hit catches a fly', () => {
     const game = startGame()
@@ -39,6 +53,7 @@ describe('M0 scoring and power', () => {
     expect(game.players[0].stats.combo).toBe(1)
     expect(game.combo).toBe(game.players[0].stats.combo)
 
+    advancePastTongueRecovery(game)
     insertEntity(game, { id: 11, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
@@ -101,8 +116,10 @@ describe('M0 scoring and power', () => {
     expect(game.players[0].stats.combo).toBe(1)
     expect(game.combo).toBe(game.players[0].stats.combo)
 
+    advancePastTongueRecovery(game)
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
+    advancePastTongueActiveWindow(game)
     expect(game.players[0].stats.combo).toBe(0)
     expect(game.players[0].stats.attempts).toBe(2)
     expect(game.players[0].stats.misses).toBe(1)
@@ -152,8 +169,10 @@ describe('M0 scoring and power', () => {
     expect(p1.power.kind).toBeUndefined()
     expect(p1.catchRadius).toBe(game.constants.baseCatchRadius)
 
+    advancePastTongueRecovery(game)
     p2.commands.fire = true
     updateGame(game, STEP_SECONDS)
+    advancePastTongueActiveWindow(game)
 
     expect(p2.stats.combo).toBe(0)
     expect(p2.stats.attempts).toBe(2)

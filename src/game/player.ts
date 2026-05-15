@@ -1,4 +1,9 @@
-import { BASE_CATCH_RADIUS } from './constants'
+import {
+  BASE_CATCH_RADIUS,
+  CLASSIC_TONGUE_MOUTH_OFFSET_Y,
+  CLASSIC_TONGUE_RANGE,
+  CLASSIC_TONGUE_WIDTH,
+} from './constants'
 import { facingForPlayer, homeLilyForPlayer } from './arena'
 import type {
   ActivePower,
@@ -45,6 +50,10 @@ export function createPlayerCommands(): GameCommands {
 
 export function createPlayerState(id: PlayerId = 'p1'): PlayerState {
   const homeLily = homeLilyForPlayer(id)
+  const facing = facingForPlayer(id)
+  const tongueOriginX = homeLily.x
+  const tongueOriginY = homeLily.y + CLASSIC_TONGUE_MOUTH_OFFSET_Y
+  const tongueTipX = tongueOriginX + (facing === 'left' ? -CLASSIC_TONGUE_RANGE : CLASSIC_TONGUE_RANGE)
 
   return {
     x: homeLily.x,
@@ -52,7 +61,7 @@ export function createPlayerState(id: PlayerId = 'p1'): PlayerState {
     homeX: homeLily.x,
     homeY: homeLily.y,
     homeLilyId: homeLily.id,
-    facing: facingForPlayer(id),
+    facing,
     phase: 'staged',
     groundY: homeLily.y,
     landingRadius: homeLily.landingRadius,
@@ -77,6 +86,14 @@ export function createPlayerState(id: PlayerId = 'p1'): PlayerState {
     },
     tongue: {
       phase: 'ready',
+      activeSeconds: 0,
+      recoverySeconds: 0,
+      range: CLASSIC_TONGUE_RANGE,
+      width: CLASSIC_TONGUE_WIDTH,
+      originX: tongueOriginX,
+      originY: tongueOriginY,
+      tipX: tongueTipX,
+      tipY: tongueOriginY,
     },
   }
 }

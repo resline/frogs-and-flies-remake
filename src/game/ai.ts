@@ -1,4 +1,5 @@
 import { AI_TAKEOVER_SECONDS } from './constants'
+import { isEntityInTongueRange } from './tongue'
 import type { Entity, GameCommands, GameState, MatchPlayerState } from './types'
 
 type AutonomousControlSource = 'cpu-opponent' | 'ai-takeover'
@@ -64,7 +65,7 @@ export function getAutonomousPlayerCommands(game: GameState, player: MatchPlayer
     commands.moveRight = true
   }
 
-  if (player.state.tongue.phase === 'ready' && distance(player.state.x, player.state.y, target.x, target.y) <= player.catchRadius) {
+  if (player.state.tongue.phase === 'ready' && isEntityInTongueRange(player.state, target, player.catchRadius)) {
     commands.tongue = true
   }
 
@@ -84,7 +85,7 @@ function hasPrimaryHumanCatchOpportunity(game: GameState): boolean {
   const state = game.player
   return game.entityIds.some((id) => {
     const entity = game.entities[id]
-    return entity?.kind === 'fly' && distance(state.x, state.y, entity.x, entity.y) <= primary.catchRadius
+    return entity?.kind === 'fly' && isEntityInTongueRange(state, entity, primary.catchRadius)
   })
 }
 

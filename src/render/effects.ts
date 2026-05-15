@@ -64,15 +64,17 @@ function drawArenaEffects(scene: Graphics, game: GameState): void {
 
 function drawTongueEffects(scene: Graphics, game: GameState): void {
   for (const player of getRenderPlayers(game)) {
-    if (player.state.tongue.phase !== 'recovering' || !player.state.tongue.result) {
+    const tongue = player.state.tongue
+    if (tongue.phase !== 'extended' && tongue.phase !== 'recovering') {
       continue
     }
 
-    const color = player.state.tongue.result === 'catch' ? 0xffe36a : 0xff6b8a
-    scene.moveTo(player.state.x, player.state.y - 10)
-    scene.lineTo(player.state.x, Math.max(90, player.state.y - player.matchPlayer.catchRadius * 0.72))
-    scene.stroke({ width: 5, color, alpha: 0.72 })
-    scene.circle(player.state.x, player.state.y - player.matchPlayer.catchRadius * 0.54, 12).fill({ color, alpha: 0.26 })
+    const color = tongue.result === 'catch' ? 0xffe36a : tongue.result === 'miss' ? 0xff6b8a : 0xff9eb6
+    const alpha = tongue.phase === 'extended' ? 0.78 : 0.46
+    scene.moveTo(tongue.originX, tongue.originY)
+    scene.lineTo(tongue.tipX, tongue.tipY)
+    scene.stroke({ width: tongue.result === 'catch' ? 6 : 4, color, alpha })
+    scene.circle(tongue.tipX, tongue.tipY, tongue.result === 'catch' ? 12 : 8).fill({ color, alpha: tongue.result ? 0.28 : 0.16 })
   }
 }
 

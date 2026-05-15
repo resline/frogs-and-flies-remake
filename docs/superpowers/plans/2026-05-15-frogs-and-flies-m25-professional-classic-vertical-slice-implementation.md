@@ -369,7 +369,7 @@ Expected: only jump/model/render files from this task plus related tests. Commit
 - Modify: `tests/unit/scoringPower.test.ts`
 - Modify: `tests/unit/cpuTakeover.test.ts`
 
-- [ ] **Step 1: Write failing tongue collision tests**
+- [x] **Step 1: Write failing tongue collision tests**
 
 Add `tests/unit/tongueCollision.test.ts` for these cases:
 
@@ -383,39 +383,39 @@ Add `tests/unit/tongueCollision.test.ts` for these cases:
 // catch increments score/catches/combo and removes only one fly
 ```
 
-- [ ] **Step 2: Run red tongue tests**
+- [x] **Step 2: Run red tongue tests**
 
 Run: `npm run test:unit -- tests/unit/tongueCollision.test.ts`
 
 Expected fail: missing `src/game/tongue.ts` or current catch-radius behavior catches behind/out-of-cone flies.
 
-- [ ] **Step 3: Implement pure directional helpers**
+- [x] **Step 3: Implement pure directional helpers**
 
 Create `src/game/tongue.ts` with deterministic helpers such as `tongueOriginForPlayer`, `tongueSegmentForPlayer`, `isEntityInTongueRange`, and `findFirstTongueHit`. Use no `Math.random()` and no wall-clock time.
 
-- [ ] **Step 4: Add tongue timing state**
+- [x] **Step 4: Add tongue timing state**
 
 Extend tongue state with `activeSeconds`, `recoverySeconds`, `range`, `width`, `originX`, `originY`, `tipX`, `tipY`, and `autoFired` if needed. Active target: 0.15-0.30 seconds; recovery target: short but visible.
 
-- [ ] **Step 5: Update collision and scoring**
+- [x] **Step 5: Update collision and scoring**
 
 Change `updateCollision` so tongue input starts an active tongue if ready, checks directional hit while active, records catch/miss once per attempt, and keeps Rush scoring compatible.
 
-- [ ] **Step 6: Keep AI/takeover on the same model**
+- [x] **Step 6: Keep AI/takeover on the same model**
 
 Update `src/game/ai.ts` so CPU and AI takeover issue the same charge/release/tongue commands as human-controlled players and never bypass directional collision.
 
-- [ ] **Step 7: Render attached tongue**
+- [x] **Step 7: Render attached tongue**
 
 Render the tongue from the frog mouth/facing side to `tipX/tipY`; add catch/miss color treatment and reduced-motion-friendly effect hooks.
 
-- [ ] **Step 8: Run green tongue tests**
+- [x] **Step 8: Run green tongue tests**
 
 Run: `npm run test:unit -- tests/unit/tongueCollision.test.ts tests/unit/scoringPower.test.ts tests/unit/cpuTakeover.test.ts`
 
 Expected pass: all listed files pass and exit `0`.
 
-- [ ] **Step 9: Commit boundary**
+- [x] **Step 9: Commit boundary**
 
 Run: `git status --short`
 
