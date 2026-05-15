@@ -12,7 +12,7 @@ import {
   THE_END_SECONDS,
 } from './constants'
 import { createPlayers } from './match'
-import { createActivePower, createPlayerState, createWaterState } from './player'
+import { createActivePower, createWaterState } from './player'
 import { createPrng } from './prng'
 import type { GameState, MatchMode } from './types'
 
@@ -28,6 +28,8 @@ export function createGame(options: CreateGameOptions): GameState {
   const mode = options.mode ?? 'classic-single'
   const durationSeconds = options.durationSeconds ?? ROUND_DURATION_SECONDS
   const theEndSeconds = options.theEndSeconds ?? THE_END_SECONDS
+  const players = createPlayers(mode)
+  const primaryPlayer = players[0]
 
   return {
     seed,
@@ -54,8 +56,8 @@ export function createGame(options: CreateGameOptions): GameState {
     remainingSeconds: durationSeconds,
     theEndSeconds,
     theEndElapsedSeconds: 0,
-    players: createPlayers(mode),
-    player: createPlayerState(),
+    players,
+    player: primaryPlayer.state,
     entities: {},
     entityIds: [],
     nextEntityId: 1,
@@ -65,8 +67,8 @@ export function createGame(options: CreateGameOptions): GameState {
     },
     score: 0,
     combo: 0,
-    power: createActivePower(),
-    catchRadius: BASE_CATCH_RADIUS,
-    water: createWaterState(),
+    power: primaryPlayer.power ?? createActivePower(),
+    catchRadius: primaryPlayer.catchRadius,
+    water: primaryPlayer.water ?? createWaterState(),
   }
 }

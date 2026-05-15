@@ -22,6 +22,12 @@ describe('local versus simulation contract', () => {
     expect(p2.controlSource).toBe('human')
     expect(p1.label).toBe('P1')
     expect(p2.label).toBe('P2')
+    expect(p1.state.homeLilyId).toBe('left')
+    expect(p2.state.homeLilyId).toBe('right')
+    expect(p1.state.facing).toBe('right')
+    expect(p2.state.facing).toBe('left')
+    expect(p1.state.phase).toBe('staged')
+    expect(p2.state.phase).toBe('staged')
   })
 
   it('keeps P1 and P2 command bags independent across command clearing', () => {

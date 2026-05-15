@@ -8,6 +8,9 @@ export type MatchMode = 'classic-single' | 'local-versus'
 export type PlayerId = 'p1' | 'p2'
 export type PlayerControlSource = 'human' | 'cpu-opponent' | 'ai-takeover'
 export type MatchWinner = PlayerId | 'tie'
+export type FacingDirection = 'left' | 'right'
+export type HomeLilyId = 'left' | 'right'
+export type PlayerPhase = 'staged' | 'charging' | 'airborne' | 'splashing' | 'recovering'
 
 export interface GameCommands {
   start?: boolean
@@ -50,7 +53,13 @@ export interface Entity {
 export interface PlayerState {
   x: number
   y: number
+  homeX: number
+  homeY: number
+  homeLilyId: HomeLilyId
+  facing: FacingDirection
+  phase: PlayerPhase
   groundY: number
+  landingRadius: number
   radius: number
   speed: number
   jump: JumpState

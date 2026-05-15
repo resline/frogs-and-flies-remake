@@ -230,7 +230,7 @@ Expected: no implementation changes yet. Do not commit this baseline-only task u
 - Modify: `tests/unit/matchModel.test.ts`
 - Modify: `tests/unit/localVersus.test.ts`
 
-- [ ] **Step 1: Write failing side-lily tests**
+- [x] **Step 1: Write failing side-lily tests**
 
 Add `tests/unit/arenaSideLily.test.ts` with assertions that `createGame({ seed: 25, mode: 'classic-single' })` creates P1 on a left lily, P2/CPU on a right lily, distinct facing directions, home lily ids, stable landing radius, and mirrored labels/control sources.
 
@@ -248,13 +248,13 @@ expect(game.players[0].state.phase).toBe('staged')
 expect(game.players[1].state.phase).toBe('staged')
 ```
 
-- [ ] **Step 2: Run red test**
+- [x] **Step 2: Run red test**
 
 Run: `npm run test:unit -- tests/unit/arenaSideLily.test.ts`
 
 Expected fail: TypeScript or assertion failure for missing `homeLilyId`, `facing`, `phase`, or left/right anchor behavior.
 
-- [ ] **Step 3: Add arena model**
+- [x] **Step 3: Add arena model**
 
 Create `src/game/arena.ts` with named Home Pond anchors:
 
@@ -267,25 +267,25 @@ export const HOME_POND_LILIES = {
 
 Add helper functions for `homeLilyForPlayer('p1' | 'p2')`, `facingForPlayer`, and fly band defaults.
 
-- [ ] **Step 4: Extend types and constants minimally**
+- [x] **Step 4: Extend types and constants minimally**
 
 Add `FacingDirection = 'left' | 'right'`, `HomeLilyId = 'left' | 'right'`, `PlayerPhase = 'staged' | 'charging' | 'airborne' | 'splashing' | 'recovering'`, and fields on `PlayerState` for `homeLilyId`, `facing`, `phase`, `homeX`, `homeY`, and `landingRadius`.
 
-- [ ] **Step 5: Implement anchored player factories**
+- [x] **Step 5: Implement anchored player factories**
 
 Update `createPlayerState`/`createPlayer` to accept `PlayerId`, set P1/P2 anchors, and keep `game.player` aliased to `game.players[0].state` for existing M2 compatibility.
 
-- [ ] **Step 6: Add DOM markers**
+- [x] **Step 6: Add DOM markers**
 
 Expose `data-p1-home-lily`, `data-p2-home-lily`, `data-p1-facing`, `data-p2-facing`, `data-p1-phase`, and `data-p2-phase` on existing HUD/state markers in `src/runtime/dom.ts`.
 
-- [ ] **Step 7: Run green side-lily tests**
+- [x] **Step 7: Run green side-lily tests**
 
 Run: `npm run test:unit -- tests/unit/arenaSideLily.test.ts tests/unit/matchModel.test.ts tests/unit/localVersus.test.ts`
 
 Expected pass: all listed files pass and exit `0`.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 Run: `git status --short`
 

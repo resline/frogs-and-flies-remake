@@ -1,4 +1,5 @@
-import { ARENA_HEIGHT, ARENA_WIDTH, BASE_CATCH_RADIUS } from './constants'
+import { BASE_CATCH_RADIUS } from './constants'
+import { facingForPlayer, homeLilyForPlayer } from './arena'
 import type {
   ActivePower,
   GameCommands,
@@ -21,7 +22,7 @@ export function createPlayer(id: PlayerId, label: string, controlSource: PlayerC
     stats,
     commands: createPlayerCommands(),
     lastHumanInputElapsedSeconds: 0,
-    state: createPlayerState(),
+    state: createPlayerState(id),
     water: createWaterState(),
     power: createActivePower(),
     catchRadius: BASE_CATCH_RADIUS,
@@ -42,11 +43,19 @@ export function createPlayerCommands(): GameCommands {
   return {}
 }
 
-export function createPlayerState(): PlayerState {
+export function createPlayerState(id: PlayerId = 'p1'): PlayerState {
+  const homeLily = homeLilyForPlayer(id)
+
   return {
-    x: ARENA_WIDTH / 2,
-    y: ARENA_HEIGHT - 100,
-    groundY: ARENA_HEIGHT - 100,
+    x: homeLily.x,
+    y: homeLily.y,
+    homeX: homeLily.x,
+    homeY: homeLily.y,
+    homeLilyId: homeLily.id,
+    facing: facingForPlayer(id),
+    phase: 'staged',
+    groundY: homeLily.y,
+    landingRadius: homeLily.landingRadius,
     radius: 28,
     speed: 320,
     jump: {

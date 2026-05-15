@@ -126,8 +126,10 @@ export function syncDom(dom: DomState, game: GameState): void {
   dom.state.setAttribute('data-mode', game.mode)
   dom.state.setAttribute('data-time-of-day', game.timeOfDay)
   syncM1RuntimeMarkers(dom.state, game)
+  syncPlayerArenaMarkers(dom.state, game)
   if (dom.canvas) {
     syncM1RuntimeMarkers(dom.canvas, game)
+    syncPlayerArenaMarkers(dom.canvas, game)
     dom.canvas.setAttribute('data-testid', 'game-canvas')
     dom.canvas.setAttribute('data-runtime-markers', 'm2')
   }
@@ -262,6 +264,22 @@ function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {
   element.setAttribute('data-water-phase', game.water.phase)
   element.setAttribute('data-water-splash-seconds', formatMarkerSeconds(game.water.splashSeconds))
   element.setAttribute('data-water-recovery-seconds', formatMarkerSeconds(game.water.recoverySeconds))
+}
+
+function syncPlayerArenaMarkers(element: HTMLElement, game: GameState): void {
+  const [p1, p2] = game.players
+
+  if (p1) {
+    element.setAttribute('data-p1-home-lily', p1.state.homeLilyId)
+    element.setAttribute('data-p1-facing', p1.state.facing)
+    element.setAttribute('data-p1-phase', p1.state.phase)
+  }
+
+  if (p2) {
+    element.setAttribute('data-p2-home-lily', p2.state.homeLilyId)
+    element.setAttribute('data-p2-facing', p2.state.facing)
+    element.setAttribute('data-p2-phase', p2.state.phase)
+  }
 }
 
 function formatMarkerSeconds(seconds: number): string {
