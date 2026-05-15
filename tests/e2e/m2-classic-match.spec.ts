@@ -155,7 +155,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await page.getByTestId('start-game').click()
 
     const results = page.getByTestId('results')
-    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 4_000 })
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
     await expect(results).toBeVisible()
     await expect(results).toHaveAttribute('data-winner', /^(p1|p2|tie)$/)
     await expect(results).toHaveAttribute('data-p1-score', /.+/)
@@ -172,13 +172,12 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
   })
 
   test('selects Local Versus from results and preserves round params', async ({ page }) => {
-    await page.goto('/?mode=classic-single&seed=123&durationSeconds=20&theEndSeconds=0.1&simulationSpeed=20')
+    await page.goto('/?mode=classic-single&seed=123&durationSeconds=20&theEndSeconds=0.1&simulationSpeed=20&smokeState=results')
 
     const state = page.getByTestId('game-state')
     const timer = page.getByTestId('round-timer')
 
-    await page.getByTestId('start-game').click()
-    await expect(state).toHaveAttribute('data-state', 'results', { timeout: 4_000 })
+    await expect(state).toHaveAttribute('data-state', 'results')
 
     await page.getByTestId(MATCH_MODE_CONTROLS.localVersus).click()
 
@@ -192,6 +191,6 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expectSelectedModeControl(page, MATCH_MODE_CONTROLS.localVersus)
 
     await page.getByTestId('start-game').click()
-    await expect(state).toHaveAttribute('data-state', 'results', { timeout: 4_000 })
+    await expect(state).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
   })
 })

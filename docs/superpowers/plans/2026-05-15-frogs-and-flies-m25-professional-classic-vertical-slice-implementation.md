@@ -751,25 +751,25 @@ Expected: DOM/render/CSS/E2E/docs only. Commit message: `feat: polish classic de
 - Modify: `src/runtime/app.ts`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write failing deterministic replay test**
+- [x] **Step 1: Write failing deterministic replay test**
 
 Add `tests/unit/deterministicReplay.test.ts` that runs the same seed/options/input script twice and expects identical event sequence, final scores, winner, catches, attempts, and time-of-day transitions.
 
-- [ ] **Step 2: Run red replay test**
+- [x] **Step 2: Run red replay test**
 
 Run: `npm run test:unit -- tests/unit/deterministicReplay.test.ts`
 
 Expected fail: missing replay helper or mismatch from non-deterministic systems.
 
-- [ ] **Step 3: Implement scripted replay helper**
+- [x] **Step 3: Implement scripted replay helper**
 
 Create `src/game/replay.ts` for tests only or pure simulation utility. It should drive fixed-step updates with a deterministic command script and collect a compact summary.
 
-- [ ] **Step 4: Remove nondeterminism**
+- [x] **Step 4: Remove nondeterminism**
 
 Audit spawn, AI, assist, fly movement, animation frame selection, and collision tie-breaks. Replace any gameplay-affecting `Math.random()` or wall-clock dependency with seeded PRNG or simulation elapsed time.
 
-- [ ] **Step 5: Expand Classic E2E coverage**
+- [x] **Step 5: Expand Classic E2E coverage**
 
 In `m25-classic-vertical-slice.spec.ts`, cover:
 
@@ -782,13 +782,13 @@ In `m25-classic-vertical-slice.spec.ts`, cover:
 - Reduced motion and high contrast markers/styles update.
 - Replay restarts with same seed/options.
 
-- [ ] **Step 6: Run focused green replay/unit tests**
+- [x] **Step 6: Run focused green replay/unit tests**
 
 Run: `npm run test:unit -- tests/unit/deterministicReplay.test.ts tests/unit/prng.test.ts tests/unit/spawn.test.ts`
 
 Expected pass: all listed tests pass and exit `0`.
 
-- [ ] **Step 7: Run focused E2E**
+- [x] **Step 7: Run focused E2E**
 
 Run: `npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts tests/e2e/m2-classic-match.spec.ts`
 
