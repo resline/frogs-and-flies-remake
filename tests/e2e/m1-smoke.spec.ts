@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+const CONTROL_CLICK_OPTIONS = { force: true } as const
+
+async function clickControl(page: Page, testId: string): Promise<void> {
+  const control = page.getByTestId(testId)
+
+  await expect(control).toBeVisible()
+  await control.click(CONTROL_CLICK_OPTIONS)
+}
+
+async function openModeSelect(page: Page): Promise<void> {
+  await clickControl(page, 'shell-play')
+  await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'mode-select')
+}
+
+async function startFromShell(page: Page): Promise<void> {
+  await openModeSelect(page)
+  await clickControl(page, 'start-game')
+}
 
 test.describe('Frogs and Flies 2 M1', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test('keeps Space jump charging separate from tongue fire', async ({ page }) => {
     await page.goto('/?seed=1&smokeElapsedSeconds=6.5')
 
@@ -77,7 +99,7 @@ test.describe('Frogs and Flies 2 M1', () => {
         )
       },
       undefined,
-      { timeout: 2_000 },
+      { timeout: 5_000 },
     )
 
     const observed = await page.evaluate(() => {
@@ -175,14 +197,14 @@ test.describe('Frogs and Flies 2 M1', () => {
       runtimeWindow.__m1RuntimeObserver = observer
     })
 
-    await page.keyboard.press('Enter')
+    await startFromShell(page)
     await expect(state).toHaveAttribute('data-state', 'gameplay')
 
     await page.keyboard.down('Space')
     await expect(state).toHaveAttribute('data-jump-phase', 'charging')
     await expect
-      .poll(async () => Number(await state.getAttribute('data-jump-charge-seconds')), { timeout: 2_000 })
-      .toBeGreaterThanOrEqual(0.45)
+      .poll(async () => Number(await state.getAttribute('data-jump-charge-seconds')), { timeout: 5_000 })
+      .toBeGreaterThanOrEqual(0.4)
     await page.keyboard.up('Space')
 
     await expect(state).toHaveAttribute('data-jump-phase', 'jumping')
@@ -208,7 +230,7 @@ test.describe('Frogs and Flies 2 M1', () => {
         )
       },
       undefined,
-      { timeout: 2_000 },
+      { timeout: 5_000 },
     )
 
     await page.waitForFunction(

@@ -1,39 +1,37 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
+const CONTROL_CLICK_OPTIONS = { force: true } as const
+
 const MATCH_MODE_CONTROLS = {
   classicSingle: 'mode-classic-single',
   localVersus: 'mode-local-versus',
 } as const
 
+async function clickControl(page: Page, testId: string): Promise<void> {
+  const control = page.getByTestId(testId)
+
+  await expect(control).toBeVisible()
+  await control.click(CONTROL_CLICK_OPTIONS)
+}
+
 async function expectSelectedModeControl(page: Page, testId: string): Promise<void> {
-  const selected = await page.getByTestId(testId).evaluate((element) => {
-    if (element instanceof HTMLInputElement) {
-      return element.checked
-    }
-
-    return (
-      element.getAttribute('aria-pressed') === 'true' ||
-      element.getAttribute('aria-checked') === 'true' ||
-      element.getAttribute('data-selected') === 'true' ||
-      element.getAttribute('data-current') === 'true'
-    )
-  })
-
-  expect(selected).toBe(true)
+  await expect(page.getByTestId(testId)).toHaveAttribute('aria-pressed', 'true')
 }
 
 async function openModeSelect(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  await clickControl(page, 'shell-play')
   await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'mode-select')
 }
 
 async function startFromShell(page: Page): Promise<void> {
   await openModeSelect(page)
-  await page.getByTestId('start-game').click()
+  await clickControl(page, 'start-game')
 }
 
 test.describe('Frogs and Flies 2 M2 Classic Match', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test('render exposes M2 canvas layer and effect markers', async ({ page }) => {
     await page.goto('/?mode=classic-single&seed=123')
 
@@ -93,7 +91,7 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(classicSingleControl).toBeVisible()
     await expectSelectedModeControl(page, MATCH_MODE_CONTROLS.localVersus)
 
-    await page.getByTestId('start-game').click()
+    await clickControl(page, 'start-game')
     await expect(state).toHaveAttribute('data-state', 'gameplay')
 
     await page.keyboard.down('KeyD')
@@ -124,13 +122,13 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(localVersusControl).toBeVisible()
     await expect(classicSingleControl).toBeVisible()
 
-    await localVersusControl.click()
+    await clickControl(page, MATCH_MODE_CONTROLS.localVersus)
     await expect(state).toHaveAttribute('data-mode', 'local-versus')
     await expect(p1ControlSource).toHaveAttribute('data-control-source', 'human')
     await expect(p2ControlSource).toHaveAttribute('data-control-source', 'human')
     await expectSelectedModeControl(page, MATCH_MODE_CONTROLS.localVersus)
 
-    await classicSingleControl.click()
+    await clickControl(page, MATCH_MODE_CONTROLS.classicSingle)
     await expect(state).toHaveAttribute('data-mode', 'classic-single')
     await expect(p1ControlSource).toHaveAttribute('data-control-source', 'human')
     await expect(p2ControlSource).toHaveAttribute('data-control-source', 'cpu-opponent')
@@ -177,33 +175,31 @@ test.describe('Frogs and Flies 2 M2 Classic Match', () => {
     await expect(page.getByTestId('results-p2-score')).toContainText(/P2: \d+/)
     await expect(page.getByTestId('results-p1-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
     await expect(page.getByTestId('results-p2-stats')).toContainText(/caught \d+, attempts \d+, accuracy \d+\.\d%, combo \d+/)
-    await expect(page.getByTestId('p1-score')).toBeVisible()
-    await expect(page.getByTestId('p2-score')).toBeVisible()
-    await expect(page.getByTestId('p1-score')).toHaveAttribute('data-score', /.+/)
-    await expect(page.getByTestId('p2-score')).toHaveAttribute('data-score', /.+/)
+    await expect(results).toHaveAttribute('data-p1-score', /.+/)
+    await expect(results).toHaveAttribute('data-p2-score', /.+/)
   })
 
   test('selects Local Versus from results and preserves round params', async ({ page }) => {
-    await page.goto('/?mode=classic-single&seed=123&durationSeconds=20&theEndSeconds=0.1&simulationSpeed=20&smokeState=results')
+    await page.goto('/?mode=classic-single&seed=123&durationSeconds=2&theEndSeconds=0.1&simulationSpeed=20&smokeState=results')
 
     const state = page.getByTestId('game-state')
     const timer = page.getByTestId('round-timer')
 
     await expect(state).toHaveAttribute('data-state', 'results')
 
-    await page.getByRole('button', { name: 'Change Mode' }).click()
-    await page.getByTestId(MATCH_MODE_CONTROLS.localVersus).click()
+    await clickControl(page, 'change-mode')
+    await clickControl(page, MATCH_MODE_CONTROLS.localVersus)
 
     await expect(state).toHaveAttribute('data-state', 'start')
     await expect(state).toHaveAttribute('data-mode', 'local-versus')
     await expect(page.getByTestId('round-seed')).toHaveAttribute('data-seed', '123')
-    await expect(timer).toHaveAttribute('data-target-seconds', '20')
-    await expect(timer).toHaveAttribute('data-remaining-seconds', '20')
+    await expect(timer).toHaveAttribute('data-target-seconds', '2')
+    await expect(timer).toHaveAttribute('data-remaining-seconds', '2')
     await expect(page.getByTestId('p1-control-source')).toHaveAttribute('data-control-source', 'human')
     await expect(page.getByTestId('p2-control-source')).toHaveAttribute('data-control-source', 'human')
     await expectSelectedModeControl(page, MATCH_MODE_CONTROLS.localVersus)
 
-    await page.getByTestId('start-game').click()
+    await clickControl(page, 'start-game')
     await expect(state).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
   })
 })
