@@ -1,0 +1,12 @@
+export const FIXED_TIMESTEP_SECONDS = 1 / 60
+export const ROUND_DURATION_SECONDS = 60
+export const THE_END_SECONDS = 2
+export const ARENA_WIDTH = 800
+export const ARENA_HEIGHT = 600
+export const BASE_CATCH_RADIUS = 220
+export const RUSH_CATCH_RADIUS = 280
+export const RUSH_SECONDS = 5
+export const BASE_FLY_SCORE = 10
+export const COMBO_BONUS_SCORE = 5
+export const FLY_SPAWN_SECONDS = 0.75
+export const POWER_SPAWN_SECONDS = 8

@@ -11,7 +11,61 @@
     <title>Frogs & Flies Remake</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <main aria-labelledby="game-title">
+        <header>
+          <h1 id="game-title">Frogs &amp; Flies</h1>
+          <p
+            data-testid="game-state"
+            data-state="idle"
+            data-time-of-day="day"
+            aria-live="polite"
+          >
+            Ready
+          </p>
+        </header>
+
+        <section aria-label="Round status">
+          <dl>
+            <div>
+              <dt>Round timer</dt>
+              <dd>
+                <output
+                  data-testid="round-timer"
+                  data-target-seconds="60"
+                  aria-live="polite"
+                >
+                  60
+                </output>
+              </dd>
+            </div>
+            <div>
+              <dt>Round seed</dt>
+              <dd><output data-testid="round-seed">m0-static-shell</output></dd>
+            </div>
+            <div>
+              <dt>Score</dt>
+              <dd><output data-testid="score">0</output></dd>
+            </div>
+          </dl>
+        </section>
+
+        <section id="game-canvas-container" aria-label="Game canvas">
+          <div id="canvas-mount" data-testid="canvas-mount"></div>
+        </section>
+
+        <section aria-label="Game controls">
+          <button type="button" data-testid="start-game">Start</button>
+          <button type="button" data-testid="pause-game">Pause</button>
+          <button type="button" data-testid="resume-game">Resume</button>
+          <button type="button" data-testid="replay-game">Replay</button>
+        </section>
+
+        <section data-testid="results" aria-live="polite" aria-label="Results">
+          <p>No round results yet.</p>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
