@@ -33,6 +33,7 @@ export function createPlayerStats(): PlayerStats {
     combo: 0,
     catches: 0,
     misses: 0,
+    attempts: 0,
   }
 }
 

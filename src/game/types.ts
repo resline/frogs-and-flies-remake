@@ -61,6 +61,7 @@ export interface PlayerStats {
   combo: number
   catches: number
   misses: number
+  attempts: number
 }
 
 export interface MatchPlayerState {

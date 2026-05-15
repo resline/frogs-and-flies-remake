@@ -29,8 +29,8 @@ describe('M2 match model', () => {
 
     expect(p1.score).toBe(0)
     expect(p2.score).toBe(0)
-    expect(p1.stats).toEqual({ score: 0, combo: 0, catches: 0, misses: 0 })
-    expect(p2.stats).toEqual({ score: 0, combo: 0, catches: 0, misses: 0 })
+    expect(p1.stats).toEqual({ score: 0, combo: 0, catches: 0, misses: 0, attempts: 0 })
+    expect(p2.stats).toEqual({ score: 0, combo: 0, catches: 0, misses: 0, attempts: 0 })
     expect(p1.commands).toEqual({})
     expect(p2.commands).toEqual({})
 

@@ -1,4 +1,4 @@
-import type { GameState } from '../types'
+import type { GameCommands, GameState, PlayerState, WaterState } from '../types'
 
 const MAX_CHARGE_SECONDS = 0.45
 const BASE_JUMP_VELOCITY_Y = -560
@@ -10,40 +10,49 @@ const WATER_RECOVERY_SECONDS = 0.35
 const TONGUE_RECOVERY_SECONDS = 0.18
 const EPSILON_SECONDS = 0.000001
 
-type RuntimeTongueState = GameState['player']['tongue'] & {
+type RuntimeTongueState = PlayerState['tongue'] & {
   recoverySeconds?: number
 }
 
 export function updateCoreFeel(game: GameState, deltaSeconds: number): void {
-  updateJump(game, deltaSeconds)
-  updateWater(game, deltaSeconds)
-  updateTongue(game, deltaSeconds)
+  const player = game.players[0]?.state ?? game.player
+  const water = game.players[0]?.water ?? game.water
+  const commands = mergePrimaryCommands(game)
+
+  updateJump(commands, player, water, deltaSeconds)
+  updateWater(water, deltaSeconds)
+  for (const matchPlayer of game.players) {
+    updateTongue(matchPlayer.state, deltaSeconds)
+  }
+
+  game.player = player
+  game.water = water
 }
 
-function updateJump(game: GameState, deltaSeconds: number): void {
-  const { jump } = game.player
+function updateJump(commands: GameCommands, player: PlayerState, water: WaterState, deltaSeconds: number): void {
+  const { jump } = player
 
   if (jump.phase === 'charging') {
-    if (game.commands.releaseJump) {
-      startJump(game)
-      advanceJump(game, deltaSeconds)
+    if (commands.releaseJump) {
+      startJump(player)
+      advanceJump(player, water, deltaSeconds)
       return
     }
 
-    if (game.commands.chargeJump) {
+    if (commands.chargeJump) {
       jump.chargeSeconds = Math.min(MAX_CHARGE_SECONDS, jump.chargeSeconds + deltaSeconds)
     }
     return
   }
 
   if (jump.phase === 'idle') {
-    game.player.y = game.player.groundY
+    player.y = player.groundY
     jump.airborne = false
     jump.velocityY = 0
     jump.flightSeconds = 0
     jump.landedSeconds = 0
 
-    if (game.commands.chargeJump) {
+    if (commands.chargeJump) {
       jump.phase = 'charging'
       jump.chargeSeconds = Math.min(MAX_CHARGE_SECONDS, deltaSeconds)
     }
@@ -51,7 +60,7 @@ function updateJump(game: GameState, deltaSeconds: number): void {
   }
 
   if (jump.phase === 'jumping') {
-    advanceJump(game, deltaSeconds)
+    advanceJump(player, water, deltaSeconds)
     return
   }
 
@@ -63,8 +72,8 @@ function updateJump(game: GameState, deltaSeconds: number): void {
   }
 }
 
-function startJump(game: GameState): void {
-  const { jump } = game.player
+function startJump(player: PlayerState): void {
+  const { jump } = player
   jump.phase = 'jumping'
   jump.airborne = true
   jump.velocityY = BASE_JUMP_VELOCITY_Y + CHARGE_JUMP_VELOCITY_Y * Math.min(jump.chargeSeconds, MAX_CHARGE_SECONDS)
@@ -72,55 +81,54 @@ function startJump(game: GameState): void {
   jump.landedSeconds = 0
 }
 
-function advanceJump(game: GameState, deltaSeconds: number): void {
-  const { jump } = game.player
+function advanceJump(player: PlayerState, water: WaterState, deltaSeconds: number): void {
+  const { jump } = player
   jump.flightSeconds += deltaSeconds
 
   const flightY = jump.velocityY * jump.flightSeconds + 0.5 * JUMP_GRAVITY * jump.flightSeconds * jump.flightSeconds
-  game.player.y = game.player.groundY + flightY
+  player.y = player.groundY + flightY
 
-  if (game.player.y >= game.player.groundY) {
-    game.player.y = game.player.groundY
+  if (player.y >= player.groundY) {
+    player.y = player.groundY
     jump.phase = 'landed'
     jump.airborne = false
     jump.velocityY = 0
     jump.flightSeconds = 0
     jump.landedSeconds = 0
-    startWaterSplash(game)
+    startWaterSplash(water)
   }
 }
 
-function startWaterSplash(game: GameState): void {
-  game.water.phase = 'splash'
-  game.water.splashSeconds = 0
-  game.water.recoverySeconds = 0
+function startWaterSplash(water: WaterState): void {
+  water.phase = 'splash'
+  water.splashSeconds = 0
+  water.recoverySeconds = 0
 }
 
-function updateWater(game: GameState, deltaSeconds: number): void {
-  if (game.water.phase === 'splash') {
-    game.water.splashSeconds += deltaSeconds
-    if (game.water.splashSeconds + EPSILON_SECONDS >= SPLASH_SECONDS) {
-      game.water.phase = 'recovery'
-      game.water.recoverySeconds = 0
+function updateWater(water: WaterState, deltaSeconds: number): void {
+  if (water.phase === 'splash') {
+    water.splashSeconds += deltaSeconds
+    if (water.splashSeconds + EPSILON_SECONDS >= SPLASH_SECONDS) {
+      water.phase = 'recovery'
+      water.recoverySeconds = 0
     }
     return
   }
 
-  if (game.water.phase === 'recovery') {
-    game.water.recoverySeconds += deltaSeconds
-    if (game.water.recoverySeconds + EPSILON_SECONDS >= WATER_RECOVERY_SECONDS) {
-      game.water.phase = 'calm'
-      game.water.splashSeconds = 0
-      game.water.recoverySeconds = 0
+  if (water.phase === 'recovery') {
+    water.recoverySeconds += deltaSeconds
+    if (water.recoverySeconds + EPSILON_SECONDS >= WATER_RECOVERY_SECONDS) {
+      water.phase = 'calm'
+      water.splashSeconds = 0
+      water.recoverySeconds = 0
     }
   }
 }
 
-function updateTongue(game: GameState, deltaSeconds: number): void {
-  const tongue = game.player.tongue as RuntimeTongueState
+function updateTongue(player: PlayerState, deltaSeconds: number): void {
+  const tongue = player.tongue as RuntimeTongueState
 
   if (tongue.phase !== 'recovering') {
-    tongue.recoverySeconds = 0
     return
   }
 
@@ -130,6 +138,15 @@ function updateTongue(game: GameState, deltaSeconds: number): void {
   }
 
   tongue.phase = 'ready'
-  tongue.result = undefined
-  tongue.recoverySeconds = 0
+  delete tongue.result
+  delete tongue.recoverySeconds
+}
+
+function mergePrimaryCommands(game: GameState): GameCommands {
+  const playerCommands = game.players[0]?.commands ?? {}
+  return {
+    ...playerCommands,
+    chargeJump: Boolean(game.commands.chargeJump || playerCommands.chargeJump),
+    releaseJump: Boolean(game.commands.releaseJump || playerCommands.releaseJump),
+  }
 }
