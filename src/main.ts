@@ -5,6 +5,14 @@ import { createGame } from './game/createGame'
 import { createFixedStep } from './game/fixedStep'
 import { buildResults } from './game/match'
 import { updateGame } from './game/update'
+import {
+  applyRuntimeInput,
+  applyRuntimePointerInput,
+  createRuntimeInputState,
+  handleRuntimeKeyDown,
+  handleRuntimeKeyUp,
+  type RuntimeInputAction,
+} from './runtime/input'
 import { readRuntimeParams, type RuntimeParams } from './runtime/params'
 import type { GameState, TimeOfDay } from './game/types'
 import type { Texture } from 'pixi.js'
@@ -53,6 +61,22 @@ const GENERATED_GAMEPLAY_ASSET_PATHS = [
   '/assets/fly.png',
   '/assets/power.png',
 ] as const
+const RUNTIME_PREVENT_DEFAULT_CODES = new Set([
+  'ArrowLeft',
+  'ArrowRight',
+  'KeyA',
+  'KeyD',
+  'Space',
+  'KeyT',
+  'KeyJ',
+  'KeyL',
+  'KeyI',
+  'KeyO',
+  'Enter',
+  'KeyP',
+  'Digit1',
+  'Digit2',
+])
 
 const params = readRuntimeParams(new URLSearchParams(window.location.search))
 const appRoot = document.querySelector<HTMLElement>('#app')
@@ -65,13 +89,10 @@ void boot(appRoot, params)
 
 async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<void> {
   const dom = createDomState(root)
-  let game = createInitialGame(runtimeParams)
+  let currentRuntimeParams = runtimeParams
+  let game = createInitialGame(currentRuntimeParams)
   let fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
-  let pendingFire = false
-  let pendingTongue = false
-  let pendingJumpRelease = false
-  const heldKeys = new Set<string>()
-  const heldJumpKeys = new Set<string>()
+  const runtimeInput = createRuntimeInputState()
   let scene: RenderScene | undefined
 
   const refresh = () => {
@@ -81,6 +102,17 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
     }
   }
 
+  const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
+    currentRuntimeParams = nextRuntimeParams
+    game = createGame(currentRuntimeParams)
+    fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
+    if (start) {
+      game.commands.start = true
+      updateGame(game, 0)
+    }
+    refresh()
+  }
+
   const runCommand = (command: 'start' | 'pause' | 'resume') => {
     game.commands[command] = true
     updateGame(game, 0)
@@ -88,11 +120,31 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
   }
 
   const replay = () => {
-    game = createGame(runtimeParams)
-    fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
-    game.commands.start = true
-    updateGame(game, 0)
-    refresh()
+    resetGame(currentRuntimeParams, true)
+  }
+
+  const runRuntimeAction = (action: RuntimeInputAction | undefined) => {
+    if (!action) {
+      return
+    }
+
+    if (action.type === 'start') {
+      if (game.phase === 'pause') {
+        runCommand('resume')
+      } else if (game.phase === 'results') {
+        replay()
+      } else {
+        runCommand('start')
+      }
+      return
+    }
+
+    if (action.type === 'pause-toggle') {
+      runCommand(game.phase === 'pause' ? 'resume' : 'pause')
+      return
+    }
+
+    resetGame({ ...currentRuntimeParams, mode: action.mode })
   }
 
   dom.startButton.addEventListener('click', () => {
@@ -107,43 +159,19 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
   dom.replayButton.addEventListener('click', replay)
 
   window.addEventListener('keydown', (event) => {
-    heldKeys.add(event.code)
-
-    if (event.code === 'Enter') {
+    if (RUNTIME_PREVENT_DEFAULT_CODES.has(event.code)) {
       event.preventDefault()
-      if (game.phase === 'pause') {
-        runCommand('resume')
-      } else if (game.phase === 'results') {
-        replay()
-      } else {
-        runCommand('start')
-      }
     }
 
-    if (event.code === 'KeyP') {
-      event.preventDefault()
-      runCommand(game.phase === 'pause' ? 'resume' : 'pause')
-    }
-
-    if (event.code === 'Space') {
-      event.preventDefault()
-      heldJumpKeys.add(event.code)
-    }
-
-    if (event.code === 'KeyT') {
-      event.preventDefault()
-      pendingTongue = true
-    }
+    runRuntimeAction(handleRuntimeKeyDown(runtimeInput, event.code))
   })
 
   window.addEventListener('keyup', (event) => {
-    heldKeys.delete(event.code)
-
-    if (event.code === 'Space') {
+    if (RUNTIME_PREVENT_DEFAULT_CODES.has(event.code)) {
       event.preventDefault()
-      heldJumpKeys.delete(event.code)
-      pendingJumpRelease = true
     }
+
+    handleRuntimeKeyUp(runtimeInput, event.code)
   })
 
   const app = new Application()
@@ -177,9 +205,7 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
     const bounds = app.canvas.getBoundingClientRect()
     const pointerX = ((event.clientX - bounds.left) / bounds.width) * ARENA_WIDTH
 
-    game.player.x = clamp(pointerX, game.player.radius, game.constants.arenaWidth - game.player.radius)
-    pendingFire = true
-    pendingTongue = true
+    applyRuntimePointerInput(game, runtimeInput, pointerX)
 
     if (game.phase === 'start') {
       runCommand('start')
@@ -192,15 +218,7 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
     const deltaSeconds = Math.min(ticker.deltaMS / 1000, 0.25)
 
     fixedStep.advance(deltaSeconds, () => {
-      game.commands.moveLeft = heldKeys.has('ArrowLeft') || heldKeys.has('KeyA')
-      game.commands.moveRight = heldKeys.has('ArrowRight') || heldKeys.has('KeyD')
-      game.commands.chargeJump = heldJumpKeys.size > 0
-      game.commands.releaseJump = pendingJumpRelease
-      game.commands.tongue = pendingTongue
-      game.commands.fire = pendingFire
-      pendingJumpRelease = false
-      pendingTongue = false
-      pendingFire = false
+      applyRuntimeInput(game, runtimeInput)
       updateGame(game, FIXED_TIMESTEP_SECONDS)
     })
 
@@ -739,8 +757,4 @@ function paletteFor(timeOfDay: TimeOfDay): {
   }
 
   return { sky: 0x79c7d2, water: 0x147887, hud: 0x06353a, ripple: 0xd9fff0 }
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
 }
