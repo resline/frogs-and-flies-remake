@@ -1,9 +1,17 @@
-import { Graphics } from 'pixi.js'
+import { Sprite, Graphics } from 'pixi.js'
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchPlayerState, PlayerState } from '../game/types'
+import type { GeneratedGameplayAssets } from '../runtime/assets'
 import { paletteFor } from './palette'
 
 export type RenderEffectMarker = 'catch' | 'miss' | 'splash' | 'score'
+
+export type BitmapEffectSprites = {
+  splash: Sprite
+  catchPop: Sprite
+  tongueFlash: Sprite
+  fireflyEnd: Sprite
+}
 
 export type RenderEffectState = {
   lastEffect?: RenderEffectMarker
@@ -15,6 +23,21 @@ export function createRenderEffectState(): RenderEffectState {
   return {
     previousScores: new Map(),
     previousVisibleScores: new Map(),
+  }
+}
+
+export function createBitmapEffectSprites(): BitmapEffectSprites {
+  return {
+    splash: createEffectSprite('splash-ring'),
+    catchPop: createEffectSprite('catch-pop'),
+    tongueFlash: createEffectSprite('tongue-flash'),
+    fireflyEnd: createEffectSprite('firefly-end'),
+  }
+}
+
+export function hideBitmapEffectSprites(sprites: BitmapEffectSprites): void {
+  for (const sprite of Object.values(sprites)) {
+    sprite.visible = false
   }
 }
 
@@ -33,6 +56,20 @@ export function drawEffects(scene: Graphics, game: GameState, state: RenderEffec
 
   state.lastEffect = lastEffect ?? state.lastEffect
   return state.lastEffect
+}
+
+export function drawBitmapEffectSprites(
+  sprites: BitmapEffectSprites,
+  game: GameState,
+  state: RenderEffectState,
+  assets: GeneratedGameplayAssets,
+): void {
+  hideBitmapEffectSprites(sprites)
+  drawBitmapTongueFlash(sprites, game, assets)
+  drawBitmapCatchPop(sprites, game, assets)
+  drawBitmapSplash(sprites, game, assets)
+  drawBitmapEndFirefly(sprites, game, assets)
+  state.lastEffect = state.lastEffect
 }
 
 function drawArenaEffects(scene: Graphics, game: GameState): void {
@@ -76,6 +113,74 @@ function drawTongueEffects(scene: Graphics, game: GameState): void {
     scene.stroke({ width: tongue.result === 'catch' ? 6 : 4, color, alpha })
     scene.circle(tongue.tipX, tongue.tipY, tongue.result === 'catch' ? 12 : 8).fill({ color, alpha: tongue.result ? 0.28 : 0.16 })
   }
+}
+
+function drawBitmapTongueFlash(sprites: BitmapEffectSprites, game: GameState, assets: GeneratedGameplayAssets): void {
+  const player = getRenderPlayers(game).find(({ state }) => state.tongue.phase === 'extended' || state.tongue.phase === 'recovering')
+  if (!player) {
+    return
+  }
+
+  const tongue = player.state.tongue
+  const dx = tongue.tipX - tongue.originX
+  const dy = tongue.tipY - tongue.originY
+  const distance = Math.max(28, Math.hypot(dx, dy))
+
+  sprites.tongueFlash.visible = true
+  sprites.tongueFlash.texture = assets.tongueFlash
+  sprites.tongueFlash.position.set(tongue.originX + dx * 0.5, tongue.originY + dy * 0.5)
+  sprites.tongueFlash.width = distance
+  sprites.tongueFlash.height = 18
+  sprites.tongueFlash.rotation = Math.atan2(dy, dx)
+  sprites.tongueFlash.alpha = tongue.phase === 'extended' ? 0.76 : 0.42
+}
+
+function drawBitmapCatchPop(sprites: BitmapEffectSprites, game: GameState, assets: GeneratedGameplayAssets): void {
+  const player = getRenderPlayers(game).find(({ state }) => state.tongue.result === 'catch')
+  if (!player) {
+    return
+  }
+
+  sprites.catchPop.visible = true
+  sprites.catchPop.texture = assets.catchPop
+  sprites.catchPop.position.set(player.state.tongue.tipX, player.state.tongue.tipY)
+  sprites.catchPop.width = 56
+  sprites.catchPop.height = 56
+  sprites.catchPop.rotation = game.elapsedSeconds * 4
+  sprites.catchPop.alpha = 0.82
+}
+
+function drawBitmapSplash(sprites: BitmapEffectSprites, game: GameState, assets: GeneratedGameplayAssets): void {
+  const player = getRenderPlayers(game).find(({ matchPlayer }) => matchPlayer.water.phase === 'splash')
+  if (!player) {
+    return
+  }
+
+  const progress = Math.min(1, player.matchPlayer.water.splashSeconds / 0.3)
+  const size = 92 + progress * 74
+
+  sprites.splash.visible = true
+  sprites.splash.texture = assets.splashRing
+  sprites.splash.position.set(player.state.x, player.state.groundY + 10)
+  sprites.splash.width = size
+  sprites.splash.height = size
+  sprites.splash.alpha = 0.76 - progress * 0.24
+}
+
+function drawBitmapEndFirefly(sprites: BitmapEffectSprites, game: GameState, assets: GeneratedGameplayAssets): void {
+  if (game.phase !== 'the-end' && game.phase !== 'results') {
+    return
+  }
+
+  const pulse = game.phase === 'the-end' ? Math.min(1, game.theEndElapsedSeconds / Math.max(0.1, game.theEndSeconds)) : 1
+  const size = 96 + pulse * 40
+
+  sprites.fireflyEnd.visible = true
+  sprites.fireflyEnd.texture = assets.fireflyEnd
+  sprites.fireflyEnd.position.set(ARENA_WIDTH / 2, ARENA_HEIGHT / 2 - 62)
+  sprites.fireflyEnd.width = size
+  sprites.fireflyEnd.height = size
+  sprites.fireflyEnd.alpha = 0.84
 }
 
 function drawScoreEffects(scene: Graphics, game: GameState, state: RenderEffectState, consumeScoreIncrease: boolean): void {
@@ -159,4 +264,12 @@ function getRenderPlayers(game: GameState): { matchPlayer: MatchPlayerState; sta
     matchPlayer,
     state: index === 0 ? game.player : matchPlayer.state,
   }))
+}
+
+function createEffectSprite(label: string): Sprite {
+  const sprite = new Sprite()
+  sprite.anchor.set(0.5)
+  sprite.visible = false
+  sprite.label = label
+  return sprite
 }

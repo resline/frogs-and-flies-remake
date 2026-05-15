@@ -62,3 +62,39 @@ python "${CODEX_HOME:-$HOME/.codex}/skills/.system/imagegen/scripts/remove_chrom
 ```
 
 Then the files were trimmed with `convert -trim +repage`.
+
+## M2.5 Home Pond Vertical Slice Assets
+
+No live OpenAI API calls were made during M2.5 implementation.
+
+All M2.5 files below are hand-authored local SVG stand-ins rendered to PNG with:
+
+```bash
+mkdir -p public/assets/source/m25 test-results/m25-assets
+node scripts/build-m25-assets.mjs
+node scripts/build-m25-assets.mjs --check
+```
+
+The local renderer uses Playwright Chromium against `file://` SVG sources, aborts HTTP/HTTPS requests, and writes transparent PNG screenshots for sprite assets.
+
+| Output | Source | Prompt/provenance | Dimensions | Transparency | File size |
+| --- | --- | --- | --- | --- | --- |
+| `public/assets/home-pond-background.png` | `public/assets/source/m25/home-pond-background.svg` | Local SVG Home Pond background with water, reeds, and readable play area. | `1600x1200` | opaque | 427,734 bytes |
+| `public/assets/lily-left.png` | `public/assets/source/m25/lily-left.svg` | Local SVG left staging lily, oriented toward center. | `256x192` | transparent | 19,829 bytes |
+| `public/assets/lily-right.png` | `public/assets/source/m25/lily-right.svg` | Local SVG right staging lily, oriented toward center. | `256x192` | transparent | 20,297 bytes |
+| `public/assets/frog-p1-idle.png` | `public/assets/source/m25/frog-p1-idle.svg` | Local SVG P1 idle frog, facing right, blue-green accents. | `256x256` | transparent | 9,117 bytes |
+| `public/assets/frog-p1-crouch.png` | `public/assets/source/m25/frog-p1-crouch.svg` | Local SVG P1 compressed jump-charge frog, facing right. | `256x256` | transparent | 8,698 bytes |
+| `public/assets/frog-p1-airborne.png` | `public/assets/source/m25/frog-p1-airborne.svg` | Local SVG P1 airborne frog, facing right. | `256x256` | transparent | 9,115 bytes |
+| `public/assets/frog-p1-tongue.png` | `public/assets/source/m25/frog-p1-tongue.svg` | Local SVG P1 tongue pose, facing right, with partial tongue cue. | `256x256` | transparent | 9,039 bytes |
+| `public/assets/frog-p1-splash.png` | `public/assets/source/m25/frog-p1-splash.svg` | Local SVG P1 splash/recovery silhouette, facing right. | `256x256` | transparent | 9,623 bytes |
+| `public/assets/frog-p2-idle.png` | `public/assets/source/m25/frog-p2-idle.svg` | Local SVG P2 idle frog, facing left, amber-green accents. | `256x256` | transparent | 9,107 bytes |
+| `public/assets/frog-p2-crouch.png` | `public/assets/source/m25/frog-p2-crouch.svg` | Local SVG P2 compressed jump-charge frog, facing left. | `256x256` | transparent | 8,718 bytes |
+| `public/assets/frog-p2-airborne.png` | `public/assets/source/m25/frog-p2-airborne.svg` | Local SVG P2 airborne frog, facing left. | `256x256` | transparent | 9,086 bytes |
+| `public/assets/frog-p2-tongue.png` | `public/assets/source/m25/frog-p2-tongue.svg` | Local SVG P2 tongue pose, facing left, with partial tongue cue. | `256x256` | transparent | 8,914 bytes |
+| `public/assets/frog-p2-splash.png` | `public/assets/source/m25/frog-p2-splash.svg` | Local SVG P2 splash/recovery silhouette, facing left. | `256x256` | transparent | 9,602 bytes |
+| `public/assets/fly-wing-a.png` | `public/assets/source/m25/fly-wing-a.svg` | Local SVG readable fly with wings up. | `96x96` | transparent | 2,932 bytes |
+| `public/assets/fly-wing-b.png` | `public/assets/source/m25/fly-wing-b.svg` | Local SVG matching fly with wings down. | `96x96` | transparent | 2,531 bytes |
+| `public/assets/firefly-end.png` | `public/assets/source/m25/firefly-end.svg` | Local SVG warm THE END firefly glow sprite. | `128x128` | transparent | 19,754 bytes |
+| `public/assets/splash-ring.png` | `public/assets/source/m25/splash-ring.svg` | Local SVG expanding water ring effect. | `192x192` | transparent | 7,185 bytes |
+| `public/assets/catch-pop.png` | `public/assets/source/m25/catch-pop.svg` | Local SVG small catch burst/pop effect. | `128x128` | transparent | 2,965 bytes |
+| `public/assets/tongue-flash.png` | `public/assets/source/m25/tongue-flash.svg` | Local SVG short tongue highlight/flash effect. | `128x64` | transparent | 1,897 bytes |

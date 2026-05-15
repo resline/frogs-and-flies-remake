@@ -32,6 +32,15 @@ export function drawProceduralEntities(scene: Graphics, game: GameState): void {
       scene.circle(entity.x, entity.y, entity.radius * 0.48).fill({ color: 0x6fe86c })
     }
   }
+
+  if (game.phase === 'start' && game.entityIds.length === 0) {
+    const wingAlpha = 0.68 + Math.sin(game.elapsedSeconds * 12) * 0.08
+    scene.ellipse(384, 220, 22, 11).fill({ color: 0xdff3ff, alpha: wingAlpha })
+    scene.ellipse(424, 220, 22, 11).fill({ color: 0xdff3ff, alpha: wingAlpha })
+    scene.ellipse(404, 240, 18, 14).fill({ color: 0x171410 })
+    scene.circle(416, 232, 8).fill({ color: 0x2d2119 })
+    scene.circle(420, 229, 3).fill({ color: 0xffe36a })
+  }
 }
 
 export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, assets: GeneratedGameplayAssets): void {
@@ -40,20 +49,21 @@ export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, ass
   for (const [index, player] of getRenderPlayers(game).entries()) {
     const id = player.matchPlayer.id
     activeIds.add(id)
+    const texture = bitmapPlayerTexture(assets, player.matchPlayer.id, player.state)
 
     let sprite = state.playerSprites.get(id)
     if (!sprite) {
-      sprite = new Sprite({ texture: assets.frog, anchor: 0.5 })
+      sprite = new Sprite({ texture, anchor: 0.5 })
       state.playerSprites.set(id, sprite)
       state.entities.addChild(sprite)
     }
 
     sprite.visible = true
-    sprite.texture = assets.frog
+    sprite.texture = texture
     sprite.position.set(player.state.x, player.state.y + bitmapPhaseYOffset(player.state))
-    sprite.width = player.state.radius * 3.2 * bitmapPhaseScaleX(player.state)
-    sprite.height = player.state.radius * 3.2 * bitmapPhaseScaleY(player.state)
-    sprite.tint = player.matchPlayer.power.remainingSeconds > 0 || (index === 0 && game.power.remainingSeconds > 0) ? 0xdfff9e : playerTint(index)
+    sprite.width = player.state.radius * 3.8 * bitmapPhaseScaleX(player.state)
+    sprite.height = player.state.radius * 3.8 * bitmapPhaseScaleY(player.state)
+    sprite.tint = player.matchPlayer.power.remainingSeconds > 0 || (index === 0 && game.power.remainingSeconds > 0) ? 0xdfff9e : 0xffffff
   }
 
   for (const [id, sprite] of state.playerSprites) {
@@ -86,11 +96,31 @@ export function drawBitmapEntities(state: EntitySpriteState, game: GameState, as
     }
 
     sprite.visible = true
-    sprite.texture = entity.kind === 'fly' ? assets.fly : assets.power
+    sprite.texture = bitmapEntityTexture(assets, game, entity.id, entity.kind)
     sprite.position.set(entity.x, entity.y)
-    sprite.width = entity.kind === 'fly' ? entity.radius * 4.4 : entity.radius * 3.2
-    sprite.height = entity.kind === 'fly' ? entity.radius * 3.2 : entity.radius * 3.2
+    sprite.width = entity.kind === 'fly' ? entity.radius * 4.8 : entity.radius * 3.2
+    sprite.height = entity.kind === 'fly' ? entity.radius * 3.7 : entity.radius * 3.2
     sprite.rotation = entity.kind === 'fly' ? Math.sin((entity.x + entity.y) * 0.02) * 0.08 : 0
+    sprite.tint = 0xffffff
+  }
+
+  if (game.phase === 'start' && activeIds.size === 0) {
+    const previewFlyId = -1
+    activeIds.add(previewFlyId)
+
+    let sprite = state.entitySprites.get(previewFlyId)
+    if (!sprite) {
+      sprite = new Sprite({ anchor: 0.5 })
+      state.entitySprites.set(previewFlyId, sprite)
+      state.entities.addChild(sprite)
+    }
+
+    sprite.visible = true
+    sprite.texture = bitmapEntityTexture(assets, game, previewFlyId, 'fly')
+    sprite.position.set(ARENA_PREVIEW_FLY_X, ARENA_PREVIEW_FLY_Y)
+    sprite.width = 86
+    sprite.height = 66
+    sprite.rotation = Math.sin(game.elapsedSeconds * 8) * 0.08
     sprite.tint = 0xffffff
   }
 
@@ -105,6 +135,9 @@ export function drawBitmapEntities(state: EntitySpriteState, game: GameState, as
   }
 }
 
+const ARENA_PREVIEW_FLY_X = 400
+const ARENA_PREVIEW_FLY_Y = 245
+
 export function hideBitmapEntities(state: EntitySpriteState): void {
   for (const sprite of state.entitySprites.values()) {
     sprite.visible = false
@@ -112,6 +145,41 @@ export function hideBitmapEntities(state: EntitySpriteState): void {
   for (const sprite of state.playerSprites.values()) {
     sprite.visible = false
   }
+}
+
+function bitmapPlayerTexture(assets: GeneratedGameplayAssets, playerId: MatchPlayerState['id'], player: PlayerState) {
+  const prefix = playerId === 'p1' ? 'frogP1' : 'frogP2'
+
+  if (player.tongue.phase === 'extended' || player.tongue.phase === 'recovering') {
+    return prefix === 'frogP1' ? assets.frogP1Tongue : assets.frogP2Tongue
+  }
+
+  if (player.phase === 'charging') {
+    return prefix === 'frogP1' ? assets.frogP1Crouch : assets.frogP2Crouch
+  }
+
+  if (player.phase === 'airborne') {
+    return prefix === 'frogP1' ? assets.frogP1Airborne : assets.frogP2Airborne
+  }
+
+  if (player.phase === 'splashing' || player.phase === 'recovering') {
+    return prefix === 'frogP1' ? assets.frogP1Splash : assets.frogP2Splash
+  }
+
+  return prefix === 'frogP1' ? assets.frogP1Idle : assets.frogP2Idle
+}
+
+function bitmapEntityTexture(
+  assets: GeneratedGameplayAssets,
+  game: GameState,
+  entityId: number,
+  entityKind: GameState['entities'][number]['kind'],
+) {
+  if (entityKind !== 'fly') {
+    return assets.fireflyEnd
+  }
+
+  return Math.floor(game.elapsedSeconds * 12 + entityId) % 2 === 0 ? assets.flyWingA : assets.flyWingB
 }
 
 function drawProceduralPlayer(scene: Graphics, player: PlayerState, matchPlayer: MatchPlayerState, index: number): void {

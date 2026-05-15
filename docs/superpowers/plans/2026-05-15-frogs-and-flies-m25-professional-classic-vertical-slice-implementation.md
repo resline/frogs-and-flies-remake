@@ -551,17 +551,17 @@ Expected: only difficulty/options files plus tests and docs. Commit message: `fe
 - Create: `public/assets/source/m25/tongue-flash.svg`
 - Create: `scripts/build-m25-assets.mjs`
 
-- [ ] **Step 1: Write failing asset-load E2E assertions**
+- [x] **Step 1: Write failing asset-load E2E assertions**
 
 In `tests/e2e/m25-classic-vertical-slice.spec.ts`, add a test that loads `/?seed=25&durationSeconds=3&theEndSeconds=0.1`, waits for `game-canvas`, and expects `data-assets-loaded` to contain `home-pond-background.png`, `lily-left.png`, `lily-right.png`, `frog-p1-idle.png`, `frog-p2-idle.png`, `fly-wing-a.png`, and `firefly-end.png`.
 
-- [ ] **Step 2: Run red asset E2E test**
+- [x] **Step 2: Run red asset E2E test**
 
 Run: `npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
 
 Expected fail: missing test ids or `data-assets-loaded` does not include expanded M2.5 paths.
 
-- [ ] **Step 3: Add or process assets without live API calls**
+- [x] **Step 3: Add or process assets without live API calls**
 
 Use the exact `M2.5 Asset Source And Processing Map` above.
 
@@ -577,7 +577,7 @@ Expected pass: command exits `0`, writes the 19 PNG outputs listed in the map, p
 
 If human-supplied PNGs are used instead, place them at the exact `public/assets/*.png` output paths in the table, still create or keep source/provenance notes in `ASSET_MANIFEST.md`, and still run `node scripts/build-m25-assets.mjs --check`.
 
-- [ ] **Step 4: Update asset manifest**
+- [x] **Step 4: Update asset manifest**
 
 Document each M2.5 asset path from the table, its exact source path or supplied-file provenance, prompt if available, local processing command, dimensions, transparency status, and file-size note. Add an explicit line: `No live OpenAI API calls were made during M2.5 implementation.`
 
@@ -587,15 +587,15 @@ Run:
 
 Expected pass: all 19 required PNGs exist, dimensions match the table, `home-pond-background.png` is opaque, the other 18 assets have alpha transparency, and each file is recorded in `ASSET_MANIFEST.md`.
 
-- [ ] **Step 5: Update runtime asset loader**
+- [x] **Step 5: Update runtime asset loader**
 
 Expand `GENERATED_GAMEPLAY_ASSET_PATHS` and `GeneratedGameplayAssets` in `src/runtime/assets.ts`. Keep graceful fallback if any optional visual fails; core gameplay must remain playable.
 
-- [ ] **Step 6: Wire animation stand-ins**
+- [x] **Step 6: Wire animation stand-ins**
 
 Render frog idle/crouch/airborne/tongue/splash by player phase, deterministic fly wing frames from entity id plus simulation elapsed, splash/catch/tongue sprites or procedural fallback, and firefly/THE END visual treatment.
 
-- [ ] **Step 7: Visual QA generated asset set**
+- [x] **Step 7: Visual QA generated asset set**
 
 Start preview-quality local rendering:
 
@@ -615,19 +615,19 @@ Expected pass: screenshot exists at `test-results/m25-assets/classic-assets.png`
 
 Manual visual gate: open `test-results/m25-assets/classic-assets.png` and confirm sprites are not cropped incorrectly, transparent PNGs do not show solid boxes, P1 faces right, P2 faces left, and HUD/controls do not cover the side-lily staging area at `1366x768`.
 
-- [ ] **Step 8: Run focused render tests**
+- [x] **Step 8: Run focused render tests**
 
 Run: `npm run test:unit -- tests/unit/renderLayers.test.ts tests/unit/renderEffects.test.ts`
 
 Expected pass: render layer/effect contracts pass and exit `0`.
 
-- [ ] **Step 9: Run green asset E2E**
+- [x] **Step 9: Run green asset E2E**
 
 Run: `npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
 
 Expected pass: expanded assets load, `data-assets-loaded` includes the required asset filenames from Step 1, canvas is visible, and test exits `0`.
 
-- [ ] **Step 10: Commit boundary**
+- [x] **Step 10: Commit boundary**
 
 Run: `git status --short`
 
