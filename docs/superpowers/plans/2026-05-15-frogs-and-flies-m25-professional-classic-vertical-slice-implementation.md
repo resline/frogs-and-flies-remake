@@ -821,33 +821,33 @@ Expected: deterministic replay, E2E, params/app/docs only. Commit message: `test
 - Modify: `README.md`
 - Modify only if required by failing verification: `Dockerfile`, `nginx.conf`, `.dockerignore`
 
-- [ ] **Step 1: Build production app**
+- [x] **Step 1: Build production app**
 
 Run: `npm run build`
 
 Expected pass: `tsc && vite build` exits `0`.
 
-- [ ] **Step 2: Build Docker image**
+- [x] **Step 2: Build Docker image**
 
 Run: `docker build -t frogs-and-flies-m25-classic-vertical-slice .`
 
 Expected pass: Docker reaches final export and exits `0`.
 
-- [ ] **Step 3: Run Docker container locally**
+- [x] **Step 3: Run Docker container locally**
 
-Run: `docker run --rm -p 8080:80 frogs-and-flies-m25-classic-vertical-slice`
+Run: `docker run --rm -p 18080:80 frogs-and-flies-m25-classic-vertical-slice` because local `8080` is occupied by `bpm-backend`.
 
-Expected: container serves nginx on `http://127.0.0.1:8080`.
+Expected: container serves nginx on `http://127.0.0.1:18080`.
 
-- [ ] **Step 4: Smoke Docker-served build**
+- [x] **Step 4: Smoke Docker-served build**
 
 Run in another terminal if Playwright base URL can be overridden:
 
-`PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
+`PLAYWRIGHT_BASE_URL=http://127.0.0.1:18080 npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
 
-Expected pass: M2.5 E2E file passes against Docker-served production build. If config does not support `PLAYWRIGHT_BASE_URL`, perform the manual smoke from Task 9 against `http://127.0.0.1:8080`.
+Expected pass: M2.5 E2E file passes against Docker-served production build. If config does not support `PLAYWRIGHT_BASE_URL`, perform the manual smoke from Task 9 against `http://127.0.0.1:18080`.
 
-- [ ] **Step 5: Document Coolify verification**
+- [x] **Step 5: Document Coolify verification**
 
 Update `README.md` with exact Coolify checks:
 
@@ -857,7 +857,7 @@ Update `README.md` with exact Coolify checks:
 - Manual smoke URL uses `?durationSeconds=3&theEndSeconds=0.1&simulationSpeed=20`.
 - Verify assets under `/assets/...` and optional audio under `/audio/...` return `200`.
 
-- [ ] **Step 6: Commit boundary**
+- [x] **Step 6: Commit boundary**
 
 Run: `git status --short`
 

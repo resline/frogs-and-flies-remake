@@ -81,6 +81,15 @@ docker run --rm -p 8080:80 frogs-and-flies-remake
 
 The Docker image builds the app with Node 22 Alpine and serves `dist` from nginx 1.27 Alpine using `nginx.conf`.
 
+Coolify / Docker verification:
+
+- Build with the repository `Dockerfile`; the container serves nginx on published container port `80`.
+- Configure the health check to load `/`.
+- Manual smoke URL: `/?durationSeconds=3&theEndSeconds=0.1&simulationSpeed=20`.
+- Verify required assets return `200`, for example `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, and `/assets/fly-wing-a.png`.
+- If optional audio files are deployed, verify the expected `/audio/...` files return `200`.
+- For local Docker verification, substitute the host port when `8080` is occupied, for example `docker run --rm -p 18080:80 frogs-and-flies-remake`.
+
 ## Assets
 
 Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). In the current verified M2, `public/assets/pond-arena.png`, `frog.png`, `fly.png`, and `power.png` are loaded into gameplay through Pixi `Assets`; procedural rendering remains available as fallback and for overlays. `public/favicon.png` is referenced by the app shell.
