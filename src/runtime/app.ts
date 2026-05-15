@@ -65,7 +65,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     }
     syncDom(dom, game, currentRuntimeParams.options, audio.getState())
     if (scene) {
-      syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game))
+      syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game, currentRuntimeParams.options))
     }
   }
 
@@ -334,6 +334,8 @@ function syncCanvasRenderMarkers(canvas: HTMLCanvasElement | undefined, markers:
   }
 
   canvas.setAttribute('data-render-layers', markers.layerNames)
+  canvas.setAttribute('data-render-reduced-motion', String(markers.reducedMotion))
+  canvas.setAttribute('data-render-high-contrast', String(markers.highContrast))
   if (markers.lastEffect) {
     canvas.setAttribute('data-last-effect', markers.lastEffect)
   }

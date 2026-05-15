@@ -6,6 +6,9 @@ import type { RuntimeOptions } from './options'
 export type DomState = {
   shell: HTMLElement
   gameHost: HTMLElement
+  hud: HTMLElement
+  controls: HTMLElement
+  chromeLayoutKey?: string
   canvas?: HTMLCanvasElement
   state: HTMLElement
   score: HTMLElement
@@ -45,9 +48,12 @@ export function createDomState(root: HTMLElement): DomState {
   const hud = getOrCreate(root, 'div', 'm0-hud', shell)
   const controls = getOrCreate(root, 'div', 'm0-controls', shell)
 
-  if (shell.tagName !== 'MAIN') {
-    shell.classList.add('game-shell')
-  }
+  shell.classList.add('game-shell')
+  shell.setAttribute('data-testid', 'm25-shell')
+  hud.setAttribute('data-testid', 'm25-hud')
+  hud.setAttribute('aria-label', 'Round status')
+  controls.setAttribute('data-testid', 'm25-controls')
+  controls.setAttribute('aria-label', 'Match controls')
   shell.style.position = 'relative'
 
   styleHud(hud)
@@ -66,29 +72,43 @@ export function createDomState(root: HTMLElement): DomState {
   const results = getOrCreateTestElement(root, 'results', 'section', hud)
   const theEnd = getOrCreateTestElement(root, 'the-end', 'div', hud)
 
-  const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', controls)
-  const localVersusButton = getOrCreateButton(root, 'mode-local-versus', 'Local Versus', controls)
-  const startButton = getOrCreateButton(root, 'start-game', 'Start', controls)
-  const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', controls)
-  const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', controls)
-  const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', controls)
+  const modeControls = getOrCreate(root, 'div', 'm25-mode-controls', controls)
+  const difficultyControls = getOrCreate(root, 'div', 'm25-difficulty-controls', controls)
+  const actionControls = getOrCreate(root, 'div', 'm25-action-controls', controls)
+  const audioControls = getOrCreate(root, 'div', 'm25-audio-controls', controls)
+  const replayControls = getOrCreate(root, 'div', 'm25-replay-controls', controls)
+  const secondaryControls = getOrCreate(root, 'div', 'm25-secondary-controls', controls)
   const options = getOrCreate(root, 'div', 'm25-options', controls)
-  const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', options)
-  const difficultyClassicStandardButton = getOrCreateButton(root, 'difficulty-classic-standard', 'Standard', options)
-  const difficultyClassicExpertButton = getOrCreateButton(root, 'difficulty-classic-expert', 'Expert', options)
-  const audioUnlockButton = getOrCreateButton(root, 'audio-unlock', 'Enable Audio', options)
-  audioUnlockButton.classList.add('m25-audio-unlock')
-  const showTimerInput = getOrCreateCheckbox(root, 'option-show-timer', 'Timer', options)
-  const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', options)
-  const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', options)
-  const muteInput = getOrCreateCheckbox(root, 'option-mute', 'Mute', options)
-  const volumeInput = getOrCreateRange(root, 'option-volume', 'Volume', options)
-
+  modeControls.classList.add('m25-control-group')
+  difficultyControls.classList.add('m25-control-group')
+  actionControls.classList.add('m25-control-group')
+  audioControls.classList.add('m25-control-group')
+  replayControls.classList.add('m25-control-group')
+  secondaryControls.classList.add('m25-control-group')
   options.classList.add('m25-options')
 
-  return {
+  const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', modeControls)
+  const localVersusButton = getOrCreateButton(root, 'mode-local-versus', 'Local Versus', modeControls)
+  const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', difficultyControls)
+  const difficultyClassicStandardButton = getOrCreateButton(root, 'difficulty-classic-standard', 'Standard', difficultyControls)
+  const difficultyClassicExpertButton = getOrCreateButton(root, 'difficulty-classic-expert', 'Expert', difficultyControls)
+  const startButton = getOrCreateButton(root, 'start-game', 'Start', actionControls)
+  const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', actionControls)
+  const muteInput = getOrCreateCheckbox(root, 'option-mute', 'Mute', audioControls)
+  const volumeInput = getOrCreateRange(root, 'option-volume', 'Volume', audioControls)
+  const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', replayControls)
+  const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', secondaryControls)
+  const audioUnlockButton = getOrCreateButton(root, 'audio-unlock', 'Enable Audio', secondaryControls)
+  audioUnlockButton.classList.add('m25-audio-unlock')
+  const showTimerInput = getOrCreateCheckbox(root, 'option-show-timer', 'Timer', secondaryControls)
+  const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', secondaryControls)
+  const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', secondaryControls)
+
+  const domState = {
     shell,
     gameHost,
+    hud,
+    controls,
     state,
     score,
     p1Score,
@@ -117,20 +137,26 @@ export function createDomState(root: HTMLElement): DomState {
     muteInput,
     volumeInput,
   }
+  layoutChrome(domState)
+
+  return domState
 }
 
 export function mountCanvas(gameHost: HTMLElement, canvas: HTMLCanvasElement): () => void {
   const resize = () => {
     const availableWidth = Math.max(320, window.innerWidth - 32)
-    const availableHeight = Math.max(240, window.innerHeight - 32)
+    const availableHeight = Math.max(240, window.innerHeight - 276)
     const scale = Math.min(1, availableWidth / ARENA_WIDTH, availableHeight / ARENA_HEIGHT)
     const width = Math.floor(ARENA_WIDTH * scale)
     const height = Math.floor(ARENA_HEIGHT * scale)
+    const centeredTop = Math.max(16, (window.innerHeight - height) / 2)
+    const shortViewportTop = Math.min(window.innerHeight - height - 16, 220)
+    const top = Math.max(centeredTop, shortViewportTop)
 
     gameHost.style.setProperty('position', 'fixed', 'important')
     gameHost.style.setProperty('left', '50%', 'important')
-    gameHost.style.setProperty('top', '50%', 'important')
-    gameHost.style.setProperty('transform', 'translate(-50%, -50%)', 'important')
+    gameHost.style.setProperty('top', `${top}px`, 'important')
+    gameHost.style.setProperty('transform', 'translateX(-50%)', 'important')
     gameHost.style.setProperty('z-index', '0', 'important')
     gameHost.style.setProperty('display', 'grid', 'important')
     gameHost.style.setProperty('place-items', 'center', 'important')
@@ -145,7 +171,7 @@ export function mountCanvas(gameHost: HTMLElement, canvas: HTMLCanvasElement): (
     canvas.style.setProperty('max-height', 'calc(100dvh - 32px)', 'important')
   }
 
-  canvas.setAttribute('aria-label', 'Frogs and Flies game canvas')
+  canvas.setAttribute('aria-label', 'Frogs and Flies classic match canvas')
   canvas.style.setProperty('touch-action', 'manipulation')
   gameHost.appendChild(canvas)
   resize()
@@ -191,6 +217,8 @@ export function syncDom(
   }
   syncRuntimeOptionMarkers(dom.shell, options, audioMarkers)
   syncRuntimeOptionMarkers(dom.state, options, audioMarkers)
+  dom.shell.classList.toggle('is-reduced-motion', options.reducedMotion)
+  dom.shell.classList.toggle('is-high-contrast', options.highContrast)
   dom.state.textContent = `State: ${game.phase}`
 
   const remainingSeconds = Math.ceil(game.remainingSeconds)
@@ -252,6 +280,7 @@ export function syncDom(
     styleMarker(element)
   }
   styleTheEnd(dom.theEnd)
+  layoutChromeWhenNeeded(dom, game.phase, options.showTimer)
 }
 
 function syncPlayerScore(element: HTMLElement, player: MatchPlayerState | undefined, fallbackLabel: string): void {
@@ -390,6 +419,9 @@ function formatMarkerSeconds(seconds: number): string {
 function getOrCreate(root: HTMLElement, tagName: string, id: string, parent: HTMLElement): HTMLElement {
   const existing = root.querySelector<HTMLElement>(`#${id}`)
   if (existing) {
+    if (existing.parentElement !== parent) {
+      parent.appendChild(existing)
+    }
     return existing
   }
 
@@ -407,6 +439,9 @@ function getOrCreateTestElement(
 ): HTMLElement {
   const existing = root.querySelector<HTMLElement>(`[data-testid="${testId}"]`)
   if (existing) {
+    if (existing.parentElement !== parent) {
+      parent.appendChild(existing)
+    }
     return existing
   }
 
@@ -469,15 +504,15 @@ function getOrCreateLabeledInput(
 }
 
 function styleHud(hud: HTMLElement): void {
-  hud.style.position = 'absolute'
+  hud.style.position = 'fixed'
   hud.style.top = '16px'
   hud.style.left = '16px'
-  hud.style.zIndex = '2'
+  hud.style.zIndex = '3'
   hud.style.display = 'flex'
   hud.style.flexWrap = 'wrap'
   hud.style.gap = '8px'
   hud.style.alignItems = 'center'
-  hud.style.maxWidth = 'min(760px, calc(100% - 32px))'
+  hud.style.maxWidth = 'min(520px, calc(100vw - 480px))'
   hud.style.pointerEvents = 'none'
 
   for (const child of Array.from(hud.children) as HTMLElement[]) {
@@ -486,10 +521,10 @@ function styleHud(hud: HTMLElement): void {
 }
 
 function styleControls(controls: HTMLElement): void {
-  controls.style.position = 'absolute'
+  controls.style.position = 'fixed'
   controls.style.right = '16px'
-  controls.style.bottom = '16px'
-  controls.style.zIndex = '2'
+  controls.style.top = '16px'
+  controls.style.zIndex = '3'
   controls.style.display = 'flex'
   controls.style.flexWrap = 'wrap'
   controls.style.gap = '8px'
@@ -520,4 +555,42 @@ function styleTheEnd(element: HTMLElement): void {
   element.style.fontWeight = '800'
   element.style.letterSpacing = '0'
   element.style.pointerEvents = 'none'
+}
+
+function layoutChrome(dom: DomState): void {
+  const isNarrow = window.innerWidth < 760
+
+  if (isNarrow) {
+    dom.hud.style.left = '8px'
+    dom.hud.style.right = '8px'
+    dom.hud.style.maxWidth = 'calc(100vw - 16px)'
+    dom.controls.style.left = '8px'
+    dom.controls.style.right = '8px'
+    dom.controls.style.top = ''
+    dom.controls.style.bottom = '8px'
+    dom.controls.style.maxWidth = 'calc(100vw - 16px)'
+    dom.controls.style.justifyContent = 'flex-start'
+    return
+  }
+
+  dom.hud.style.left = '16px'
+  dom.hud.style.right = ''
+  dom.hud.style.maxWidth = 'min(520px, calc(100vw - 480px))'
+  dom.controls.style.left = ''
+  dom.controls.style.right = '16px'
+  dom.controls.style.top = '16px'
+  dom.controls.style.bottom = ''
+  dom.controls.style.maxWidth = 'min(420px, calc(100vw - 32px))'
+  dom.controls.style.justifyContent = 'flex-end'
+}
+
+function layoutChromeWhenNeeded(dom: DomState, phase: GameState['phase'], showTimer: boolean): void {
+  const nextKey = `${window.innerWidth}:${window.innerHeight}:${phase}:${showTimer}:${dom.results.style.display}`
+
+  if (dom.chromeLayoutKey === nextKey) {
+    return
+  }
+
+  dom.chromeLayoutKey = nextKey
+  layoutChrome(dom)
 }

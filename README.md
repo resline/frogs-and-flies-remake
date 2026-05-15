@@ -12,6 +12,7 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - Procedural fly and Rush power-up spawning from the deterministic seed.
 - Score, combo bonus, and 5 second Rush radius boost.
 - Responsive canvas sizing and smoke-test DOM markers for automation.
+- Desktop and mobile UI chrome keeps HUD/results/controls out of the primary jump band at common playtest viewports.
 - Gameplay loads `/assets/pond-arena.png`, `/assets/frog.png`, `/assets/fly.png`, and `/assets/power.png` through Pixi `Assets`.
 - Runtime rendering uses those generated sprites with procedural fallback paths and PixiJS `Graphics` overlays for gameplay affordances.
 
@@ -28,6 +29,8 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - On-screen controls: `Start`, `Pause`, `Resume`, `Replay`.
 - Difficulty options: `Classic Assist`, `Classic Standard`, and `Classic Expert`.
 - Options UI includes timer visibility, reduced motion, high contrast, mute, volume, and an `Enable Audio` control.
+- Mode, difficulty, match, audio, and replay controls are native keyboard-focusable controls with visible focus states and selected/checked ARIA state.
+- Reduced motion softens rapid render pulses and rotating effects; high contrast increases outlines/contrast for frogs, flies, tongue, lilies, and UI controls.
 - Audio uses an autoplay-safe Web Audio baseline. SFX unlock only after the explicit audio button is pressed, and queued gameplay sounds are dropped safely if browser audio is unavailable.
 
 ## Determinism And Smoke Parameters
@@ -41,7 +44,7 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
   - `/?durationSeconds=2&theEndSeconds=1&simulationSpeed=20`
 - Supported M2 smoke params: `mode`, `seed`, `smokeElapsedSeconds`, `smokeState`, `durationSeconds`, `theEndSeconds`, `simulationSpeed`.
 - Supported M2.5 option params: `difficulty=classic-assist|classic-standard|classic-expert`, `showTimer=0|1`, `reducedMotion=0|1`, `highContrast=0|1`, `mute=0|1`, and `volume=0..1`.
-- Runtime audio markers include `data-audio-unlocked`, `data-audio-muted`, and `data-audio-volume` on the shell/canvas for smoke automation.
+- Runtime accessibility/audio markers include `data-reduced-motion`, `data-high-contrast`, `data-render-reduced-motion`, `data-render-high-contrast`, `data-audio-unlocked`, `data-audio-muted`, and `data-audio-volume` on the shell/canvas for smoke automation.
 
 ## Local Development
 

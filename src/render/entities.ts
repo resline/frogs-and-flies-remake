@@ -8,13 +8,26 @@ export type EntitySpriteState = {
   playerSprites: Map<string, Sprite>
 }
 
-export function drawProceduralPlayers(scene: Graphics, game: GameState): void {
+type RenderEntityOptions = {
+  reducedMotion: boolean
+  highContrast: boolean
+}
+
+export function drawProceduralPlayers(
+  scene: Graphics,
+  game: GameState,
+  options: RenderEntityOptions = { reducedMotion: false, highContrast: false },
+): void {
   for (const [index, player] of getRenderPlayers(game).entries()) {
-    drawProceduralPlayer(scene, player.state, player.matchPlayer, index)
+    drawProceduralPlayer(scene, player.state, player.matchPlayer, index, options)
   }
 }
 
-export function drawProceduralEntities(scene: Graphics, game: GameState): void {
+export function drawProceduralEntities(
+  scene: Graphics,
+  game: GameState,
+  options: RenderEntityOptions = { reducedMotion: false, highContrast: false },
+): void {
   for (const id of game.entityIds) {
     const entity = game.entities[id]
     if (!entity) {
@@ -22,10 +35,14 @@ export function drawProceduralEntities(scene: Graphics, game: GameState): void {
     }
 
     if (entity.kind === 'fly') {
-      scene.ellipse(entity.x - 5, entity.y - 4, 8, 5).fill({ color: 0xdff3ff, alpha: 0.78 })
-      scene.ellipse(entity.x + 5, entity.y - 4, 8, 5).fill({ color: 0xdff3ff, alpha: 0.78 })
+      const wingColor = options.highContrast ? 0xffffff : 0xdff3ff
+      scene.ellipse(entity.x - 5, entity.y - 4, 8, 5).fill({ color: wingColor, alpha: 0.86 })
+      scene.ellipse(entity.x + 5, entity.y - 4, 8, 5).fill({ color: wingColor, alpha: 0.86 })
       scene.circle(entity.x, entity.y, entity.radius).fill({ color: 0x16140f })
       scene.circle(entity.x + 4, entity.y - 4, 3).fill({ color: 0xffe36a })
+      if (options.highContrast) {
+        scene.circle(entity.x, entity.y, entity.radius + 2).stroke({ color: 0xffffff, width: 2, alpha: 0.92 })
+      }
     } else {
       scene.circle(entity.x, entity.y, entity.radius + 8).fill({ color: 0xf7d154, alpha: 0.26 })
       scene.circle(entity.x, entity.y, entity.radius).fill({ color: 0xfff178 })
@@ -34,7 +51,7 @@ export function drawProceduralEntities(scene: Graphics, game: GameState): void {
   }
 
   if (game.phase === 'start' && game.entityIds.length === 0) {
-    const wingAlpha = 0.68 + Math.sin(game.elapsedSeconds * 12) * 0.08
+    const wingAlpha = options.reducedMotion ? 0.7 : 0.68 + Math.sin(game.elapsedSeconds * 12) * 0.08
     scene.ellipse(384, 220, 22, 11).fill({ color: 0xdff3ff, alpha: wingAlpha })
     scene.ellipse(424, 220, 22, 11).fill({ color: 0xdff3ff, alpha: wingAlpha })
     scene.ellipse(404, 240, 18, 14).fill({ color: 0x171410 })
@@ -43,7 +60,12 @@ export function drawProceduralEntities(scene: Graphics, game: GameState): void {
   }
 }
 
-export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, assets: GeneratedGameplayAssets): void {
+export function drawBitmapPlayers(
+  state: EntitySpriteState,
+  game: GameState,
+  assets: GeneratedGameplayAssets,
+  options: RenderEntityOptions = { reducedMotion: false, highContrast: false },
+): void {
   const activeIds = new Set<string>()
 
   for (const [index, player] of getRenderPlayers(game).entries()) {
@@ -63,7 +85,14 @@ export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, ass
     sprite.position.set(player.state.x, player.state.y + bitmapPhaseYOffset(player.state))
     sprite.width = player.state.radius * 3.8 * bitmapPhaseScaleX(player.state)
     sprite.height = player.state.radius * 3.8 * bitmapPhaseScaleY(player.state)
-    sprite.tint = player.matchPlayer.power.remainingSeconds > 0 || (index === 0 && game.power.remainingSeconds > 0) ? 0xdfff9e : 0xffffff
+    sprite.tint =
+      player.matchPlayer.power.remainingSeconds > 0 || (index === 0 && game.power.remainingSeconds > 0)
+        ? 0xdfff9e
+        : options.highContrast && id === 'p1'
+          ? 0xe8fff0
+          : options.highContrast
+            ? 0xfff1c8
+            : 0xffffff
   }
 
   for (const [id, sprite] of state.playerSprites) {
@@ -77,7 +106,12 @@ export function drawBitmapPlayers(state: EntitySpriteState, game: GameState, ass
   }
 }
 
-export function drawBitmapEntities(state: EntitySpriteState, game: GameState, assets: GeneratedGameplayAssets): void {
+export function drawBitmapEntities(
+  state: EntitySpriteState,
+  game: GameState,
+  assets: GeneratedGameplayAssets,
+  options: RenderEntityOptions = { reducedMotion: false, highContrast: false },
+): void {
   const activeIds = new Set<number>()
 
   for (const id of game.entityIds) {
@@ -100,8 +134,8 @@ export function drawBitmapEntities(state: EntitySpriteState, game: GameState, as
     sprite.position.set(entity.x, entity.y)
     sprite.width = entity.kind === 'fly' ? entity.radius * 4.8 : entity.radius * 3.2
     sprite.height = entity.kind === 'fly' ? entity.radius * 3.7 : entity.radius * 3.2
-    sprite.rotation = entity.kind === 'fly' ? Math.sin((entity.x + entity.y) * 0.02) * 0.08 : 0
-    sprite.tint = 0xffffff
+    sprite.rotation = entity.kind === 'fly' && !options.reducedMotion ? Math.sin((entity.x + entity.y) * 0.02) * 0.08 : 0
+    sprite.tint = options.highContrast && entity.kind === 'fly' ? 0xffffff : 0xffffff
   }
 
   if (game.phase === 'start' && activeIds.size === 0) {
@@ -120,7 +154,7 @@ export function drawBitmapEntities(state: EntitySpriteState, game: GameState, as
     sprite.position.set(ARENA_PREVIEW_FLY_X, ARENA_PREVIEW_FLY_Y)
     sprite.width = 86
     sprite.height = 66
-    sprite.rotation = Math.sin(game.elapsedSeconds * 8) * 0.08
+    sprite.rotation = options.reducedMotion ? 0 : Math.sin(game.elapsedSeconds * 8) * 0.08
     sprite.tint = 0xffffff
   }
 
@@ -182,7 +216,13 @@ function bitmapEntityTexture(
   return Math.floor(game.elapsedSeconds * 12 + entityId) % 2 === 0 ? assets.flyWingA : assets.flyWingB
 }
 
-function drawProceduralPlayer(scene: Graphics, player: PlayerState, matchPlayer: MatchPlayerState, index: number): void {
+function drawProceduralPlayer(
+  scene: Graphics,
+  player: PlayerState,
+  matchPlayer: MatchPlayerState,
+  index: number,
+  options: RenderEntityOptions,
+): void {
   const { x, y, radius } = player
   const powered = matchPlayer.power.remainingSeconds > 0
   const body = powered ? 0x94f65f : playerTint(index)
@@ -191,6 +231,11 @@ function drawProceduralPlayer(scene: Graphics, player: PlayerState, matchPlayer:
   const faceSign = player.facing === 'left' ? -1 : 1
 
   scene.ellipse(x, y + 18, radius + 10, 9).fill({ color: 0x163e28, alpha: pose.shadowAlpha })
+  if (options.highContrast) {
+    scene
+      .ellipse(x, y + pose.bodyOffsetY, radius * pose.scaleX + 4, radius * pose.scaleY + 4)
+      .stroke({ color: index === 0 ? 0xffffff : 0xffe08a, width: 4, alpha: 0.92 })
+  }
   scene.ellipse(x, y + pose.bodyOffsetY, radius * pose.scaleX, radius * pose.scaleY).fill({ color: body })
   scene.ellipse(x, y + 8 + pose.bodyOffsetY, radius * 0.58 * pose.scaleX, radius * 0.5 * pose.scaleY).fill({
     color: belly,

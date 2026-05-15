@@ -18,7 +18,14 @@ import { paletteFor } from './palette'
 
 export type RenderFrameMarkers = {
   layerNames: string
+  reducedMotion: boolean
+  highContrast: boolean
   lastEffect?: RenderEffectMarker
+}
+
+export type RenderAccessibilityOptions = {
+  reducedMotion: boolean
+  highContrast: boolean
 }
 
 export type RenderScene = {
@@ -92,20 +99,26 @@ export function createRenderScene(): RenderScene {
   }
 }
 
-export function renderScene(scene: RenderScene, game: GameState): RenderFrameMarkers {
+export function renderScene(
+  scene: RenderScene,
+  game: GameState,
+  options: RenderAccessibilityOptions = { reducedMotion: false, highContrast: false },
+): RenderFrameMarkers {
   if (scene.assets) {
-    renderBitmapScene(scene, game)
+    renderBitmapScene(scene, game, options)
   } else {
-    renderProceduralScene(scene, game)
+    renderProceduralScene(scene, game, options)
   }
 
   return {
     layerNames: RENDER_LAYER_NAMES.join(' '),
+    reducedMotion: options.reducedMotion,
+    highContrast: options.highContrast,
     lastEffect: scene.effectState.lastEffect,
   }
 }
 
-function renderBitmapScene(scene: RenderScene, game: GameState): void {
+function renderBitmapScene(scene: RenderScene, game: GameState, options: RenderAccessibilityOptions): void {
   const assets = scene.assets
   if (!assets) {
     return
@@ -118,16 +131,16 @@ function renderBitmapScene(scene: RenderScene, game: GameState): void {
   scene.pond.texture = assets.homePondBackground
   scene.pond.width = ARENA_WIDTH
   scene.pond.height = ARENA_HEIGHT
-  drawBitmapLilies(scene, assets)
+  drawBitmapLilies(scene, assets, options)
 
-  drawBitmapPlayers(scene, game, assets)
-  drawBitmapEntities(scene, game, assets)
-  drawEffects(scene.effects, game, scene.effectState)
-  drawBitmapEffectSprites(scene.effectSprites, game, scene.effectState, assets)
+  drawBitmapPlayers(scene, game, assets, options)
+  drawBitmapEntities(scene, game, assets, options)
+  drawEffects(scene.effects, game, scene.effectState, options)
+  drawBitmapEffectSprites(scene.effectSprites, game, scene.effectState, assets, options)
   drawPhaseOverlay(scene.ui, game)
 }
 
-function renderProceduralScene(scene: RenderScene, game: GameState): void {
+function renderProceduralScene(scene: RenderScene, game: GameState, options: RenderAccessibilityOptions): void {
   const palette = paletteFor(game.timeOfDay)
 
   scene.pond.visible = false
@@ -142,13 +155,13 @@ function renderProceduralScene(scene: RenderScene, game: GameState): void {
   scene.background.rect(0, 0, ARENA_WIDTH, ARENA_HEIGHT).fill({ color: palette.sky })
   scene.background.rect(0, ARENA_HEIGHT * 0.28, ARENA_WIDTH, ARENA_HEIGHT * 0.72).fill({ color: palette.water })
 
-  drawProceduralPlayers(scene.gameplay, game)
-  drawProceduralEntities(scene.gameplay, game)
-  drawEffects(scene.effects, game, scene.effectState)
+  drawProceduralPlayers(scene.gameplay, game, options)
+  drawProceduralEntities(scene.gameplay, game, options)
+  drawEffects(scene.effects, game, scene.effectState, options)
   drawPhaseOverlay(scene.ui, game)
 }
 
-function drawBitmapLilies(scene: RenderScene, assets: GeneratedGameplayAssets): void {
+function drawBitmapLilies(scene: RenderScene, assets: GeneratedGameplayAssets, options: RenderAccessibilityOptions): void {
   const lilyWidth = HOME_POND_LILY_LANDING_RADIUS * 3
   const lilyHeight = lilyWidth * 0.75
 
@@ -157,14 +170,14 @@ function drawBitmapLilies(scene: RenderScene, assets: GeneratedGameplayAssets): 
   scene.lilySprites.left.position.set(HOME_POND_LILY_LANDING_RADIUS * 2.1, HOME_POND_LILY_Y + 18)
   scene.lilySprites.left.width = lilyWidth
   scene.lilySprites.left.height = lilyHeight
-  scene.lilySprites.left.tint = 0xffffff
+  scene.lilySprites.left.tint = options.highContrast ? 0xeafff2 : 0xffffff
 
   scene.lilySprites.right.visible = true
   scene.lilySprites.right.texture = assets.lilyRight
   scene.lilySprites.right.position.set(ARENA_WIDTH - HOME_POND_LILY_LANDING_RADIUS * 2.1, HOME_POND_LILY_Y + 18)
   scene.lilySprites.right.width = lilyWidth
   scene.lilySprites.right.height = lilyHeight
-  scene.lilySprites.right.tint = 0xffffff
+  scene.lilySprites.right.tint = options.highContrast ? 0xfff4d2 : 0xffffff
 }
 
 function drawPhaseOverlay(scene: Graphics, game: GameState): void {

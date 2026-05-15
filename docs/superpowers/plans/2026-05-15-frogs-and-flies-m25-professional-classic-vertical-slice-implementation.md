@@ -702,39 +702,39 @@ Expected: audio runtime, tests, UI, optional small audio assets, docs. Commit me
 - Modify: `tests/e2e/m25-classic-vertical-slice.spec.ts`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write failing accessibility/UX E2E tests**
+- [x] **Step 1: Write failing accessibility/UX E2E tests**
 
 Add tests that verify keyboard focus order reaches mode, difficulty, start, pause, mute, volume, and replay controls; selected controls expose accessible pressed/checked state; reduced motion and high contrast update DOM/canvas markers; and `game-canvas` has an accessible label.
 
-- [ ] **Step 2: Add responsive no-overlap screenshot checks**
+- [x] **Step 2: Add responsive no-overlap screenshot checks**
 
 In the same E2E file, test viewports `800x600`, `1024x768`, `1366x768`, `1920x1080`, and `390x844`. Use locator bounding boxes for HUD/controls/canvas/results and assert visible controls do not overlap canvas-critical jump band or each other.
 
-- [ ] **Step 3: Run red UX E2E tests**
+- [x] **Step 3: Run red UX E2E tests**
 
 Run: `npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
 
 Expected fail: missing option markers, focus states, or no-overlap constraints.
 
-- [ ] **Step 4: Implement semantic shell polish**
+- [x] **Step 4: Implement semantic shell polish**
 
 Use native buttons/inputs where possible, visible focus styles, stable labels, `aria-live` only for low-frequency state/results, and no diagnostic-looking primary UI text. Keep test markers as attributes.
 
-- [ ] **Step 5: Implement reduced-motion/high-contrast behavior**
+- [x] **Step 5: Implement reduced-motion/high-contrast behavior**
 
 Reduced motion should soften/disallow screen shake, heavy bobbing, pulsing glows, and rapid flashes. High contrast should improve frog/fly/tongue/lily outlines and avoid hue-only player identity.
 
-- [ ] **Step 6: Tune responsive CSS**
+- [x] **Step 6: Tune responsive CSS**
 
 Ensure text fits buttons and panels, controls wrap predictably, HUD avoids the primary jump arc/fly bands, and results remain readable at all required viewports.
 
-- [ ] **Step 7: Run green UX E2E tests**
+- [x] **Step 7: Run green UX E2E tests**
 
 Run: `npm run test:e2e -- tests/e2e/m25-classic-vertical-slice.spec.ts`
 
 Expected pass: M2.5 UX tests pass and exit `0`.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 Run: `git status --short`
 
