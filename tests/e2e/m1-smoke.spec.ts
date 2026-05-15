@@ -11,13 +11,98 @@ test.describe('Frogs and Flies 2 M1', () => {
     await expect(state).toHaveAttribute('data-tongue-result', 'none')
     await expect(score).toHaveAttribute('data-score', '0')
 
+    await page.evaluate(() => {
+      const state = document.querySelector<HTMLElement>('[data-testid="game-state"]')
+      if (!state) {
+        throw new Error('Missing game-state runtime marker')
+      }
+
+      const runtimeWindow = window as Window & {
+        __m1SpaceTongueObserved?: {
+          tonguePhases: string[]
+          tongueResults: string[]
+        }
+        __m1SpaceTongueObserver?: MutationObserver
+      }
+
+      runtimeWindow.__m1SpaceTongueObserver?.disconnect()
+
+      const observed = {
+        tonguePhases: [] as string[],
+        tongueResults: [] as string[],
+      }
+      const pushCurrentTongue = () => {
+        const tonguePhase = state.getAttribute('data-tongue-phase')
+        const tongueResult = state.getAttribute('data-tongue-result')
+
+        if (tonguePhase && observed.tonguePhases.at(-1) !== tonguePhase) {
+          observed.tonguePhases.push(tonguePhase)
+        }
+        if (tongueResult && observed.tongueResults.at(-1) !== tongueResult) {
+          observed.tongueResults.push(tongueResult)
+        }
+      }
+
+      pushCurrentTongue()
+      const observer = new MutationObserver(pushCurrentTongue)
+      observer.observe(state, {
+        attributes: true,
+        attributeFilter: ['data-tongue-phase', 'data-tongue-result'],
+      })
+
+      runtimeWindow.__m1SpaceTongueObserved = observed
+      runtimeWindow.__m1SpaceTongueObserver = observer
+    })
+
     await page.keyboard.down('Space')
     await expect(state).toHaveAttribute('data-jump-phase', 'charging')
     await expect(state).toHaveAttribute('data-tongue-result', 'none')
     await expect(score).toHaveAttribute('data-score', '0')
 
     await page.keyboard.press('KeyT')
-    await expect(score).toHaveAttribute('data-score', '10')
+    await page.waitForFunction(
+      () => {
+        const runtimeWindow = window as Window & {
+          __m1SpaceTongueObserved?: {
+            tonguePhases: string[]
+            tongueResults: string[]
+          }
+        }
+
+        const observed = runtimeWindow.__m1SpaceTongueObserved
+        return (
+          observed?.tongueResults.includes('miss') &&
+          observed.tonguePhases.includes('recovering') &&
+          observed.tonguePhases.at(-1) === 'ready'
+        )
+      },
+      undefined,
+      { timeout: 2_000 },
+    )
+
+    const observed = await page.evaluate(() => {
+      const runtimeWindow = window as Window & {
+        __m1SpaceTongueObserved?: {
+          tonguePhases: string[]
+          tongueResults: string[]
+        }
+        __m1SpaceTongueObserver?: MutationObserver
+      }
+
+      runtimeWindow.__m1SpaceTongueObserver?.disconnect()
+      return runtimeWindow.__m1SpaceTongueObserved
+    })
+
+    if (!observed) {
+      throw new Error('Missing observed Space/tongue transitions')
+    }
+
+    expect(observed.tonguePhases).toContain('extended')
+    expect(observed.tonguePhases).toContain('recovering')
+    expect(observed.tonguePhases.at(-1)).toBe('ready')
+    expect(observed.tongueResults).toContain('miss')
+    await expect(state).toHaveAttribute('data-jump-phase', 'charging')
+    await expect(score).toHaveAttribute('data-score', '0')
 
     await page.keyboard.up('Space')
   })
