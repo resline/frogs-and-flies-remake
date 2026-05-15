@@ -546,7 +546,11 @@ function validateInputBinding(raw: unknown): InputBinding | undefined {
 }
 
 function getBrowserStorage(): StorageLike | undefined {
-  return typeof globalThis.localStorage === 'undefined' ? undefined : globalThis.localStorage
+  try {
+    return typeof globalThis.localStorage === 'undefined' ? undefined : globalThis.localStorage
+  } catch {
+    return undefined
+  }
 }
 
 function isFutureVersion(raw: unknown): boolean {

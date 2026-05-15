@@ -224,6 +224,56 @@ button[data-selected="true"] {
   display: contents;
 }
 
+.m26-shell-panel {
+  align-items: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 6;
+}
+
+.m26-shell-panel[hidden],
+#m26-results-actions[hidden] {
+  display: none !important;
+}
+
+#m26-settings,
+[data-testid="high-scores-panel"] {
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+#m26-settings .m25-control-group,
+#m26-settings .m25-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#m26-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 6;
+}
+
+#m26-results-actions *,
+.m26-shell-panel * {
+  pointer-events: auto;
+}
+
 .m25-control-group button {
   min-height: 36px;
   min-width: 88px;

@@ -379,7 +379,7 @@ Expected: `src/runtime/save.ts`, `tests/unit/saveManager.test.ts`, and narrow ru
 - Modify: `src/game/types.ts` only if richer result types are needed.
 - Modify: `src/style.css`
 
-- [ ] **Step 1: Write failing shell state tests**
+- [x] **Step 1: Write failing shell state tests**
 
 In `tests/unit/runtimeShell.test.ts`, test:
 
@@ -389,7 +389,7 @@ In `tests/unit/runtimeShell.test.ts`, test:
 - `openSettings`, `openHighScores`, `startGameplay`, `pause`, `resume`, `showResults`, `replay`, and `mainMenu` transitions are valid.
 - Invalid transitions return unchanged state or a typed error without throwing.
 
-- [ ] **Step 2: Run red shell state tests**
+- [x] **Step 2: Run red shell state tests**
 
 Run:
 
@@ -399,7 +399,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts
 
 Expected fail: `src/runtime/shell.ts` does not exist.
 
-- [ ] **Step 3: Implement pure shell state machine**
+- [x] **Step 3: Implement pure shell state machine**
 
 Create `src/runtime/shell.ts` with:
 
@@ -412,7 +412,7 @@ Create `src/runtime/shell.ts` with:
 
 Keep this file DOM-free and Pixi-free.
 
-- [ ] **Step 4: Run green shell state tests**
+- [x] **Step 4: Run green shell state tests**
 
 Run:
 
@@ -422,7 +422,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts
 
 Expected pass: pure shell transitions pass.
 
-- [ ] **Step 5: Write failing shell E2E tests**
+- [x] **Step 5: Write failing shell E2E tests**
 
 Create `tests/e2e/m26-shell.spec.ts` covering:
 
@@ -435,7 +435,7 @@ Create `tests/e2e/m26-shell.spec.ts` covering:
 - Results show winner, scores, catches, attempts, accuracy, combo/high-score status, Replay, Change Mode, and Main Menu.
 - High Scores uses local-only wording.
 
-- [ ] **Step 6: Run red shell E2E tests on port 5176**
+- [x] **Step 6: Run red shell E2E tests on port 5176**
 
 Run:
 
@@ -446,7 +446,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-shel
 
 Expected fail: M2.6 shell markers and screens do not exist yet.
 
-- [ ] **Step 7: Integrate shell in runtime and DOM**
+- [x] **Step 7: Integrate shell in runtime and DOM**
 
 Modify `src/main.ts`, `src/runtime/app.ts`, and `src/runtime/dom.ts` to:
 
@@ -457,15 +457,15 @@ Modify `src/main.ts`, `src/runtime/app.ts`, and `src/runtime/dom.ts` to:
 - Preserve existing M2.5 test ids where possible, or update tests intentionally.
 - Add DOM state markers: `data-testid="m26-shell"`, `data-shell-screen`, `data-selected-mode`, `data-save-status`, `data-storage-available`, `data-round-recorded`.
 
-- [ ] **Step 8: Add results and high-score integration**
+- [x] **Step 8: Add results and high-score integration**
 
 Modify runtime so a completed round updates high scores and stats exactly once. Use a round id such as `${mode}:${seed}:${startedAt}` or an internal monotonic runtime id. Results re-render must not double-write.
 
-- [ ] **Step 9: Add settings persistence UI hooks**
+- [x] **Step 9: Add settings persistence UI hooks**
 
 Settings changes persist immediately or through a small debounced save. Failed writes update non-blocking markers; gameplay must continue.
 
-- [ ] **Step 10: Write failing persistence E2E tests**
+- [x] **Step 10: Write failing persistence E2E tests**
 
 Create `tests/e2e/m26-persistence.spec.ts` covering:
 
@@ -475,7 +475,7 @@ Create `tests/e2e/m26-persistence.spec.ts` covering:
 - Results replay/change-mode does not duplicate stats.
 - Local storage disabled through page init script still boots with defaults and marker.
 
-- [ ] **Step 11: Run green shell and persistence tests**
+- [x] **Step 11: Run green shell and persistence tests**
 
 Run:
 
@@ -485,7 +485,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-shel
 
 Expected pass: shell and persistence flows pass on Chromium.
 
-- [ ] **Step 12: Run focused unit tests**
+- [x] **Step 12: Run focused unit tests**
 
 Run:
 
@@ -495,7 +495,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts tests/unit/saveManager.test
 
 Expected pass: shell/save integration does not break match model.
 
-- [ ] **Step 13: Commit boundary**
+- [x] **Step 13: Commit boundary**
 
 Run:
 

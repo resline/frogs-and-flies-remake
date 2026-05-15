@@ -17,8 +17,18 @@ import { createAudioManager } from './audio'
 import { loadGeneratedGameplayAssets } from './assets'
 import { createDomState, mountCanvas, syncDom } from './dom'
 import type { RuntimeParams } from './params'
-import type { GameState } from '../game/types'
+import type { GameState, MatchMode } from '../game/types'
 import type { RuntimeOptions } from './options'
+import {
+  createDefaultSave,
+  createSaveManager,
+  recordRoundCompleted,
+  recordRoundStarted,
+  type SaveData,
+  type SaveLoadStatus,
+  type SaveWriteStatus,
+} from './save'
+import { createInitialShellState, reduceShellState, type ShellAction, type ShellState } from './shell'
 
 const RUNTIME_PREVENT_DEFAULT_CODES = new Set([
   'ArrowLeft',
@@ -45,11 +55,30 @@ export type RuntimeHandle = {
   destroy: () => void
 }
 
-export async function startRuntime(root: HTMLElement, runtimeParams: RuntimeParams): Promise<RuntimeHandle> {
+export interface RuntimePersistenceServices {
+  saveManager?: ReturnType<typeof createSaveManager>
+  saveData?: SaveData
+  saveStatus?: SaveLoadStatus | SaveWriteStatus
+}
+
+export async function startRuntime(
+  root: HTMLElement,
+  runtimeParams: RuntimeParams,
+  persistence: RuntimePersistenceServices = {},
+): Promise<RuntimeHandle> {
   const dom = createDomState(root)
   let currentRuntimeParams = runtimeParams
   let game = createInitialGame(currentRuntimeParams)
   let fixedStep = createRuntimeFixedStep(currentRuntimeParams)
+  const saveManager = persistence.saveManager ?? createSaveManager()
+  let saveData = persistence.saveData ?? createDefaultSave()
+  let saveStatus: SaveLoadStatus | SaveWriteStatus = persistence.saveStatus ?? 'defaulted'
+  let storageAvailable = saveStatus !== 'storage-unavailable'
+  let shellState: ShellState = createInitialShellState(currentRuntimeParams.mode)
+  let roundCounter = 0
+  let activeRoundId = ''
+  let roundRecorded = false
+  let highScoreStatus = 'Local high score status pending.'
   const runtimeInput = createRuntimeInputState()
   const audio = createAudioManager({
     muted: currentRuntimeParams.options.mute,
@@ -63,7 +92,18 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     if (destroyed) {
       return
     }
-    syncDom(dom, game, currentRuntimeParams.options, audio.getState())
+    if (game.phase === 'results') {
+      showResultsIfNeeded()
+      recordCompletedRoundIfNeeded()
+    }
+    syncDom(dom, game, currentRuntimeParams.options, audio.getState(), {
+      shell: shellState,
+      saveStatus,
+      storageAvailable,
+      roundRecorded,
+      highScoreStatus,
+      save: saveData,
+    })
     if (scene) {
       syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game, currentRuntimeParams.options))
     }
@@ -78,6 +118,86 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   const updateGameAndAudio = (deltaSeconds: number) => {
     updateGame(game, deltaSeconds)
     playGameplayAudioEvents()
+  }
+
+  function transitionShell(action: ShellAction): void {
+    const next = reduceShellState(shellState, action)
+    shellState = next.state
+  }
+
+  function beginRound(): void {
+    roundCounter += 1
+    activeRoundId = `${currentRuntimeParams.mode}:${currentRuntimeParams.seed}:${roundCounter}`
+    roundRecorded = false
+    highScoreStatus = 'Local high score status pending.'
+    persistSave(recordRoundStarted(saveData, activeRoundId))
+  }
+
+  function startGameplay(): void {
+    if (game.mode !== shellState.selectedMode) {
+      resetGame({ ...currentRuntimeParams, mode: shellState.selectedMode })
+    }
+    beginRound()
+    transitionShell({ type: 'startGameplay' })
+    runCommand('start')
+  }
+
+  function showResultsIfNeeded(): void {
+    if (shellState.screen === 'gameplay' || shellState.screen === 'pause') {
+      transitionShell({ type: 'showResults' })
+    }
+  }
+
+  function recordCompletedRoundIfNeeded(): void {
+    if (roundRecorded || !activeRoundId) {
+      return
+    }
+
+    const beforeCount = scoreEntriesForMode(saveData, currentRuntimeParams.mode).length
+    const nextSave = recordRoundCompleted(saveData, {
+      roundId: activeRoundId,
+      mode: currentRuntimeParams.mode,
+      difficulty: currentRuntimeParams.options.difficulty,
+      seed: currentRuntimeParams.seed,
+      completedAt: new Date().toISOString(),
+      durationSeconds: game.durationSeconds,
+      winner: game.results?.winner ?? buildResults(game).winner,
+      players: game.players.map((player) => ({
+        id: player.id,
+        score: player.score,
+        catches: player.stats.catches,
+        attempts: player.stats.attempts,
+        splashes: player.stats.misses,
+        maxCombo: player.stats.combo,
+      })),
+    })
+    const afterCount = scoreEntriesForMode(nextSave, currentRuntimeParams.mode).length
+
+    roundRecorded = true
+    highScoreStatus = afterCount > beforeCount ? 'New local high score recorded.' : 'Local high score already recorded.'
+    persistSave(nextSave)
+  }
+
+  function persistCurrentSettings(): void {
+    persistSave({
+      ...saveData,
+      settings: {
+        ...saveData.settings,
+        difficulty: currentRuntimeParams.options.difficulty,
+        showTimer: currentRuntimeParams.options.showTimer,
+        reducedMotion: currentRuntimeParams.options.reducedMotion,
+        highContrast: currentRuntimeParams.options.highContrast,
+        mute: currentRuntimeParams.options.mute,
+        masterVolume: currentRuntimeParams.options.volume,
+      },
+    })
+  }
+
+  function persistSave(nextSave: SaveData): void {
+    const result = saveManager.save(nextSave)
+    saveData = result.data
+    saveStatus = result.status
+    storageAvailable = result.status !== 'storage-unavailable'
   }
 
   const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
@@ -99,6 +219,8 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   }
 
   const replay = () => {
+    transitionShell({ type: shellState.screen === 'results' ? 'replay' : 'startGameplay' })
+    beginRound()
     resetGame(currentRuntimeParams, true)
   }
 
@@ -131,15 +253,46 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
       replay()
       return
     }
-    runCommand('start')
+    startGameplay()
   }
-  const handleClassicSingleClick = () => resetGame({ ...currentRuntimeParams, mode: 'classic-single' })
-  const handleLocalVersusClick = () => resetGame({ ...currentRuntimeParams, mode: 'local-versus' })
+  const handlePlayClick = () => {
+    transitionShell({ type: 'play' })
+    refresh()
+  }
+  const handleOpenSettingsClick = () => {
+    transitionShell({ type: 'openSettings' })
+    refresh()
+  }
+  const handleOpenHighScoresClick = () => {
+    transitionShell({ type: 'openHighScores' })
+    refresh()
+  }
+  const handleMainMenuClick = () => {
+    transitionShell({ type: 'mainMenu' })
+    refresh()
+  }
+  const handleChangeModeClick = () => {
+    transitionShell({ type: 'changeMode' })
+    refresh()
+  }
+  const handleClassicSingleClick = () => selectMode('classic-single')
+  const handleLocalVersusClick = () => selectMode('local-versus')
   const handleAssistDifficultyClick = () => resetDifficulty('classic-assist')
   const handleStandardDifficultyClick = () => resetDifficulty('classic-standard')
   const handleExpertDifficultyClick = () => resetDifficulty('classic-expert')
-  const handlePauseClick = () => runCommand('pause')
-  const handleResumeClick = () => runCommand('resume')
+  const handlePauseClick = () => {
+    transitionShell({ type: 'pause' })
+    runCommand('pause')
+  }
+  const handleResumeClick = () => {
+    transitionShell({ type: 'resume' })
+    runCommand('resume')
+  }
+  const handleRestartClick = () => {
+    transitionShell({ type: 'startGameplay' })
+    resetGame(currentRuntimeParams, true)
+    beginRound()
+  }
   const handleShowTimerChange = () => updateRuntimeOptions({ showTimer: dom.showTimerInput.checked })
   const handleReducedMotionChange = () => updateRuntimeOptions({ reducedMotion: dom.reducedMotionInput.checked })
   const handleHighContrastChange = () => updateRuntimeOptions({ highContrast: dom.highContrastInput.checked })
@@ -149,8 +302,14 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     void audio.unlock().then(refresh)
   }
 
+  function selectMode(mode: RuntimeParams['mode']): void {
+    transitionShell({ type: 'selectMode', mode })
+    resetGame({ ...currentRuntimeParams, mode })
+  }
+
   function resetDifficulty(difficulty: RuntimeOptions['difficulty']): void {
     resetGame({ ...currentRuntimeParams, options: { ...currentRuntimeParams.options, difficulty } })
+    persistCurrentSettings()
   }
 
   function updateRuntimeOptions(options: Partial<RuntimeOptions>): void {
@@ -162,6 +321,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
       },
     }
     syncAudioOptions()
+    persistCurrentSettings()
     refresh()
   }
 
@@ -170,6 +330,17 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     audio.setVolume(currentRuntimeParams.options.volume)
   }
 
+  dom.playButton.addEventListener('click', handlePlayClick)
+  dom.openSettingsButton.addEventListener('click', handleOpenSettingsClick)
+  dom.openHighScoresButton.addEventListener('click', handleOpenHighScoresClick)
+  dom.mainMenuModeButton.addEventListener('click', handleMainMenuClick)
+  dom.mainMenuSettingsButton.addEventListener('click', handleMainMenuClick)
+  dom.mainMenuHighScoresButton.addEventListener('click', handleMainMenuClick)
+  dom.mainMenuPauseButton.addEventListener('click', handleMainMenuClick)
+  dom.mainMenuResultsButton.addEventListener('click', handleMainMenuClick)
+  dom.pauseSettingsButton.addEventListener('click', handleOpenSettingsClick)
+  dom.restartButton.addEventListener('click', handleRestartClick)
+  dom.changeModeButton.addEventListener('click', handleChangeModeClick)
   dom.classicSingleButton.addEventListener('click', handleClassicSingleClick)
   dom.localVersusButton.addEventListener('click', handleLocalVersusClick)
   dom.difficultyClassicAssistButton.addEventListener('click', handleAssistDifficultyClick)
@@ -258,12 +429,23 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   app.ticker.add(tick)
 
   return {
-    start: () => runCommand('start'),
-    pause: () => runCommand('pause'),
-    resume: () => runCommand('resume'),
+    start: startGameplay,
+    pause: handlePauseClick,
+    resume: handleResumeClick,
     replay,
     destroy: () => {
       destroyed = true
+      dom.playButton.removeEventListener('click', handlePlayClick)
+      dom.openSettingsButton.removeEventListener('click', handleOpenSettingsClick)
+      dom.openHighScoresButton.removeEventListener('click', handleOpenHighScoresClick)
+      dom.mainMenuModeButton.removeEventListener('click', handleMainMenuClick)
+      dom.mainMenuSettingsButton.removeEventListener('click', handleMainMenuClick)
+      dom.mainMenuHighScoresButton.removeEventListener('click', handleMainMenuClick)
+      dom.mainMenuPauseButton.removeEventListener('click', handleMainMenuClick)
+      dom.mainMenuResultsButton.removeEventListener('click', handleMainMenuClick)
+      dom.pauseSettingsButton.removeEventListener('click', handleOpenSettingsClick)
+      dom.restartButton.removeEventListener('click', handleRestartClick)
+      dom.changeModeButton.removeEventListener('click', handleChangeModeClick)
       dom.classicSingleButton.removeEventListener('click', handleClassicSingleClick)
       dom.localVersusButton.removeEventListener('click', handleLocalVersusClick)
       dom.difficultyClassicAssistButton.removeEventListener('click', handleAssistDifficultyClick)
@@ -339,4 +521,8 @@ function syncCanvasRenderMarkers(canvas: HTMLCanvasElement | undefined, markers:
   if (markers.lastEffect) {
     canvas.setAttribute('data-last-effect', markers.lastEffect)
   }
+}
+
+function scoreEntriesForMode(save: SaveData, mode: MatchMode): SaveData['highScores']['classicSingle'] {
+  return mode === 'classic-single' ? save.highScores.classicSingle : save.highScores.localVersus
 }

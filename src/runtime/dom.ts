@@ -2,6 +2,8 @@ import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
 import type { AudioManagerState } from './audio'
 import type { RuntimeOptions } from './options'
+import type { SaveData, SaveLoadStatus, SaveWriteStatus } from './save'
+import type { ShellState } from './shell'
 
 export type DomState = {
   shell: HTMLElement
@@ -22,6 +24,24 @@ export type DomState = {
   seedAlias: HTMLElement
   results: HTMLElement
   theEnd: HTMLElement
+  mainMenuPanel: HTMLElement
+  modeSelectPanel: HTMLElement
+  settingsPanel: HTMLElement
+  highScoresPanel: HTMLElement
+  gameplayPanel: HTMLElement
+  pausePanel: HTMLElement
+  resultsActions: HTMLElement
+  playButton: HTMLElement
+  openSettingsButton: HTMLElement
+  openHighScoresButton: HTMLElement
+  mainMenuModeButton: HTMLElement
+  mainMenuSettingsButton: HTMLElement
+  mainMenuHighScoresButton: HTMLElement
+  mainMenuPauseButton: HTMLElement
+  mainMenuResultsButton: HTMLElement
+  pauseSettingsButton: HTMLElement
+  restartButton: HTMLElement
+  changeModeButton: HTMLElement
   classicSingleButton: HTMLElement
   localVersusButton: HTMLElement
   startButton: HTMLElement
@@ -37,6 +57,16 @@ export type DomState = {
   highContrastInput: HTMLInputElement
   muteInput: HTMLInputElement
   volumeInput: HTMLInputElement
+  inputProfileSelect: HTMLSelectElement
+}
+
+export interface ShellDomSyncState {
+  shell: ShellState
+  saveStatus: SaveLoadStatus | SaveWriteStatus
+  storageAvailable: boolean
+  roundRecorded: boolean
+  highScoreStatus?: string
+  save: SaveData
 }
 
 export function createDomState(root: HTMLElement): DomState {
@@ -49,11 +79,11 @@ export function createDomState(root: HTMLElement): DomState {
   const controls = getOrCreate(root, 'div', 'm0-controls', shell)
 
   shell.classList.add('game-shell')
-  shell.setAttribute('data-testid', 'm25-shell')
+  shell.setAttribute('data-testid', 'm26-shell')
   hud.setAttribute('data-testid', 'm25-hud')
   hud.setAttribute('aria-label', 'Round status')
   controls.setAttribute('data-testid', 'm25-controls')
-  controls.setAttribute('aria-label', 'Match controls')
+  controls.setAttribute('aria-label', 'Product shell controls')
   shell.style.position = 'relative'
 
   styleHud(hud)
@@ -72,13 +102,23 @@ export function createDomState(root: HTMLElement): DomState {
   const results = getOrCreateTestElement(root, 'results', 'section', hud)
   const theEnd = getOrCreateTestElement(root, 'the-end', 'div', hud)
 
-  const modeControls = getOrCreate(root, 'div', 'm25-mode-controls', controls)
-  const difficultyControls = getOrCreate(root, 'div', 'm25-difficulty-controls', controls)
-  const actionControls = getOrCreate(root, 'div', 'm25-action-controls', controls)
-  const audioControls = getOrCreate(root, 'div', 'm25-audio-controls', controls)
-  const replayControls = getOrCreate(root, 'div', 'm25-replay-controls', controls)
-  const secondaryControls = getOrCreate(root, 'div', 'm25-secondary-controls', controls)
-  const options = getOrCreate(root, 'div', 'm25-options', controls)
+  const mainMenuPanel = getOrCreate(root, 'section', 'm26-main-menu', controls)
+  const modeSelectPanel = getOrCreate(root, 'section', 'm26-mode-select', controls)
+  const settingsPanel = getOrCreate(root, 'section', 'm26-settings', controls)
+  const highScoresPanel = getOrCreateTestElement(root, 'high-scores-panel', 'section', controls)
+  const gameplayPanel = getOrCreate(root, 'section', 'm26-gameplay-controls', controls)
+  const pausePanel = getOrCreate(root, 'section', 'm26-pause', controls)
+  const resultsActions = getOrCreate(root, 'div', 'm26-results-actions', results)
+  const modeControls = getOrCreate(root, 'div', 'm25-mode-controls', modeSelectPanel)
+  const difficultyControls = getOrCreate(root, 'div', 'm25-difficulty-controls', settingsPanel)
+  const actionControls = getOrCreate(root, 'div', 'm25-action-controls', modeSelectPanel)
+  const audioControls = getOrCreate(root, 'div', 'm25-audio-controls', settingsPanel)
+  const replayControls = getOrCreate(root, 'div', 'm25-replay-controls', resultsActions)
+  const secondaryControls = getOrCreate(root, 'div', 'm25-secondary-controls', settingsPanel)
+  const options = getOrCreate(root, 'div', 'm25-options', settingsPanel)
+  for (const panel of [mainMenuPanel, modeSelectPanel, settingsPanel, highScoresPanel, gameplayPanel, pausePanel]) {
+    panel.classList.add('m26-shell-panel')
+  }
   modeControls.classList.add('m25-control-group')
   difficultyControls.classList.add('m25-control-group')
   actionControls.classList.add('m25-control-group')
@@ -87,22 +127,34 @@ export function createDomState(root: HTMLElement): DomState {
   secondaryControls.classList.add('m25-control-group')
   options.classList.add('m25-options')
 
+  const playButton = getOrCreateButton(root, 'shell-play', 'Play', mainMenuPanel)
+  const openSettingsButton = getOrCreateButton(root, 'shell-settings', 'Settings', mainMenuPanel)
+  const openHighScoresButton = getOrCreateButton(root, 'shell-high-scores', 'High Scores', mainMenuPanel)
   const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', modeControls)
   const localVersusButton = getOrCreateButton(root, 'mode-local-versus', 'Local Versus', modeControls)
   const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', difficultyControls)
   const difficultyClassicStandardButton = getOrCreateButton(root, 'difficulty-classic-standard', 'Standard', difficultyControls)
   const difficultyClassicExpertButton = getOrCreateButton(root, 'difficulty-classic-expert', 'Expert', difficultyControls)
   const startButton = getOrCreateButton(root, 'start-game', 'Start', actionControls)
-  const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', actionControls)
+  const mainMenuModeButton = getOrCreateButton(root, 'shell-mode-main-menu', 'Main Menu', modeSelectPanel)
+  const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', gameplayPanel)
   const muteInput = getOrCreateCheckbox(root, 'option-mute', 'Mute', audioControls)
   const volumeInput = getOrCreateRange(root, 'option-volume', 'Volume', audioControls)
   const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', replayControls)
-  const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', secondaryControls)
+  const changeModeButton = getOrCreateButton(root, 'change-mode', 'Change Mode', resultsActions)
+  const mainMenuResultsButton = getOrCreateButton(root, 'results-main-menu', 'Main Menu', resultsActions)
+  const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', pausePanel)
+  const restartButton = getOrCreateButton(root, 'restart-game', 'Restart', pausePanel)
+  const pauseSettingsButton = getOrCreateButton(root, 'pause-settings', 'Settings', pausePanel)
+  const mainMenuPauseButton = getOrCreateButton(root, 'pause-main-menu', 'Main Menu', pausePanel)
   const audioUnlockButton = getOrCreateButton(root, 'audio-unlock', 'Enable Audio', secondaryControls)
   audioUnlockButton.classList.add('m25-audio-unlock')
   const showTimerInput = getOrCreateCheckbox(root, 'option-show-timer', 'Timer', secondaryControls)
   const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', secondaryControls)
   const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', secondaryControls)
+  const inputProfileSelect = getOrCreateSelect(root, 'input-profile-select', 'Input profile', settingsPanel)
+  const mainMenuSettingsButton = getOrCreateButton(root, 'settings-main-menu', 'Main Menu', settingsPanel)
+  const mainMenuHighScoresButton = getOrCreateButton(root, 'high-scores-main-menu', 'Main Menu', highScoresPanel)
 
   const domState = {
     shell,
@@ -121,6 +173,24 @@ export function createDomState(root: HTMLElement): DomState {
     seedAlias,
     results,
     theEnd,
+    mainMenuPanel,
+    modeSelectPanel,
+    settingsPanel,
+    highScoresPanel,
+    gameplayPanel,
+    pausePanel,
+    resultsActions,
+    playButton,
+    openSettingsButton,
+    openHighScoresButton,
+    mainMenuModeButton,
+    mainMenuSettingsButton,
+    mainMenuHighScoresButton,
+    mainMenuPauseButton,
+    mainMenuResultsButton,
+    pauseSettingsButton,
+    restartButton,
+    changeModeButton,
     classicSingleButton,
     localVersusButton,
     startButton,
@@ -136,6 +206,7 @@ export function createDomState(root: HTMLElement): DomState {
     highContrastInput,
     muteInput,
     volumeInput,
+    inputProfileSelect,
   }
   layoutChrome(domState)
 
@@ -185,6 +256,7 @@ export function syncDom(
   game: GameState,
   runtimeOptions?: RuntimeOptions,
   audioState?: AudioManagerState,
+  shellSync?: ShellDomSyncState,
 ): void {
   const options = runtimeOptions ?? {
     difficulty: game.options.difficulty,
@@ -263,6 +335,10 @@ export function syncDom(
   syncCheckboxControl(dom.muteInput, options.mute)
   dom.volumeInput.value = String(options.volume)
   dom.volumeInput.setAttribute('aria-valuenow', String(options.volume))
+  syncInputProfileControl(dom.inputProfileSelect, shellSync?.save)
+  if (shellSync) {
+    syncShellDom(dom, shellSync)
+  }
 
   for (const element of [
     dom.state,
@@ -326,6 +402,65 @@ function syncResults(element: HTMLElement, game: GameState): void {
   element.style.display = game.phase === 'results' ? 'block' : 'none'
 }
 
+function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
+  const { shell, save, saveStatus, storageAvailable, roundRecorded, highScoreStatus } = shellSync
+
+  dom.shell.setAttribute('data-shell-screen', shell.screen)
+  dom.shell.setAttribute('data-selected-mode', shell.selectedMode)
+  dom.shell.setAttribute('data-save-status', saveStatus)
+  dom.shell.setAttribute('data-storage-available', String(storageAvailable))
+  dom.shell.setAttribute('data-round-recorded', String(roundRecorded))
+
+  setPanelVisible(dom.mainMenuPanel, shell.screen === 'main-menu' || shell.screen === 'splash')
+  setPanelVisible(dom.modeSelectPanel, shell.screen === 'mode-select')
+  setPanelVisible(dom.settingsPanel, shell.screen === 'settings')
+  setPanelVisible(dom.highScoresPanel, shell.screen === 'high-scores')
+  setPanelVisible(dom.gameplayPanel, shell.screen === 'gameplay')
+  setPanelVisible(dom.pausePanel, shell.screen === 'pause')
+  setPanelVisible(dom.resultsActions, shell.screen === 'results')
+
+  dom.startButton.hidden = shell.screen !== 'mode-select'
+  dom.pauseButton.hidden = shell.screen !== 'gameplay'
+  dom.results.hidden = shell.screen !== 'results'
+  syncModeControl(dom.classicSingleButton, shell.selectedMode, 'classic-single')
+  syncModeControl(dom.localVersusButton, shell.selectedMode, 'local-versus')
+  syncHighScores(dom.highScoresPanel, save)
+  syncResultLine(dom.results, 'results-high-score-status', highScoreStatus ?? 'Local high score status pending.')
+}
+
+function syncHighScores(element: HTMLElement, save: SaveData): void {
+  const classic = save.highScores.classicSingle[0]
+  const versus = save.highScores.localVersus[0]
+  const classicText = classic
+    ? `Classic Single local best: ${classic.score} points - Seed ${classic.seed}`
+    : 'Classic Single local best: none yet'
+  const versusText = versus ? `Local Versus local best: ${versus.score} points - Seed ${versus.seed}` : 'Local Versus local best: none yet'
+
+  element.setAttribute('aria-label', 'Local high scores')
+  syncResultLine(element, 'high-scores-title', 'Local High Scores')
+  syncResultLine(element, 'high-scores-classic-single', classicText)
+  syncResultLine(element, 'high-scores-local-versus', versusText)
+}
+
+function syncInputProfileControl(element: HTMLSelectElement, save: SaveData | undefined): void {
+  const profiles = save?.inputProfiles.length ? save.inputProfiles : [{ id: 'default', name: 'Default' }]
+  const selected = save?.settings.inputProfileId ?? 'default'
+
+  element.replaceChildren()
+  for (const profile of profiles) {
+    const option = document.createElement('option')
+    option.value = profile.id
+    option.textContent = profile.name
+    option.selected = profile.id === selected
+    element.appendChild(option)
+  }
+}
+
+function setPanelVisible(element: HTMLElement, visible: boolean): void {
+  element.hidden = !visible
+  element.style.display = visible ? '' : 'none'
+}
+
 function syncResultLine(parent: HTMLElement, testId: string, text: string): void {
   const existing = parent.querySelector<HTMLElement>(`[data-testid="${testId}"]`)
   const element = existing ?? document.createElement('div')
@@ -342,7 +477,7 @@ function formatResultStats(player: MatchPlayerState | undefined, fallbackLabel: 
   const attempts = player?.stats.attempts ?? 0
   const accuracy = attempts > 0 ? catches / attempts : 0
 
-  return `${player?.label ?? fallbackLabel}: caught ${catches}/${attempts} - accuracy ${(accuracy * 100).toFixed(1)}%`
+  return `${player?.label ?? fallbackLabel}: caught ${catches}, attempts ${attempts}, accuracy ${(accuracy * 100).toFixed(1)}%, combo ${player?.stats.combo ?? 0}`
 }
 
 function syncModeControl(element: HTMLElement, currentMode: MatchMode, mode: MatchMode): void {
@@ -477,6 +612,24 @@ function getOrCreateRange(root: HTMLElement, testId: string, label: string, pare
   input.step = '0.05'
   input.setAttribute('aria-label', label)
   return input
+}
+
+function getOrCreateSelect(root: HTMLElement, testId: string, label: string, parent: HTMLElement): HTMLSelectElement {
+  const existing = root.querySelector<HTMLSelectElement>(`[data-testid="${testId}"]`)
+  if (existing) {
+    return existing
+  }
+
+  const wrapper = document.createElement('label')
+  wrapper.className = 'm25-option-control'
+  const select = document.createElement('select')
+  const text = document.createElement('span')
+  select.setAttribute('data-testid', testId)
+  select.setAttribute('aria-label', label)
+  text.textContent = label
+  wrapper.append(select, text)
+  parent.appendChild(wrapper)
+  return select
 }
 
 function getOrCreateLabeledInput(
