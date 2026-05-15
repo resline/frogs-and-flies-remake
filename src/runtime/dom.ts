@@ -58,6 +58,14 @@ export type DomState = {
   muteInput: HTMLInputElement
   volumeInput: HTMLInputElement
   inputProfileSelect: HTMLSelectElement
+  inputRemapStatus: HTMLElement
+  resetInputProfileButton: HTMLElement
+  touchLeftButton: HTMLElement
+  touchRightButton: HTMLElement
+  touchJumpButton: HTMLElement
+  touchTongueButton: HTMLElement
+  touchPauseButton: HTMLElement
+  touchConfirmButton: HTMLElement
 }
 
 export interface ShellDomSyncState {
@@ -153,8 +161,26 @@ export function createDomState(root: HTMLElement): DomState {
   const reducedMotionInput = getOrCreateCheckbox(root, 'option-reduced-motion', 'Reduced motion', secondaryControls)
   const highContrastInput = getOrCreateCheckbox(root, 'option-high-contrast', 'High contrast', secondaryControls)
   const inputProfileSelect = getOrCreateSelect(root, 'input-profile-select', 'Input profile', settingsPanel)
+  const inputRemapPanel = getOrCreate(root, 'div', 'm26-input-remap-panel', settingsPanel)
+  const inputRemapStatus = getOrCreateTestElement(root, 'input-remap-status', 'div', inputRemapPanel)
+  const resetInputProfileButton = getOrCreateButton(root, 'input-reset-defaults', 'Reset Defaults', inputRemapPanel)
+  createInputRemapButtons(root, inputRemapPanel)
   const mainMenuSettingsButton = getOrCreateButton(root, 'settings-main-menu', 'Main Menu', settingsPanel)
   const mainMenuHighScoresButton = getOrCreateButton(root, 'high-scores-main-menu', 'Main Menu', highScoresPanel)
+  const touchZones = getOrCreate(root, 'div', 'm26-touch-zones', shell)
+  const touchLeftButton = getOrCreateButton(root, 'touch-left', 'Left', touchZones)
+  const touchRightButton = getOrCreateButton(root, 'touch-right', 'Right', touchZones)
+  const touchJumpButton = getOrCreateButton(root, 'touch-jump', 'Jump', touchZones)
+  const touchTongueButton = getOrCreateButton(root, 'touch-tongue', 'Tongue', touchZones)
+  const touchPauseButton = getOrCreateButton(root, 'touch-pause', 'Pause', touchZones)
+  const touchConfirmButton = getOrCreateButton(root, 'touch-confirm', 'Confirm', touchZones)
+  touchZones.setAttribute('data-testid', 'touch-zones')
+  touchZones.setAttribute('aria-label', 'Touch controls')
+  touchZones.setAttribute('data-touch-zones-ready', 'true')
+  for (const button of [touchLeftButton, touchRightButton, touchJumpButton, touchTongueButton, touchPauseButton, touchConfirmButton]) {
+    button.classList.add('m26-touch-zone')
+    button.setAttribute('data-touch-zone', 'true')
+  }
 
   const domState = {
     shell,
@@ -207,6 +233,14 @@ export function createDomState(root: HTMLElement): DomState {
     muteInput,
     volumeInput,
     inputProfileSelect,
+    inputRemapStatus,
+    resetInputProfileButton,
+    touchLeftButton,
+    touchRightButton,
+    touchJumpButton,
+    touchTongueButton,
+    touchPauseButton,
+    touchConfirmButton,
   }
   layoutChrome(domState)
 
@@ -453,6 +487,28 @@ function syncInputProfileControl(element: HTMLSelectElement, save: SaveData | un
     option.textContent = profile.name
     option.selected = profile.id === selected
     element.appendChild(option)
+  }
+}
+
+function createInputRemapButtons(root: HTMLElement, parent: HTMLElement): void {
+  const actions = [
+    ['p1.moveLeft', 'P1 Left'],
+    ['p1.moveRight', 'P1 Right'],
+    ['p1.chargeJump', 'P1 Jump'],
+    ['p1.tongue', 'P1 Tongue'],
+    ['p2.moveLeft', 'P2 Left'],
+    ['p2.moveRight', 'P2 Right'],
+    ['p2.chargeJump', 'P2 Jump'],
+    ['p2.tongue', 'P2 Tongue'],
+    ['ui.start', 'Start'],
+    ['ui.pause', 'Pause'],
+    ['ui.confirm', 'Confirm'],
+    ['ui.back', 'Back'],
+  ] as const
+
+  for (const [action, label] of actions) {
+    const button = getOrCreateButton(root, `remap-${action}`, label, parent)
+    button.setAttribute('data-input-action', action)
   }
 }
 

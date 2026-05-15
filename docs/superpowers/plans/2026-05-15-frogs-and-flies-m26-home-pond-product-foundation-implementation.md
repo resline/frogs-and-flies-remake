@@ -520,7 +520,7 @@ Expected: shell runtime, save integration, shell/persistence tests, and CSS only
 - Modify: `src/style.css`
 - Modify: `tests/unit/runtimeInput.test.ts`
 
-- [ ] **Step 1: Write failing action registry tests**
+- [x] **Step 1: Write failing action registry tests**
 
 In `tests/unit/inputBindings.test.ts`, assert action ids include:
 
@@ -534,7 +534,7 @@ Assert default keyboard bindings preserve:
 - P2: `KeyJ`, `KeyL`, `KeyI`, `KeyO`
 - UI: `Enter`, `KeyP`
 
-- [ ] **Step 2: Run red action registry tests**
+- [x] **Step 2: Run red action registry tests**
 
 Run:
 
@@ -544,7 +544,7 @@ npm run test:unit -- tests/unit/inputBindings.test.ts
 
 Expected fail: `src/runtime/inputBindings.ts` does not exist.
 
-- [ ] **Step 3: Implement input binding data model**
+- [x] **Step 3: Implement input binding data model**
 
 Create `src/runtime/inputBindings.ts` with:
 
@@ -559,7 +559,7 @@ Create `src/runtime/inputBindings.ts` with:
 - `isBrowserReservedShortcut`
 - `resetProfileToDefaults`
 
-- [ ] **Step 4: Run green action registry tests**
+- [x] **Step 4: Run green action registry tests**
 
 Run:
 
@@ -569,7 +569,7 @@ npm run test:unit -- tests/unit/inputBindings.test.ts
 
 Expected pass: action registry and defaults are data-driven.
 
-- [ ] **Step 5: Write failing runtime mapper tests**
+- [x] **Step 5: Write failing runtime mapper tests**
 
 Extend `tests/unit/runtimeInput.test.ts` so keyboard state is converted through the default profile rather than hard-coded checks. Existing behavior must remain:
 
@@ -578,7 +578,7 @@ Extend `tests/unit/runtimeInput.test.ts` so keyboard state is converted through 
 - UI `Enter` and `KeyP` map to shell/runtime actions.
 - Pointer input remains P1-only and compatible with current smoke behavior.
 
-- [ ] **Step 6: Refactor runtime input through action state**
+- [x] **Step 6: Refactor runtime input through action state**
 
 Modify `src/runtime/input.ts` to:
 
@@ -587,7 +587,7 @@ Modify `src/runtime/input.ts` to:
 - Keep gameplay commands separate from UI shell actions.
 - Preserve existing `applyRuntimeInput` and `applyRuntimePointerInput` compatibility if existing tests rely on them.
 
-- [ ] **Step 7: Write failing gamepad mapper tests**
+- [x] **Step 7: Write failing gamepad mapper tests**
 
 In `tests/unit/gamepadInput.test.ts`, test pure functions for:
 
@@ -598,11 +598,11 @@ In `tests/unit/gamepadInput.test.ts`, test pure functions for:
 - Dead zone prevents drift.
 - Disconnected gamepad yields no actions.
 
-- [ ] **Step 8: Implement gamepad polling foundation**
+- [x] **Step 8: Implement gamepad polling foundation**
 
 Create `src/runtime/gamepad.ts` with pure mapper helpers and a browser poller. Runtime must expose markers such as `data-gamepad-connected` and `data-active-input-device`. If CI cannot emulate gamepads, E2E should assert only marker behavior while unit tests cover mapper logic.
 
-- [ ] **Step 9: Add touch zones**
+- [x] **Step 9: Add touch zones**
 
 Modify DOM/CSS to expose touch zones when touch mode is active:
 
@@ -615,7 +615,7 @@ Modify DOM/CSS to expose touch zones when touch mode is active:
 
 Touch zones must not break desktop pointer play or focus behavior.
 
-- [ ] **Step 10: Add remapping UI**
+- [x] **Step 10: Add remapping UI**
 
 Add settings UI to:
 
@@ -625,7 +625,7 @@ Add settings UI to:
 - Reset to defaults.
 - Persist selected profile and profiles through SaveManager.
 
-- [ ] **Step 11: Write and run input E2E tests**
+- [x] **Step 11: Write and run input E2E tests**
 
 Create `tests/e2e/m26-input.spec.ts` covering keyboard defaults, pointer/touch zone markers, remap conflict, reset defaults, and persistence after reload.
 
@@ -637,7 +637,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-inpu
 
 Expected pass: input flows pass without adding a user account model.
 
-- [ ] **Step 12: Run focused input unit tests**
+- [x] **Step 12: Run focused input unit tests**
 
 Run:
 
@@ -647,7 +647,7 @@ npm run test:unit -- tests/unit/inputBindings.test.ts tests/unit/gamepadInput.te
 
 Expected pass: input foundation and persistence hooks pass.
 
-- [ ] **Step 13: Commit boundary**
+- [x] **Step 13: Commit boundary**
 
 Run:
 

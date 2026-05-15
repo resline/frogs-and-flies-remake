@@ -1,5 +1,6 @@
 import { isDifficultyMode } from '../game/difficulty'
 import type { DifficultyMode, MatchMode, MatchWinner, PlayerId } from '../game/types'
+import { createDefaultInputProfiles } from './inputBindings'
 
 export const SAVE_SCHEMA_VERSION = 1
 export const SAVE_STORAGE_KEY = 'frogs-and-flies.save.v1'
@@ -25,7 +26,9 @@ export interface SaveSettings {
 
 export interface InputBinding {
   action: string
-  codes: string[]
+  codes?: string[]
+  device?: string
+  code?: string
   playerId?: PlayerId
 }
 
@@ -148,13 +151,7 @@ export function createDefaultSave(_now: () => string = () => new Date().toISOStr
       bestCombo: 0,
       totalPlaySeconds: 0,
     },
-    inputProfiles: [
-      {
-        id: 'default',
-        name: 'Default',
-        bindings: [],
-      },
-    ],
+    inputProfiles: createDefaultInputProfiles(),
     completedRoundIds: [],
     startedRoundIds: [],
   }
@@ -409,14 +406,21 @@ function cloneSave(save: SaveData): SaveData {
     stats: { ...save.stats },
     inputProfiles: save.inputProfiles.map((profile) => ({
       ...profile,
-      bindings: profile.bindings.map((binding) => ({
-        ...binding,
-        codes: [...binding.codes],
-      })),
+      bindings: profile.bindings.map(cloneInputBinding),
     })),
     completedRoundIds: [...save.completedRoundIds],
     startedRoundIds: [...save.startedRoundIds],
   }
+}
+
+function cloneInputBinding(binding: InputBinding): InputBinding {
+  const clone: InputBinding = { ...binding }
+  if (binding.codes) {
+    clone.codes = [...binding.codes]
+  } else {
+    delete clone.codes
+  }
+  return clone
 }
 
 function cloneHighScores(highScores: SaveData['highScores']): SaveData['highScores'] {
@@ -534,13 +538,21 @@ function validateInputProfile(raw: unknown): InputProfile | undefined {
 }
 
 function validateInputBinding(raw: unknown): InputBinding | undefined {
-  if (!isRecord(raw) || typeof raw.action !== 'string' || !Array.isArray(raw.codes)) {
+  if (!isRecord(raw) || typeof raw.action !== 'string') {
+    return undefined
+  }
+
+  const codes = validateStringArray(raw.codes)
+  const code = typeof raw.code === 'string' ? raw.code : undefined
+  if (codes.length === 0 && !code) {
     return undefined
   }
 
   return {
     action: raw.action,
-    codes: validateStringArray(raw.codes),
+    codes: codes.length > 0 ? codes : undefined,
+    device: typeof raw.device === 'string' ? raw.device : undefined,
+    code,
     playerId: isPlayerId(raw.playerId) ? raw.playerId : undefined,
   }
 }

@@ -296,6 +296,59 @@ button[data-selected="true"] {
   order: 6;
 }
 
+.m26-input-remap-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  order: 7;
+}
+
+.m26-input-remap-panel [data-testid="input-remap-status"] {
+  border: 1px solid rgba(229, 255, 224, 0.2);
+  border-radius: 6px;
+  flex-basis: 100%;
+  font-size: 13px;
+  line-height: 1.25;
+  min-height: 32px;
+  padding: 7px 8px;
+}
+
+.m26-input-remap-panel button {
+  min-height: 34px;
+  min-width: 86px;
+  padding: 0 10px;
+}
+
+#m26-touch-zones {
+  bottom: 16px;
+  display: none;
+  gap: 8px;
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
+  left: 16px;
+  pointer-events: none;
+  position: fixed;
+  right: 16px;
+  z-index: 5;
+}
+
+#m26-touch-zones .m26-touch-zone {
+  min-height: 48px;
+  min-width: 44px;
+  padding: 0 8px;
+  pointer-events: auto;
+  text-transform: none;
+}
+
+.game-shell[data-active-input-device="touch"] #m26-touch-zones {
+  display: grid;
+}
+
+@media (pointer: coarse) {
+  #m26-touch-zones {
+    display: grid;
+  }
+}
+
 .m25-audio-unlock[data-audio-unlocked="true"] {
   background: #bff7c5;
   border-color: rgba(191, 247, 197, 0.84);

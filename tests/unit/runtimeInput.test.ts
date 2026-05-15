@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createGame } from '../../src/game/createGame'
 import { updateGame } from '../../src/game/update'
+import type { InputProfile } from '../../src/runtime/inputBindings'
 
 type RuntimeInputModule = {
-  createRuntimeInputState?: () => RuntimeInputState
+  createRuntimeInputState?: (profile?: InputProfile) => RuntimeInputState
   handleRuntimeKeyDown?: (input: RuntimeInputState, code: string) => RuntimeInputAction | undefined
   handleRuntimeKeyUp?: (input: RuntimeInputState, code: string) => void
   applyRuntimeInput?: (game: ReturnType<typeof createGame>, input: RuntimeInputState) => void
@@ -72,6 +73,40 @@ describe('runtime input mapper', () => {
       humanInput: true,
     })
     expect(game.players[1].commands.moveLeft).toBeUndefined()
+  })
+
+  it('maps keyboard controls through the selected input profile', async () => {
+    const { createRuntimeInputState, handleRuntimeKeyDown, applyRuntimeInput } = await loadRuntimeInput()
+    const input = createRuntimeInputState({
+      id: 'lefty',
+      name: 'Lefty',
+      bindings: [
+        { action: 'p1.moveLeft', device: 'keyboard', code: 'KeyZ' },
+        { action: 'p1.moveRight', device: 'keyboard', code: 'KeyX' },
+        { action: 'p1.chargeJump', device: 'keyboard', code: 'KeyC' },
+        { action: 'p1.releaseJump', device: 'keyboard', code: 'KeyC' },
+        { action: 'p1.tongue', device: 'keyboard', code: 'KeyV' },
+        { action: 'ui.start', device: 'keyboard', code: 'Enter' },
+        { action: 'ui.pause', device: 'keyboard', code: 'KeyP' },
+        { action: 'ui.confirm', device: 'keyboard', code: 'Enter' },
+        { action: 'ui.back', device: 'keyboard', code: 'Escape' },
+      ],
+    })
+    const game = startGame('classic-single')
+
+    handleRuntimeKeyDown(input, 'KeyA')
+    handleRuntimeKeyDown(input, 'KeyZ')
+    handleRuntimeKeyDown(input, 'KeyC')
+    handleRuntimeKeyDown(input, 'KeyV')
+    applyRuntimeInput(game, input)
+
+    expect(game.commands).toMatchObject({
+      moveLeft: true,
+      chargeJump: true,
+      tongue: true,
+      humanInput: true,
+    })
+    expect(game.commands.moveRight).toBeUndefined()
   })
 
   it('keeps Space as P1 jump and KeyT as P1 tongue for M1 classic behavior', async () => {

@@ -1,4 +1,5 @@
 import type { GameCommands, GameState, MatchMode } from '../game/types'
+import { DEFAULT_INPUT_PROFILE, type InputActionId, type InputDeviceType, type InputProfile } from './inputBindings'
 
 export type RuntimeInputAction =
   | { type: 'start' }
@@ -6,7 +7,11 @@ export type RuntimeInputAction =
   | { type: 'mode'; mode: MatchMode }
 
 export type RuntimeInputState = {
+  profile: InputProfile
   heldKeys: Set<string>
+  heldActions: Set<InputActionId>
+  pendingActions: Set<InputActionId>
+  activeInputDevice: InputDeviceType | 'none'
   pendingP1JumpRelease: boolean
   pendingP2JumpRelease: boolean
   pendingP1Fire: boolean
@@ -16,9 +21,13 @@ export type RuntimeInputState = {
 
 const RUNTIME_COMMAND_KEYS = ['moveLeft', 'moveRight', 'chargeJump', 'releaseJump', 'tongue', 'fire', 'humanInput'] as const
 
-export function createRuntimeInputState(): RuntimeInputState {
+export function createRuntimeInputState(profile: InputProfile = DEFAULT_INPUT_PROFILE): RuntimeInputState {
   return {
+    profile,
     heldKeys: new Set(),
+    heldActions: new Set(),
+    pendingActions: new Set(),
+    activeInputDevice: 'none',
     pendingP1JumpRelease: false,
     pendingP2JumpRelease: false,
     pendingP1Fire: false,
@@ -29,18 +38,28 @@ export function createRuntimeInputState(): RuntimeInputState {
 
 export function handleRuntimeKeyDown(input: RuntimeInputState, code: string): RuntimeInputAction | undefined {
   input.heldKeys.add(code)
+  input.activeInputDevice = 'keyboard'
 
-  if (code === 'KeyT') {
-    input.pendingP1Tongue = true
-  }
-  if (code === 'KeyO') {
-    input.pendingP2Tongue = true
+  const actions = actionsForBinding(input, 'keyboard', code)
+  for (const action of actions) {
+    if (action.endsWith('.releaseJump')) {
+      continue
+    }
+    input.heldActions.add(action)
+    if (action === 'p1.tongue') {
+      input.pendingActions.add(action)
+      input.pendingP1Tongue = true
+    }
+    if (action === 'p2.tongue') {
+      input.pendingActions.add(action)
+      input.pendingP2Tongue = true
+    }
   }
 
-  if (code === 'Enter') {
+  if (actions.includes('ui.start') || actions.includes('ui.confirm')) {
     return { type: 'start' }
   }
-  if (code === 'KeyP') {
+  if (actions.includes('ui.pause')) {
     return { type: 'pause-toggle' }
   }
   if (code === 'Digit1') {
@@ -55,12 +74,18 @@ export function handleRuntimeKeyDown(input: RuntimeInputState, code: string): Ru
 
 export function handleRuntimeKeyUp(input: RuntimeInputState, code: string): void {
   const wasHeld = input.heldKeys.delete(code)
+  const actions = actionsForBinding(input, 'keyboard', code)
 
-  if (code === 'Space' && wasHeld) {
-    input.pendingP1JumpRelease = true
-  }
-  if (code === 'KeyI' && wasHeld) {
-    input.pendingP2JumpRelease = true
+  for (const action of actions) {
+    input.heldActions.delete(action)
+    if (action === 'p1.releaseJump' && wasHeld) {
+      input.pendingActions.add(action)
+      input.pendingP1JumpRelease = true
+    }
+    if (action === 'p2.releaseJump' && wasHeld) {
+      input.pendingActions.add(action)
+      input.pendingP2JumpRelease = true
+    }
   }
 }
 
@@ -77,19 +102,19 @@ export function applyRuntimeInput(game: GameState, input: RuntimeInputState): vo
   }
 
   const p1 = {
-    moveLeft: input.heldKeys.has('ArrowLeft') || input.heldKeys.has('KeyA'),
-    moveRight: input.heldKeys.has('ArrowRight') || input.heldKeys.has('KeyD'),
-    chargeJump: input.heldKeys.has('Space'),
-    releaseJump: input.pendingP1JumpRelease,
+    moveLeft: input.heldActions.has('p1.moveLeft'),
+    moveRight: input.heldActions.has('p1.moveRight'),
+    chargeJump: input.heldActions.has('p1.chargeJump'),
+    releaseJump: input.pendingActions.has('p1.releaseJump') || input.pendingP1JumpRelease,
     fire: input.pendingP1Fire,
-    tongue: input.pendingP1Tongue,
+    tongue: input.pendingActions.has('p1.tongue') || input.pendingP1Tongue,
   }
   const p2 = {
-    moveLeft: input.heldKeys.has('KeyJ'),
-    moveRight: input.heldKeys.has('KeyL'),
-    chargeJump: input.heldKeys.has('KeyI'),
-    releaseJump: input.pendingP2JumpRelease,
-    tongue: input.pendingP2Tongue,
+    moveLeft: input.heldActions.has('p2.moveLeft'),
+    moveRight: input.heldActions.has('p2.moveRight'),
+    chargeJump: input.heldActions.has('p2.chargeJump'),
+    releaseJump: input.pendingActions.has('p2.releaseJump') || input.pendingP2JumpRelease,
+    tongue: input.pendingActions.has('p2.tongue') || input.pendingP2Tongue,
   }
 
   writeCommands(game.commands, p1)
@@ -105,6 +130,7 @@ export function applyRuntimeInput(game: GameState, input: RuntimeInputState): vo
   input.pendingP1Fire = false
   input.pendingP1Tongue = false
   input.pendingP2Tongue = false
+  input.pendingActions.clear()
 }
 
 export function applyRuntimePointerInput(game: GameState, input: RuntimeInputState, pointerX: number): void {
@@ -121,11 +147,33 @@ export function applyRuntimePointerInput(game: GameState, input: RuntimeInputSta
 
   input.pendingP1Fire = true
   input.pendingP1Tongue = true
+  input.activeInputDevice = 'pointer'
 
   writeCommands(game.commands, pointerCommands)
   if (p1Commands) {
     writeCommands(p1Commands, pointerCommands)
   }
+}
+
+export function addRuntimeInputAction(input: RuntimeInputState, action: InputActionId, held: boolean): void {
+  if (held) {
+    input.heldActions.add(action)
+    if (action === 'p1.tongue' || action === 'p2.tongue') {
+      input.pendingActions.add(action)
+    }
+    return
+  }
+
+  input.heldActions.delete(action)
+  if (action === 'p1.releaseJump' || action === 'p2.releaseJump' || action === 'p1.tongue' || action === 'p2.tongue') {
+    input.pendingActions.add(action)
+  }
+}
+
+function actionsForBinding(input: RuntimeInputState, device: InputDeviceType, code: string): InputActionId[] {
+  return input.profile.bindings
+    .filter((binding) => binding.device === device && binding.code === code)
+    .map((binding) => binding.action)
 }
 
 function clearRuntimeCommands(commands: GameCommands): void {

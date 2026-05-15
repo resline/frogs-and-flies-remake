@@ -5,6 +5,7 @@ import { createFixedStep } from '../game/fixedStep'
 import { buildResults } from '../game/match'
 import { drainGameplayAudioEvents, updateGame } from '../game/update'
 import {
+  addRuntimeInputAction,
   applyRuntimeInput,
   applyRuntimePointerInput,
   createRuntimeInputState,
@@ -12,6 +13,7 @@ import {
   handleRuntimeKeyUp,
   type RuntimeInputAction,
 } from './input'
+import { createGamepadPoller, type GamepadInputSnapshot } from './gamepad'
 import { createRenderScene, renderScene, type RenderFrameMarkers, type RenderScene } from '../render/scene'
 import { createAudioManager } from './audio'
 import { loadGeneratedGameplayAssets } from './assets'
@@ -29,6 +31,16 @@ import {
   type SaveWriteStatus,
 } from './save'
 import { createInitialShellState, reduceShellState, type ShellAction, type ShellState } from './shell'
+import {
+  DEFAULT_INPUT_PROFILE,
+  detectBindingConflict,
+  isBrowserReservedShortcut,
+  resetProfileToDefaults,
+  type InputActionId,
+  type InputBinding,
+  type InputDeviceType,
+  type InputProfile,
+} from './inputBindings'
 
 const RUNTIME_PREVENT_DEFAULT_CODES = new Set([
   'ArrowLeft',
@@ -80,7 +92,22 @@ export async function startRuntime(
   let activeRoundId = ''
   let roundRecorded = false
   let highScoreStatus = 'Local high score status pending.'
-  const runtimeInput = createRuntimeInputState()
+  const runtimeInput = createRuntimeInputState(readSelectedInputProfile(saveData))
+  let remappingAction: InputActionId | undefined
+  let gamepadSnapshot: GamepadInputSnapshot = {
+    connected: false,
+    activeInputDevice: 'none',
+    actions: [],
+  }
+  let previousGamepadActions = new Set<InputActionId>()
+  const gamepadPoller = createGamepadPoller({
+    onSnapshot(snapshot) {
+      gamepadSnapshot = snapshot
+      if (snapshot.activeInputDevice === 'gamepad') {
+        runtimeInput.activeInputDevice = 'gamepad'
+      }
+    },
+  })
   const audio = createAudioManager({
     muted: currentRuntimeParams.options.mute,
     volume: currentRuntimeParams.options.volume,
@@ -105,6 +132,10 @@ export async function startRuntime(
       highScoreStatus,
       save: saveData,
     })
+    syncInputRuntimeMarkers(dom.shell, runtimeInput, gamepadSnapshot)
+    if (dom.canvas) {
+      syncInputRuntimeMarkers(dom.canvas, runtimeInput, gamepadSnapshot)
+    }
     if (scene) {
       syncCanvasRenderMarkers(dom.canvas, renderScene(scene, game, currentRuntimeParams.options))
     }
@@ -199,6 +230,7 @@ export async function startRuntime(
     saveData = result.data
     saveStatus = result.status
     storageAvailable = result.status !== 'storage-unavailable'
+    runtimeInput.profile = readSelectedInputProfile(saveData)
   }
 
   const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
@@ -242,7 +274,13 @@ export async function startRuntime(
     }
 
     if (action.type === 'pause-toggle') {
-      runCommand(game.phase === 'pause' ? 'resume' : 'pause')
+      if (game.phase === 'pause') {
+        transitionShell({ type: 'resume' })
+        runCommand('resume')
+      } else {
+        transitionShell({ type: 'pause' })
+        runCommand('pause')
+      }
       return
     }
 
@@ -299,6 +337,33 @@ export async function startRuntime(
   const handleHighContrastChange = () => updateRuntimeOptions({ highContrast: dom.highContrastInput.checked })
   const handleMuteChange = () => updateRuntimeOptions({ mute: dom.muteInput.checked })
   const handleVolumeInput = () => updateRuntimeOptions({ volume: Number.parseFloat(dom.volumeInput.value) })
+  const handleInputProfileChange = () => {
+    persistSave({
+      ...saveData,
+      settings: {
+        ...saveData.settings,
+        inputProfileId: dom.inputProfileSelect.value,
+      },
+    })
+    refresh()
+  }
+  const handleInputRemapClick = (event: Event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>('[data-input-action]')
+    const action = button?.getAttribute('data-input-action')
+    if (!isInputActionId(action)) {
+      return
+    }
+    remappingAction = action
+    dom.inputRemapStatus.textContent = `Press a key for ${action}.`
+    dom.inputRemapStatus.setAttribute('data-remap-state', 'listening')
+  }
+  const handleResetInputProfileClick = () => {
+    const profile = readSelectedInputProfile(saveData)
+    writeInputProfile(resetProfileToDefaults(profile))
+    dom.inputRemapStatus.textContent = 'Input profile reset to defaults.'
+    dom.inputRemapStatus.setAttribute('data-remap-state', 'reset')
+    refresh()
+  }
   const handleAudioUnlockClick = () => {
     void audio.unlock().then(refresh)
   }
@@ -356,9 +421,18 @@ export async function startRuntime(
   dom.highContrastInput.addEventListener('change', handleHighContrastChange)
   dom.muteInput.addEventListener('change', handleMuteChange)
   dom.volumeInput.addEventListener('input', handleVolumeInput)
+  dom.inputProfileSelect.addEventListener('change', handleInputProfileChange)
+  dom.settingsPanel.addEventListener('click', handleInputRemapClick)
+  dom.resetInputProfileButton.addEventListener('click', handleResetInputProfileClick)
   dom.audioUnlockButton.addEventListener('click', handleAudioUnlockClick)
 
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (remappingAction) {
+      event.preventDefault()
+      completeKeyboardRemap(event)
+      return
+    }
+
     if (RUNTIME_PREVENT_DEFAULT_CODES.has(event.code)) {
       event.preventDefault()
     }
@@ -406,6 +480,7 @@ export async function startRuntime(
     const pointerX = ((event.clientX - bounds.left) / bounds.width) * ARENA_WIDTH
 
     applyRuntimePointerInput(game, runtimeInput, pointerX)
+    runtimeInput.activeInputDevice = event.pointerType === 'touch' ? 'touch' : 'pointer'
 
     if (game.phase === 'start') {
       startGameplay()
@@ -413,6 +488,12 @@ export async function startRuntime(
   }
 
   app.canvas.addEventListener('pointerdown', handlePointerDown)
+  bindTouchZone(dom.touchLeftButton, 'p1.moveLeft')
+  bindTouchZone(dom.touchRightButton, 'p1.moveRight')
+  bindTouchZone(dom.touchJumpButton, 'p1.chargeJump')
+  bindTouchZone(dom.touchTongueButton, 'p1.tongue')
+  bindTouchZone(dom.touchPauseButton, 'ui.pause')
+  bindTouchZone(dom.touchConfirmButton, 'ui.confirm')
 
   refresh()
 
@@ -421,6 +502,25 @@ export async function startRuntime(
     const simulationDeltaSeconds = deltaSeconds * currentRuntimeParams.simulationSpeed
 
     fixedStep.advance(simulationDeltaSeconds, () => {
+      const snapshot = gamepadPoller.poll()
+      const nextGamepadActions: Set<InputActionId> = new Set(
+        snapshot.actions.filter((action) => action !== 'p1.releaseJump' && action !== 'p2.releaseJump'),
+      )
+      for (const action of previousGamepadActions) {
+        if (!nextGamepadActions.has(action)) {
+          runtimeInput.heldActions.delete(action)
+          if (action === 'p1.chargeJump') {
+            addRuntimeInputAction(runtimeInput, 'p1.releaseJump', false)
+          }
+          if (action === 'p2.chargeJump') {
+            addRuntimeInputAction(runtimeInput, 'p2.releaseJump', false)
+          }
+        }
+      }
+      for (const action of nextGamepadActions) {
+        addRuntimeInputAction(runtimeInput, action, true)
+      }
+      previousGamepadActions = nextGamepadActions
       applyRuntimeInput(game, runtimeInput)
       updateGameAndAudio(FIXED_TIMESTEP_SECONDS)
     })
@@ -461,15 +561,175 @@ export async function startRuntime(
       dom.highContrastInput.removeEventListener('change', handleHighContrastChange)
       dom.muteInput.removeEventListener('change', handleMuteChange)
       dom.volumeInput.removeEventListener('input', handleVolumeInput)
+      dom.inputProfileSelect.removeEventListener('change', handleInputProfileChange)
+      dom.settingsPanel.removeEventListener('click', handleInputRemapClick)
+      dom.resetInputProfileButton.removeEventListener('click', handleResetInputProfileClick)
       dom.audioUnlockButton.removeEventListener('click', handleAudioUnlockClick)
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       app.canvas.removeEventListener('pointerdown', handlePointerDown)
       removeResizeListener?.()
+      gamepadPoller.destroy()
       app.ticker.remove(tick)
       app.destroy(true)
     },
   }
+
+  function completeKeyboardRemap(event: KeyboardEvent): void {
+    if (!remappingAction) {
+      return
+    }
+
+    const binding: InputBinding = {
+      action: remappingAction,
+      device: 'keyboard',
+      code: event.code,
+    }
+    const profile = readSelectedInputProfile(saveData)
+    const conflict = detectBindingConflict(profile, binding)
+    if (isBrowserReservedShortcut(event)) {
+      dom.inputRemapStatus.textContent = `${event.code} is reserved by the browser.`
+      dom.inputRemapStatus.setAttribute('data-remap-state', 'rejected')
+      remappingAction = undefined
+      refresh()
+      return
+    }
+    if (conflict) {
+      dom.inputRemapStatus.textContent = `${event.code} conflicts with ${conflict.action}.`
+      dom.inputRemapStatus.setAttribute('data-remap-state', 'conflict')
+      remappingAction = undefined
+      refresh()
+      return
+    }
+
+    writeInputProfile(replaceKeyboardBinding(profile, binding))
+    dom.inputRemapStatus.textContent = `${remappingAction} set to ${event.code}.`
+    dom.inputRemapStatus.setAttribute('data-remap-state', 'saved')
+    remappingAction = undefined
+    refresh()
+  }
+
+  function writeInputProfile(profile: InputProfile): void {
+    const exists = saveData.inputProfiles.some((candidate) => candidate.id === profile.id)
+    persistSave({
+      ...saveData,
+      settings: {
+        ...saveData.settings,
+        inputProfileId: profile.id,
+      },
+      inputProfiles: exists
+        ? saveData.inputProfiles.map((candidate) => (candidate.id === profile.id ? profile : candidate))
+        : [...saveData.inputProfiles, profile],
+    })
+  }
+
+  function bindTouchZone(element: HTMLElement, action: InputActionId): void {
+    const down = (event: PointerEvent) => {
+      event.preventDefault()
+      runtimeInput.activeInputDevice = 'touch'
+      addRuntimeInputAction(runtimeInput, action, true)
+      if (action === 'ui.pause') {
+        runRuntimeAction({ type: 'pause-toggle' })
+      }
+      if (action === 'ui.confirm') {
+        runRuntimeAction({ type: 'start' })
+      }
+      refresh()
+    }
+    const up = (event: PointerEvent) => {
+      event.preventDefault()
+      runtimeInput.activeInputDevice = 'touch'
+      addRuntimeInputAction(runtimeInput, releaseActionFor(action), false)
+      refresh()
+    }
+    element.addEventListener('pointerdown', down)
+    element.addEventListener('pointerup', up)
+    element.addEventListener('pointercancel', up)
+  }
+}
+
+function readSelectedInputProfile(save: SaveData): InputProfile {
+  const selected = save.inputProfiles.find((profile) => profile.id === save.settings.inputProfileId) ?? save.inputProfiles[0]
+  return toRuntimeInputProfile(selected) ?? resetProfileToDefaults(DEFAULT_INPUT_PROFILE)
+}
+
+function toRuntimeInputProfile(profile: SaveData['inputProfiles'][number] | undefined): InputProfile | undefined {
+  if (!profile) {
+    return undefined
+  }
+
+  const bindings = profile.bindings.flatMap((binding) => {
+    const action = isInputActionId(binding.action) ? binding.action : undefined
+    if (!action) {
+      return []
+    }
+    if (isInputDeviceType(binding.device) && typeof binding.code === 'string') {
+      return [{ action, device: binding.device, code: binding.code }]
+    }
+    return (binding.codes ?? []).map((code) => ({ action, device: 'keyboard' as const, code }))
+  })
+
+  return {
+    id: profile.id,
+    name: profile.name,
+    bindings: bindings.length > 0 ? bindings : resetProfileToDefaults(DEFAULT_INPUT_PROFILE).bindings,
+  }
+}
+
+function replaceKeyboardBinding(profile: InputProfile, binding: InputBinding): InputProfile {
+  const linkedAction = linkedReleaseAction(binding.action)
+  const nextBindings = profile.bindings.filter((candidate) => {
+    if (candidate.device !== 'keyboard') {
+      return true
+    }
+    return candidate.action !== binding.action && candidate.action !== linkedAction
+  })
+  nextBindings.push(binding)
+  if (linkedAction) {
+    nextBindings.push({ ...binding, action: linkedAction })
+  }
+
+  return {
+    ...profile,
+    bindings: nextBindings,
+  }
+}
+
+function linkedReleaseAction(action: InputActionId): InputActionId | undefined {
+  if (action === 'p1.chargeJump' || action === 'p1.releaseJump') {
+    return action === 'p1.chargeJump' ? 'p1.releaseJump' : 'p1.chargeJump'
+  }
+  if (action === 'p2.chargeJump' || action === 'p2.releaseJump') {
+    return action === 'p2.chargeJump' ? 'p2.releaseJump' : 'p2.chargeJump'
+  }
+  return undefined
+}
+
+function releaseActionFor(action: InputActionId): InputActionId {
+  return action === 'p1.chargeJump' ? 'p1.releaseJump' : action === 'p2.chargeJump' ? 'p2.releaseJump' : action
+}
+
+function isInputActionId(value: unknown): value is InputActionId {
+  return (
+    value === 'p1.moveLeft' ||
+    value === 'p1.moveRight' ||
+    value === 'p1.chargeJump' ||
+    value === 'p1.releaseJump' ||
+    value === 'p1.tongue' ||
+    value === 'p2.moveLeft' ||
+    value === 'p2.moveRight' ||
+    value === 'p2.chargeJump' ||
+    value === 'p2.releaseJump' ||
+    value === 'p2.tongue' ||
+    value === 'ui.start' ||
+    value === 'ui.pause' ||
+    value === 'ui.confirm' ||
+    value === 'ui.back'
+  )
+}
+
+function isInputDeviceType(value: unknown): value is InputDeviceType {
+  return value === 'keyboard' || value === 'pointer' || value === 'touch' || value === 'gamepad'
 }
 
 function createRuntimeFixedStep(runtimeParams: RuntimeParams): ReturnType<typeof createFixedStep> {
@@ -531,6 +791,11 @@ function syncCanvasRenderMarkers(canvas: HTMLCanvasElement | undefined, markers:
   if (markers.lastEffect) {
     canvas.setAttribute('data-last-effect', markers.lastEffect)
   }
+}
+
+function syncInputRuntimeMarkers(element: HTMLElement, input: { activeInputDevice: string }, gamepad: GamepadInputSnapshot): void {
+  element.setAttribute('data-gamepad-connected', String(gamepad.connected))
+  element.setAttribute('data-active-input-device', input.activeInputDevice)
 }
 
 function scoreEntriesForMode(save: SaveData, mode: MatchMode): SaveData['highScores']['classicSingle'] {
