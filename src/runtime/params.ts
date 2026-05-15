@@ -1,5 +1,5 @@
 import type { GamePhase } from '../game/types'
-import { readRuntimeOptions, type RuntimeOptions } from './options'
+import { readRuntimeOptions, type RuntimeOptions, type RuntimeOptionsDefaults } from './options'
 
 export type RuntimeMode = 'classic-single' | 'local-versus'
 
@@ -14,7 +14,7 @@ export type RuntimeParams = {
   options: RuntimeOptions
 }
 
-export function readRuntimeParams(searchParams: URLSearchParams): RuntimeParams {
+export function readRuntimeParams(searchParams: URLSearchParams, savedDefaults: RuntimeOptionsDefaults = {}): RuntimeParams {
   return {
     seed: readPositiveInteger(searchParams.get('seed'), 1),
     mode: readMode(searchParams.get('mode')),
@@ -23,7 +23,7 @@ export function readRuntimeParams(searchParams: URLSearchParams): RuntimeParams 
     durationSeconds: readNonNegativeNumber(searchParams.get('durationSeconds')),
     theEndSeconds: readNonNegativeNumber(searchParams.get('theEndSeconds')),
     simulationSpeed: readPositiveNumber(searchParams.get('simulationSpeed'), 1),
-    options: readRuntimeOptions(searchParams),
+    options: readRuntimeOptions(searchParams, savedDefaults),
   }
 }
 

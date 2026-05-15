@@ -43,6 +43,6 @@ export function getClassicDifficulty(difficulty: DifficultyMode = 'classic-stand
   }
 }
 
-export function isDifficultyMode(value: string | null | undefined): value is DifficultyMode {
+export function isDifficultyMode(value: unknown): value is DifficultyMode {
   return value === 'classic-assist' || value === 'classic-standard' || value === 'classic-expert'
 }

@@ -209,7 +209,7 @@ Expected: no source changes from baseline verification. Do not commit generated 
 - Modify: `src/runtime/params.ts`
 - Modify later integration points only after unit green: `src/main.ts`, `src/runtime/app.ts`, `src/runtime/dom.ts`
 
-- [ ] **Step 1: Write failing default-save tests**
+- [x] **Step 1: Write failing default-save tests**
 
 In `tests/unit/saveManager.test.ts`, add tests that import from `../../src/runtime/save` and assert:
 
@@ -221,7 +221,7 @@ expect(createDefaultSave().highScores.localVersus).toEqual([])
 expect(createDefaultSave().stats.roundsStarted).toBe(0)
 ```
 
-- [ ] **Step 2: Run red SaveManager tests**
+- [x] **Step 2: Run red SaveManager tests**
 
 Run:
 
@@ -231,7 +231,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts
 
 Expected fail: module `../../src/runtime/save` does not exist.
 
-- [ ] **Step 3: Implement minimal SaveManager schema**
+- [x] **Step 3: Implement minimal SaveManager schema**
 
 Create `src/runtime/save.ts` with:
 
@@ -268,7 +268,7 @@ stats: {
 }
 ```
 
-- [ ] **Step 4: Run green default-save tests**
+- [x] **Step 4: Run green default-save tests**
 
 Run:
 
@@ -278,7 +278,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts
 
 Expected pass: default schema tests pass.
 
-- [ ] **Step 5: Write failing storage resilience tests**
+- [x] **Step 5: Write failing storage resilience tests**
 
 Add tests for:
 
@@ -288,7 +288,7 @@ Add tests for:
 - Unavailable storage does not throw and returns defaults with status `storage-unavailable`.
 - Invalid primitive ranges are clamped or rejected to defaults.
 
-- [ ] **Step 6: Implement load, save, reset, validation, and migration switch**
+- [x] **Step 6: Implement load, save, reset, validation, and migration switch**
 
 In `src/runtime/save.ts`, implement:
 
@@ -301,7 +301,7 @@ In `src/runtime/save.ts`, implement:
 
 Use a version switch even though only v1 exists.
 
-- [ ] **Step 7: Run green storage resilience tests**
+- [x] **Step 7: Run green storage resilience tests**
 
 Run:
 
@@ -311,7 +311,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts
 
 Expected pass: invalid/unavailable storage never prevents boot defaults.
 
-- [ ] **Step 8: Write failing high-score and stats tests**
+- [x] **Step 8: Write failing high-score and stats tests**
 
 Add tests for:
 
@@ -321,11 +321,11 @@ Add tests for:
 - Local Versus records winner or `tie` without claiming global authority.
 - Score entries include mode, difficulty, score, winner/player id, catches, attempts, accuracy, max combo, seed, completedAt, and duration seconds.
 
-- [ ] **Step 9: Implement high-score and stats helpers**
+- [x] **Step 9: Implement high-score and stats helpers**
 
 Add pure helpers in `src/runtime/save.ts`. Keep them independent from DOM and Pixi.
 
-- [ ] **Step 10: Write failing import/export tests**
+- [x] **Step 10: Write failing import/export tests**
 
 Add tests for:
 
@@ -334,15 +334,15 @@ Add tests for:
 - Import rejects malformed JSON and unsupported versions.
 - Import includes input profiles if implemented.
 
-- [ ] **Step 11: Implement import/export helpers**
+- [x] **Step 11: Implement import/export helpers**
 
 Add `exportJson(save: SaveData): string` and `importJson(json: string): SaveImportResult`. UI controls for import/export are optional later, but these internal APIs must be tested.
 
-- [ ] **Step 12: Integrate settings defaults with runtime options**
+- [x] **Step 12: Integrate settings defaults with runtime options**
 
 Modify `src/runtime/options.ts` and `src/runtime/params.ts` so saved defaults can be merged before URL overrides. URL params must override saved settings for that page load, but must not rewrite saved settings until the user changes settings through UI.
 
-- [ ] **Step 13: Run focused SaveManager integration tests**
+- [x] **Step 13: Run focused SaveManager integration tests**
 
 Run:
 
@@ -352,7 +352,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/runtimeOptions.te
 
 Expected pass: save tests and existing option/param tests pass.
 
-- [ ] **Step 14: Commit boundary**
+- [x] **Step 14: Commit boundary**
 
 Run:
 
