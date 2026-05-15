@@ -10,3 +10,4 @@ export const BASE_FLY_SCORE = 10
 export const COMBO_BONUS_SCORE = 5
 export const FLY_SPAWN_SECONDS = 0.75
 export const POWER_SPAWN_SECONDS = 8
+export const AI_TAKEOVER_SECONDS = 15

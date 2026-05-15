@@ -3,6 +3,7 @@ import type { GameState, TimeOfDay } from '../types'
 
 export function updateTimer(game: GameState, deltaSeconds: number): void {
   if (game.phase === 'gameplay') {
+    game.elapsedSeconds = Math.min(game.durationSeconds, game.elapsedSeconds + deltaSeconds)
     game.remainingSeconds = Math.max(0, game.remainingSeconds - deltaSeconds)
     if (game.remainingSeconds === 0) {
       game.phase = 'the-end'

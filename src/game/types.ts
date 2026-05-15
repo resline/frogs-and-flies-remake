@@ -19,6 +19,7 @@ export interface GameCommands {
   releaseJump?: boolean
   moveLeft?: boolean
   moveRight?: boolean
+  humanInput?: boolean
 }
 
 export interface GameConstants {
@@ -71,6 +72,7 @@ export interface MatchPlayerState {
   score: number
   stats: PlayerStats
   commands: GameCommands
+  lastHumanInputElapsedSeconds: number
   state: PlayerState
   water: WaterState
   power: ActivePower
@@ -128,6 +130,7 @@ export interface GameState {
   phase: GamePhase
   timeOfDay: TimeOfDay
   commands: GameCommands
+  elapsedSeconds: number
   durationSeconds: number
   remainingSeconds: number
   theEndSeconds: number

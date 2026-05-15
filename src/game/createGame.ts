@@ -48,6 +48,7 @@ export function createGame(options: CreateGameOptions): GameState {
     phase: 'start',
     timeOfDay: 'day',
     commands: {},
+    elapsedSeconds: 0,
     durationSeconds,
     remainingSeconds: durationSeconds,
     theEndSeconds,

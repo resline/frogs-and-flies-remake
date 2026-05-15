@@ -20,6 +20,7 @@ export function createPlayer(id: PlayerId, label: string, controlSource: PlayerC
     score: stats.score,
     stats,
     commands: createPlayerCommands(),
+    lastHumanInputElapsedSeconds: 0,
     state: createPlayerState(),
     water: createWaterState(),
     power: createActivePower(),
