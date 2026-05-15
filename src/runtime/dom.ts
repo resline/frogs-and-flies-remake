@@ -129,7 +129,7 @@ export function syncDom(dom: DomState, game: GameState): void {
   if (dom.canvas) {
     syncM1RuntimeMarkers(dom.canvas, game)
     dom.canvas.setAttribute('data-testid', 'game-canvas')
-    dom.canvas.setAttribute('data-runtime-markers', 'm1')
+    dom.canvas.setAttribute('data-runtime-markers', 'm2')
   }
   dom.state.textContent = `State: ${game.phase}`
 

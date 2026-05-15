@@ -24,6 +24,20 @@ async function expectSelectedModeControl(page: Page, testId: string): Promise<vo
 }
 
 test.describe('Frogs and Flies 2 M2 Classic Match', () => {
+  test('render exposes M2 canvas layer and effect markers', async ({ page }) => {
+    await page.goto('/?mode=classic-single&seed=123')
+
+    const canvas = page.getByTestId('game-canvas')
+    await expect(canvas).toBeVisible()
+    await expect(canvas).toHaveAttribute('data-runtime-markers', 'm2')
+    await expect(canvas).toHaveAttribute('data-render-layers', 'background gameplay effects ui')
+
+    await page.getByTestId('start-game').click()
+    await page.keyboard.press('KeyT')
+
+    await expect(canvas).toHaveAttribute('data-last-effect', /^(catch|miss|splash|score)$/)
+  })
+
   test('exposes the Classic Single HUD contract and starts gameplay', async ({ page }) => {
     await page.goto('/?mode=classic-single&seed=123')
 

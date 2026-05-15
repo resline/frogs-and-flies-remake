@@ -31,7 +31,7 @@ test.describe('Frogs and Flies 2 M1', () => {
     await expect(canvas).toBeVisible()
     await expect(state).toHaveAttribute('data-jump-phase', 'idle')
     await expect(state).toHaveAttribute('data-water-phase', 'calm')
-    await expect(canvas).toHaveAttribute('data-runtime-markers', 'm1')
+    await expect(canvas).toHaveAttribute('data-runtime-markers', 'm2')
     await expect(canvas).toHaveAttribute('data-jump-phase', 'idle')
     await expect(canvas).toHaveAttribute('data-water-phase', 'calm')
 
