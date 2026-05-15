@@ -1,5 +1,5 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
-import type { GameState, MatchPlayerState } from '../game/types'
+import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
 
 export type DomState = {
   shell: HTMLElement
@@ -17,6 +17,8 @@ export type DomState = {
   seedAlias: HTMLElement
   results: HTMLElement
   theEnd: HTMLElement
+  classicSingleButton: HTMLElement
+  localVersusButton: HTMLElement
   startButton: HTMLElement
   pauseButton: HTMLElement
   resumeButton: HTMLElement
@@ -53,6 +55,8 @@ export function createDomState(root: HTMLElement): DomState {
   const results = getOrCreateTestElement(root, 'results', 'section', hud)
   const theEnd = getOrCreateTestElement(root, 'the-end', 'div', hud)
 
+  const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', controls)
+  const localVersusButton = getOrCreateButton(root, 'mode-local-versus', 'Local Versus', controls)
   const startButton = getOrCreateButton(root, 'start-game', 'Start', controls)
   const pauseButton = getOrCreateButton(root, 'pause-game', 'Pause', controls)
   const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', controls)
@@ -73,6 +77,8 @@ export function createDomState(root: HTMLElement): DomState {
     seedAlias,
     results,
     theEnd,
+    classicSingleButton,
+    localVersusButton,
     startButton,
     pauseButton,
     resumeButton,
@@ -156,6 +162,8 @@ export function syncDom(dom: DomState, game: GameState): void {
   dom.theEnd.style.display = game.phase === 'the-end' ? 'block' : 'none'
 
   syncResults(dom.results, game)
+  syncModeControl(dom.classicSingleButton, game.mode, 'classic-single')
+  syncModeControl(dom.localVersusButton, game.mode, 'local-versus')
 
   for (const element of [
     dom.state,
@@ -196,10 +204,13 @@ function syncControlSource(element: HTMLElement, player: MatchPlayerState | unde
 }
 
 function syncResults(element: HTMLElement, game: GameState): void {
-  const p1Score = String(game.players[0]?.score ?? 0)
-  const p2Score = String(game.players[1]?.score ?? 0)
+  const p1 = game.players[0]
+  const p2 = game.players[1]
+  const p1Score = String(p1?.score ?? 0)
+  const p2Score = String(p2?.score ?? 0)
+  const winner = game.results?.winner
+  const winnerLabel = winner === 'p1' ? 'P1' : winner === 'p2' ? 'P2' : 'Tie'
 
-  element.textContent = `Results: ${p1Score}-${p2Score}`
   element.setAttribute('data-p1-score', p1Score)
   element.setAttribute('data-p2-score', p2Score)
   if (game.results) {
@@ -207,7 +218,38 @@ function syncResults(element: HTMLElement, game: GameState): void {
   } else {
     element.removeAttribute('data-winner')
   }
+  syncResultLine(element, 'results-winner', `Winner: ${winnerLabel}`)
+  syncResultLine(element, 'results-p1-score', `P1: ${p1Score}`)
+  syncResultLine(element, 'results-p2-score', `P2: ${p2Score}`)
+  syncResultLine(element, 'results-p1-stats', formatResultStats(p1, 'P1'))
+  syncResultLine(element, 'results-p2-stats', formatResultStats(p2, 'P2'))
   element.style.display = game.phase === 'results' ? 'block' : 'none'
+}
+
+function syncResultLine(parent: HTMLElement, testId: string, text: string): void {
+  const existing = parent.querySelector<HTMLElement>(`[data-testid="${testId}"]`)
+  const element = existing ?? document.createElement('div')
+
+  element.setAttribute('data-testid', testId)
+  element.textContent = text
+  if (!existing) {
+    parent.appendChild(element)
+  }
+}
+
+function formatResultStats(player: MatchPlayerState | undefined, fallbackLabel: string): string {
+  const catches = player?.stats.catches ?? 0
+  const attempts = player?.stats.attempts ?? 0
+  const accuracy = attempts > 0 ? catches / attempts : 0
+
+  return `${player?.label ?? fallbackLabel}: caught ${catches}/${attempts} - accuracy ${(accuracy * 100).toFixed(1)}%`
+}
+
+function syncModeControl(element: HTMLElement, currentMode: MatchMode, mode: MatchMode): void {
+  const selected = currentMode === mode
+
+  element.setAttribute('data-selected', String(selected))
+  element.setAttribute('aria-pressed', String(selected))
 }
 
 function syncM1RuntimeMarkers(element: HTMLElement, game: GameState): void {

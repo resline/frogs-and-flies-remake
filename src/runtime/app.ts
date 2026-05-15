@@ -58,7 +58,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   const dom = createDomState(root)
   let currentRuntimeParams = runtimeParams
   let game = createInitialGame(currentRuntimeParams)
-  let fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
+  let fixedStep = createRuntimeFixedStep(currentRuntimeParams)
   const runtimeInput = createRuntimeInputState()
   let scene: RenderScene | undefined
   let destroyed = false
@@ -77,7 +77,7 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
   const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
     currentRuntimeParams = nextRuntimeParams
     game = createGame(currentRuntimeParams)
-    fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
+    fixedStep = createRuntimeFixedStep(currentRuntimeParams)
     if (start) {
       game.commands.start = true
       updateGame(game, 0)
@@ -126,9 +126,13 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     }
     runCommand('start')
   }
+  const handleClassicSingleClick = () => resetGame({ ...currentRuntimeParams, mode: 'classic-single' })
+  const handleLocalVersusClick = () => resetGame({ ...currentRuntimeParams, mode: 'local-versus' })
   const handlePauseClick = () => runCommand('pause')
   const handleResumeClick = () => runCommand('resume')
 
+  dom.classicSingleButton.addEventListener('click', handleClassicSingleClick)
+  dom.localVersusButton.addEventListener('click', handleLocalVersusClick)
   dom.startButton.addEventListener('click', handleStartClick)
   dom.pauseButton.addEventListener('click', handlePauseClick)
   dom.resumeButton.addEventListener('click', handleResumeClick)
@@ -197,8 +201,9 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
 
   const tick = (ticker: { deltaMS: number }) => {
     const deltaSeconds = Math.min(ticker.deltaMS / 1000, 0.25)
+    const simulationDeltaSeconds = deltaSeconds * currentRuntimeParams.simulationSpeed
 
-    fixedStep.advance(deltaSeconds, () => {
+    fixedStep.advance(simulationDeltaSeconds, () => {
       applyRuntimeInput(game, runtimeInput)
       updateGame(game, FIXED_TIMESTEP_SECONDS)
     })
@@ -214,6 +219,8 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
     replay,
     destroy: () => {
       destroyed = true
+      dom.classicSingleButton.removeEventListener('click', handleClassicSingleClick)
+      dom.localVersusButton.removeEventListener('click', handleLocalVersusClick)
       dom.startButton.removeEventListener('click', handleStartClick)
       dom.pauseButton.removeEventListener('click', handlePauseClick)
       dom.resumeButton.removeEventListener('click', handleResumeClick)
@@ -226,6 +233,10 @@ export async function startRuntime(root: HTMLElement, runtimeParams: RuntimePara
       app.destroy(true)
     },
   }
+}
+
+function createRuntimeFixedStep(runtimeParams: RuntimeParams): ReturnType<typeof createFixedStep> {
+  return createFixedStep(FIXED_TIMESTEP_SECONDS, Math.max(8, Math.ceil(runtimeParams.simulationSpeed * 8)))
 }
 
 function createInitialGame(runtimeParams: RuntimeParams): GameState {

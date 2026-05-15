@@ -83,6 +83,12 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+button[data-selected="true"] {
+  background: #ffffff;
+  border-color: rgba(255, 241, 167, 0.84);
+  box-shadow: 0 0 0 2px rgba(255, 241, 167, 0.22);
+}
+
 .game-shell {
   position: relative;
   width: 100%;
