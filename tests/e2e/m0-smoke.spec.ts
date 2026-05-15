@@ -44,6 +44,31 @@ test.describe('Frogs and Flies 2 M0', () => {
     expect(seen.size).toBeGreaterThan(3)
   })
 
+  test('loads generated gameplay assets into the PixiJS runtime', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await page.goto('/?seed=123')
+
+    const canvas = page.locator('canvas')
+    await expect(canvas).toBeVisible()
+
+    const screenshot = PNG.sync.read(await canvas.screenshot())
+    const seen = new Set<string>()
+    const stride = Math.max(4, Math.floor(screenshot.data.length / 2000 / 4) * 4)
+
+    for (let index = 0; index < screenshot.data.length; index += stride) {
+      seen.add(
+        `${screenshot.data[index]},${screenshot.data[index + 1]},${screenshot.data[index + 2]},${screenshot.data[index + 3]}`,
+      )
+    }
+
+    expect(screenshot.width * screenshot.height).toBeGreaterThan(0)
+    expect(seen.size).toBeGreaterThan(3)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /pond-arena\.png/)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /frog\.png/)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /fly\.png/)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /power\.png/)
+  })
+
   test('starts, pauses, resumes, and replays a round from DOM controls', async ({ page }) => {
     await page.goto('/?seed=123')
 

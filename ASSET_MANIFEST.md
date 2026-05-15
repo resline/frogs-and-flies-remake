@@ -5,8 +5,9 @@ This manifest tracks the current generated bitmap asset inventory for M0.
 Status in the current verified M0:
 
 - `public/favicon.png` is referenced by `index.html`.
-- `public/assets/*.png` files are present and ready for future sprite/background integration.
-- The runtime currently renders the game scene procedurally with PixiJS v8 `Graphics`; it does not load `public/assets/pond-arena.png`, `frog.png`, `fly.png`, or `power.png` into gameplay yet.
+- `public/assets/pond-arena.png`, `frog.png`, `fly.png`, and `power.png` are loaded into gameplay through Pixi `Assets`.
+- The game scene renders those generated sprites with procedural fallback paths and PixiJS v8 `Graphics` overlays.
+- Playwright E2E smoke coverage asserts that the generated gameplay assets loaded into the PixiJS runtime.
 
 Generated image workspace:
 
@@ -14,10 +15,10 @@ Generated image workspace:
 
 ## Available Files
 
-- `public/assets/pond-arena.png` - generated 16:9 pond arena background candidate.
-- `public/assets/frog.png` - generated frog sprite candidate with transparent background.
-- `public/assets/fly.png` - generated fly sprite candidate with transparent background.
-- `public/assets/power.png` - generated Rush power-up sprite candidate with transparent background.
+- `public/assets/pond-arena.png` - generated 16:9 pond arena background loaded by gameplay.
+- `public/assets/frog.png` - generated frog sprite with transparent background loaded by gameplay.
+- `public/assets/fly.png` - generated fly sprite with transparent background loaded by gameplay.
+- `public/assets/power.png` - generated Rush power-up sprite with transparent background loaded by gameplay.
 - `public/favicon.png` - favicon derived from the generated frog sprite.
 
 Preserved chroma-key source files:

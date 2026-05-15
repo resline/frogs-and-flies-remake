@@ -1,6 +1,6 @@
 # Frogs & Flies Remake
 
-M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round. It is a deterministic 60 second single-player slice with fixed-step simulation, seeded spawning, scoring, a Rush power-up, round-state UI, and procedural placeholder rendering.
+M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round. It is a deterministic 60 second single-player slice with fixed-step simulation, seeded spawning, scoring, a Rush power-up, round-state UI, and generated sprite rendering with procedural fallback and overlays.
 
 ## Current M0
 
@@ -12,7 +12,8 @@ M0 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - Procedural fly and Rush power-up spawning from the deterministic seed.
 - Score, combo bonus, and 5 second Rush radius boost.
 - Responsive canvas sizing and smoke-test DOM markers for automation.
-- Rendering is currently procedural PixiJS `Graphics` placeholder art. Generated bitmap assets exist in `public/assets`, but the runtime does not load them into the scene yet.
+- Gameplay loads `/assets/pond-arena.png`, `/assets/frog.png`, `/assets/fly.png`, and `/assets/power.png` through Pixi `Assets`.
+- Runtime rendering uses those generated sprites with procedural fallback paths and PixiJS `Graphics` overlays for gameplay affordances.
 
 ## Controls
 
@@ -47,7 +48,7 @@ npm run test:e2e
 npm test
 ```
 
-`npm test` runs Vitest unit tests and Playwright E2E smoke tests.
+`npm test` runs Vitest unit tests and Playwright E2E smoke tests, including an assertion that generated gameplay assets loaded into the PixiJS runtime.
 
 ## Build
 
@@ -68,4 +69,4 @@ The Docker image builds the app with Node 22 Alpine and serves `dist` from nginx
 
 ## Assets
 
-Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). In the current verified M0, those files are present in `public/assets` and `public/favicon.png`; gameplay visuals are still drawn procedurally with PixiJS `Graphics`.
+Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). In the current verified M0, `public/assets/pond-arena.png`, `frog.png`, `fly.png`, and `power.png` are loaded into gameplay through Pixi `Assets`; procedural rendering remains available as fallback and for overlays. `public/favicon.png` is referenced by the app shell.

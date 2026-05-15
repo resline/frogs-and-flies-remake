@@ -1,10 +1,11 @@
-import { Application, Graphics } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Sprite } from 'pixi.js'
 import './style.css'
 import { ARENA_HEIGHT, ARENA_WIDTH, FIXED_TIMESTEP_SECONDS } from './game/constants'
 import { createGame, type CreateGameOptions } from './game/createGame'
 import { createFixedStep } from './game/fixedStep'
 import { updateGame } from './game/update'
 import type { GamePhase, GameState, TimeOfDay } from './game/types'
+import type { Texture } from 'pixi.js'
 
 type RuntimeParams = Required<Pick<CreateGameOptions, 'seed'>> &
   Pick<CreateGameOptions, 'durationSeconds' | 'theEndSeconds'> & {
@@ -29,6 +30,33 @@ type DomState = {
   replayButton: HTMLElement
 }
 
+type GeneratedGameplayAssets = {
+  loadedPaths: readonly string[]
+  pond: Texture
+  frog: Texture
+  fly: Texture
+  power: Texture
+}
+
+type RenderScene = {
+  root: Container
+  pond: Sprite
+  fallback: Graphics
+  effects: Graphics
+  player: Sprite
+  entities: Container
+  entitySprites: Map<number, Sprite>
+  overlay: Graphics
+  assets?: GeneratedGameplayAssets
+}
+
+const GENERATED_GAMEPLAY_ASSET_PATHS = [
+  '/assets/pond-arena.png',
+  '/assets/frog.png',
+  '/assets/fly.png',
+  '/assets/power.png',
+] as const
+
 const params = readRuntimeParams(new URLSearchParams(window.location.search))
 const appRoot = document.querySelector<HTMLElement>('#app')
 
@@ -44,7 +72,7 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
   let fixedStep = createFixedStep(FIXED_TIMESTEP_SECONDS)
   let pendingFire = false
   const heldKeys = new Set<string>()
-  let scene: Graphics | undefined
+  let scene: RenderScene | undefined
 
   const refresh = () => {
     syncDom(dom, game)
@@ -117,9 +145,21 @@ async function boot(root: HTMLElement, runtimeParams: RuntimeParams): Promise<vo
     backgroundColor: 0x06252b,
   })
 
-  scene = new Graphics()
-  app.stage.addChild(scene)
+  scene = createRenderScene()
+  app.stage.addChild(scene.root)
   mountCanvas(dom.gameHost, app.canvas)
+  void loadGeneratedGameplayAssets(app.canvas).then((assets) => {
+    if (!assets || !scene) {
+      return
+    }
+
+    scene.assets = assets
+    scene.pond.texture = assets.pond
+    scene.pond.width = ARENA_WIDTH
+    scene.pond.height = ARENA_HEIGHT
+    scene.player.texture = assets.frog
+    refresh()
+  })
 
   app.canvas.addEventListener('pointerdown', (event) => {
     const bounds = app.canvas.getBoundingClientRect()
@@ -301,6 +341,56 @@ function mountCanvas(gameHost: HTMLElement, canvas: HTMLCanvasElement): void {
   window.addEventListener('resize', resize)
 }
 
+function createRenderScene(): RenderScene {
+  const root = new Container()
+  const pond = new Sprite()
+  const fallback = new Graphics()
+  const effects = new Graphics()
+  const player = new Sprite({ anchor: 0.5 })
+  const entities = new Container()
+  const overlay = new Graphics()
+
+  pond.visible = false
+  player.visible = false
+
+  root.addChild(pond)
+  root.addChild(fallback)
+  root.addChild(effects)
+  root.addChild(player)
+  root.addChild(entities)
+  root.addChild(overlay)
+
+  return {
+    root,
+    pond,
+    fallback,
+    effects,
+    player,
+    entities,
+    entitySprites: new Map(),
+    overlay,
+  }
+}
+
+async function loadGeneratedGameplayAssets(canvas: HTMLCanvasElement): Promise<GeneratedGameplayAssets | undefined> {
+  try {
+    const textures = await Assets.load<Texture>([...GENERATED_GAMEPLAY_ASSET_PATHS])
+
+    canvas.setAttribute('data-assets-loaded', GENERATED_GAMEPLAY_ASSET_PATHS.join(' '))
+    return {
+      loadedPaths: GENERATED_GAMEPLAY_ASSET_PATHS,
+      pond: textures['/assets/pond-arena.png'],
+      frog: textures['/assets/frog.png'],
+      fly: textures['/assets/fly.png'],
+      power: textures['/assets/power.png'],
+    }
+  } catch (error) {
+    canvas.removeAttribute('data-assets-loaded')
+    console.warn('Generated gameplay assets failed to load; using procedural fallback.', error)
+    return undefined
+  }
+}
+
 function getOrCreate(root: HTMLElement, tagName: string, id: string, parent: HTMLElement): HTMLElement {
   const existing = root.querySelector<HTMLElement>(`#${id}`)
   if (existing) {
@@ -437,7 +527,45 @@ function styleTheEnd(element: HTMLElement): void {
   element.style.pointerEvents = 'none'
 }
 
-function renderScene(scene: Graphics, game: GameState): void {
+function renderScene(scene: RenderScene, game: GameState): void {
+  if (scene.assets) {
+    renderBitmapScene(scene, game)
+    return
+  }
+
+  hideBitmapScene(scene)
+  renderProceduralScene(scene.fallback, game)
+}
+
+function renderBitmapScene(scene: RenderScene, game: GameState): void {
+  const assets = scene.assets
+  if (!assets) {
+    return
+  }
+
+  scene.pond.visible = true
+  scene.fallback.clear()
+  scene.effects.clear()
+  scene.overlay.clear()
+
+  drawBitmapEffects(scene.effects, game)
+  drawBitmapPlayer(scene.player, game)
+  drawBitmapEntities(scene, game, assets)
+  drawPhaseOverlay(scene.overlay, game)
+}
+
+function hideBitmapScene(scene: RenderScene): void {
+  scene.pond.visible = false
+  scene.player.visible = false
+  scene.effects.clear()
+  scene.overlay.clear()
+
+  for (const sprite of scene.entitySprites.values()) {
+    sprite.visible = false
+  }
+}
+
+function renderProceduralScene(scene: Graphics, game: GameState): void {
   const palette = paletteFor(game.timeOfDay)
 
   scene.clear()
@@ -458,6 +586,80 @@ function renderScene(scene: Graphics, game: GameState): void {
   drawPlayer(scene, game)
   drawEntities(scene, game)
 
+  drawPhaseOverlay(scene, game)
+}
+
+function drawBitmapEffects(scene: Graphics, game: GameState): void {
+  const palette = paletteFor(game.timeOfDay)
+
+  scene.rect(0, 0, ARENA_WIDTH, 82).fill({ color: palette.hud, alpha: 0.38 })
+  scene.rect(0, ARENA_HEIGHT - 90, ARENA_WIDTH, 90).fill({ color: 0x05221c, alpha: 0.28 })
+
+  for (let index = 0; index < 9; index += 1) {
+    const x = 74 + index * 86
+    const y = 230 + ((index * 47 + game.seed) % 210)
+    scene.ellipse(x, y, 38, 9).fill({ color: palette.ripple, alpha: 0.2 })
+  }
+
+  scene.ellipse(116, ARENA_HEIGHT - 74, 84, 28).fill({ color: 0x2e7d45, alpha: 0.52 })
+  scene.ellipse(ARENA_WIDTH - 116, ARENA_HEIGHT - 74, 84, 28).fill({ color: 0x2b7340, alpha: 0.52 })
+
+  if (game.power.remainingSeconds > 0) {
+    scene.circle(game.player.x, game.player.y, game.player.radius + 15).fill({ color: 0xd9ff71, alpha: 0.22 })
+  }
+
+  if (game.phase === 'gameplay') {
+    const powered = game.power.remainingSeconds > 0
+    scene.circle(game.player.x, game.player.y, game.catchRadius).stroke({ width: 2, color: powered ? 0xd9ff71 : 0x9fe8ff, alpha: 0.25 })
+  }
+}
+
+function drawBitmapPlayer(sprite: Sprite, game: GameState): void {
+  sprite.visible = true
+  sprite.position.set(game.player.x, game.player.y)
+  sprite.width = game.player.radius * 3.2
+  sprite.height = game.player.radius * 3.2
+  sprite.tint = game.power.remainingSeconds > 0 ? 0xdfff9e : 0xffffff
+}
+
+function drawBitmapEntities(scene: RenderScene, game: GameState, assets: GeneratedGameplayAssets): void {
+  const activeIds = new Set<number>()
+
+  for (const id of game.entityIds) {
+    const entity = game.entities[id]
+    if (!entity) {
+      continue
+    }
+
+    activeIds.add(id)
+
+    let sprite = scene.entitySprites.get(id)
+    if (!sprite) {
+      sprite = new Sprite({ anchor: 0.5 })
+      scene.entitySprites.set(id, sprite)
+      scene.entities.addChild(sprite)
+    }
+
+    sprite.visible = true
+    sprite.texture = entity.kind === 'fly' ? assets.fly : assets.power
+    sprite.position.set(entity.x, entity.y)
+    sprite.width = entity.kind === 'fly' ? entity.radius * 4.4 : entity.radius * 3.2
+    sprite.height = entity.kind === 'fly' ? entity.radius * 3.2 : entity.radius * 3.2
+    sprite.rotation = entity.kind === 'fly' ? Math.sin((entity.x + entity.y) * 0.02) * 0.08 : 0
+  }
+
+  for (const [id, sprite] of scene.entitySprites) {
+    if (activeIds.has(id)) {
+      continue
+    }
+
+    scene.entities.removeChild(sprite)
+    sprite.destroy()
+    scene.entitySprites.delete(id)
+  }
+}
+
+function drawPhaseOverlay(scene: Graphics, game: GameState): void {
   if (game.phase === 'pause') {
     scene.rect(0, 0, ARENA_WIDTH, ARENA_HEIGHT).fill({ color: 0x021011, alpha: 0.38 })
   }
