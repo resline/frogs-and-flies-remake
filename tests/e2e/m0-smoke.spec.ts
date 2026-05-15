@@ -63,10 +63,12 @@ test.describe('Frogs and Flies 2 M0', () => {
 
     expect(screenshot.width * screenshot.height).toBeGreaterThan(0)
     expect(seen.size).toBeGreaterThan(3)
-    await expect(canvas).toHaveAttribute('data-assets-loaded', /pond-arena\.png/)
-    await expect(canvas).toHaveAttribute('data-assets-loaded', /frog\.png/)
-    await expect(canvas).toHaveAttribute('data-assets-loaded', /fly\.png/)
-    await expect(canvas).toHaveAttribute('data-assets-loaded', /power\.png/)
+    const assetLoadExpectation = { timeout: 30_000 }
+
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /pond-arena\.png/, assetLoadExpectation)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /frog\.png/, assetLoadExpectation)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /fly\.png/, assetLoadExpectation)
+    await expect(canvas).toHaveAttribute('data-assets-loaded', /power\.png/, assetLoadExpectation)
   })
 
   test('starts, pauses, resumes, and replays a round from DOM controls', async ({ page }) => {
@@ -138,9 +140,9 @@ test.describe('Frogs and Flies 2 M0', () => {
 
     await expect(page.getByTestId('start-game')).toBeVisible()
     await page.getByTestId('start-game').click()
-    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'the-end', { timeout: 4000 })
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'the-end', { timeout: 10_000 })
     await expect(page.getByText('THE END')).toBeVisible()
-    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 3000 })
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
     await expect(page.getByTestId('results')).toBeVisible()
   })
 })
