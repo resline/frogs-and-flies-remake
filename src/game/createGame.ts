@@ -17,20 +17,21 @@ import { createPrng } from './prng'
 import type { GameState, MatchMode } from './types'
 
 export interface CreateGameOptions {
-  seed: number
+  seed?: number
   mode?: MatchMode
   durationSeconds?: number
   theEndSeconds?: number
 }
 
 export function createGame(options: CreateGameOptions): GameState {
+  const seed = options.seed ?? 0
   const mode = options.mode ?? 'classic-single'
   const durationSeconds = options.durationSeconds ?? ROUND_DURATION_SECONDS
   const theEndSeconds = options.theEndSeconds ?? THE_END_SECONDS
 
   return {
-    seed: options.seed,
-    prng: createPrng(options.seed),
+    seed,
+    prng: createPrng(seed),
     constants: {
       roundDurationSeconds: durationSeconds,
       theEndSeconds,
