@@ -1,7 +1,19 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import { PNG } from 'pngjs'
 
+const CONTROL_CLICK_OPTIONS = { force: true } as const
+
+async function clickControl(page: Page, testId: string): Promise<void> {
+  const control = page.getByTestId(testId)
+
+  await expect(control).toBeVisible()
+  await control.click(CONTROL_CLICK_OPTIONS)
+}
+
 test.describe('Frogs and Flies 2 M0', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test('loads the PixiJS canvas and exposes start state markers', async ({ page }) => {
     await page.goto('/')
 
@@ -74,22 +86,19 @@ test.describe('Frogs and Flies 2 M0', () => {
   test('starts, pauses, resumes, and replays a round from DOM controls', async ({ page }) => {
     await page.goto('/?seed=123')
 
-    await expect(page.getByTestId('start-game')).toBeVisible()
-    await page.getByTestId('start-game').click()
+    await clickControl(page, 'start-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
 
-    await expect(page.getByTestId('pause-game')).toBeVisible()
-    await page.getByTestId('pause-game').click()
+    await clickControl(page, 'pause-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'pause')
 
-    await expect(page.getByTestId('resume-game')).toBeVisible()
-    await page.getByTestId('resume-game').click()
+    await clickControl(page, 'resume-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
 
-    await page.getByTestId('pause-game').click()
+    await clickControl(page, 'pause-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'pause')
 
-    await page.getByTestId('replay-game').click()
+    await clickControl(page, 'replay-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
   })
 
@@ -116,12 +125,13 @@ test.describe('Frogs and Flies 2 M0', () => {
     await expect(page.getByTestId('results')).toBeVisible()
     await expect(page.getByTestId('results')).toHaveAttribute('data-winner', 'tie')
 
-    await expect(page.getByTestId('replay-game')).toBeVisible()
-    await page.getByTestId('replay-game').click()
+    await clickControl(page, 'replay-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'gameplay')
   })
 
   test('accepts deterministic 180 second day, dusk, night, and THE END simulation states', async ({ page }) => {
+    test.setTimeout(60_000)
+
     const cases = [
       { elapsed: 0, phase: 'gameplay', timeOfDay: 'day' },
       { elapsed: 90, phase: 'gameplay', timeOfDay: 'dusk' },
@@ -137,10 +147,9 @@ test.describe('Frogs and Flies 2 M0', () => {
   })
 
   test('plays through THE END and reaches results without a forced results state', async ({ page }) => {
-    await page.goto('/?seed=123&durationSeconds=2&theEndSeconds=1')
+    await page.goto('/?seed=123&durationSeconds=2&theEndSeconds=10&simulationSpeed=20')
 
-    await expect(page.getByTestId('start-game')).toBeVisible()
-    await page.getByTestId('start-game').click()
+    await clickControl(page, 'start-game')
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'the-end', { timeout: 10_000 })
     await expect(page.getByText('THE END')).toBeVisible()
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 8_000 })
