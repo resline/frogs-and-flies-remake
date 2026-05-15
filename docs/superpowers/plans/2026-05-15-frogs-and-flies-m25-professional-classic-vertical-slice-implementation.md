@@ -869,55 +869,55 @@ Expected: README plus Docker/nginx only if required. Commit message: `docs: add 
 - Read/verify: all changed files.
 - Modify only if review finds issues: task-owned files.
 
-- [ ] **Step 1: Run full unit suite**
+- [x] **Step 1: Run full unit suite**
 
 Run: `npm run test:unit`
 
 Expected pass: all unit tests pass and exit `0`.
 
-- [ ] **Step 2: Run full E2E suite**
+- [x] **Step 2: Run full E2E suite**
 
 Run: `npm run test:e2e`
 
 Expected pass: all Playwright tests pass and exit `0`.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 
 Expected pass: unit and E2E suites pass and exit `0`.
 
-- [ ] **Step 4: Run production build**
+- [x] **Step 4: Run production build**
 
 Run: `npm run build`
 
 Expected pass: TypeScript and Vite build pass and exit `0`.
 
-- [ ] **Step 5: Run Docker build**
+- [x] **Step 5: Run Docker build**
 
 Run: `docker build -t frogs-and-flies-m25-classic-vertical-slice .`
 
 Expected pass: Docker build exits `0`.
 
-- [ ] **Step 6: Inspect final dirty state**
+- [x] **Step 6: Inspect final dirty state**
 
 Run: `git status --short`
 
 Expected: only intentional M2.5 implementation files changed.
 
-- [ ] **Step 7: Review scope exclusions**
+- [x] **Step 7: Review scope exclusions**
 
 Run: `rg -n "campaign|boss|leaderboard|monetization|shop|\bads?\b|advertising|payment|account|analytics" src tests README.md ASSET_MANIFEST.md`
 
 Expected: no new implemented feature surface for excluded systems. Documentation mentions are acceptable only as non-goals or future scope.
 
-- [ ] **Step 8: Review asset/API guard**
+- [x] **Step 8: Review asset/API guard**
 
 Run: `rg -n "OPENAI_API_KEY|image_gen|responses\\.create|images\\.generate|live OpenAI" . --glob '!node_modules/**' --glob '!dist/**'`
 
 Expected: no runtime or script requirement for live OpenAI image calls. `ASSET_MANIFEST.md` may include the explicit no-live-API note.
 
-- [ ] **Step 9: Prepare implementation summary**
+- [x] **Step 9: Prepare implementation summary**
 
 Summarize:
 
@@ -928,7 +928,7 @@ Summarize:
 - Tests and deploy gates run with pass/fail status.
 - Known limitations intentionally deferred outside M2.5.
 
-- [ ] **Step 10: Final commit boundary**
+- [x] **Step 10: Final commit boundary**
 
 Run: `git status --short`
 
@@ -936,21 +936,21 @@ Expected: all intended changes committed or clearly listed for handoff according
 
 ## Acceptance Checklist
 
-- [ ] Classic Single is a 180-second Home Pond match with P1 on the left lily and CPU/P2 on the right lily.
-- [ ] Local Versus uses the same side-lily arena with two human-controlled frogs.
-- [ ] Player state includes lily anchor, facing, phase, jump state, tongue state, splash/recovery, and deterministic stats.
-- [ ] Jump charge and arc behavior are tunable through named constants and covered by unit tests.
-- [ ] Tongue firing is directional, visually attached to the frog, and covered by catch/miss/recovery tests.
-- [ ] Classic Assist and Classic Standard are exposed in UI and tests; Classic Expert is included only if it remains a constant-table extension.
-- [ ] Fly bands and assist behavior are deterministic and option-driven.
-- [ ] Home Pond assets expand beyond the four M2 images and `ASSET_MANIFEST.md` records provenance and local processing.
-- [ ] No live OpenAI API calls are required or made for asset generation during implementation.
-- [ ] Audio unlock, mute, and volume state exist and gameplay continues if audio fails.
-- [ ] Reduced motion and high contrast/enhanced outline options affect runtime presentation.
-- [ ] Desktop UI has semantic controls, visible focus, clean pause/results/replay, and no primary diagnostic-looking shell.
-- [ ] HUD/results text does not overlap at `800x600`, `1024x768`, `1366x768`, `1920x1080`, and `390x844`.
-- [ ] Same seed/options/input script produces identical replay summary in automated tests.
-- [ ] Playwright covers Classic Single, Local Versus, short result, assets, audio UI, options, and responsive layout.
-- [ ] `npm run build`, `npm run test:unit`, `npm run test:e2e`, `npm test`, and Docker build pass.
-- [ ] Docker/Coolify verification notes are current.
-- [ ] No campaign, extra biomes, bosses, leaderboard, monetization, or unrelated runtime rewrite is introduced.
+- [x] Classic Single is a 180-second Home Pond match with P1 on the left lily and CPU/P2 on the right lily.
+- [x] Local Versus uses the same side-lily arena with two human-controlled frogs.
+- [x] Player state includes lily anchor, facing, phase, jump state, tongue state, splash/recovery, and deterministic stats.
+- [x] Jump charge and arc behavior are tunable through named constants and covered by unit tests.
+- [x] Tongue firing is directional, visually attached to the frog, and covered by catch/miss/recovery tests.
+- [x] Classic Assist and Classic Standard are exposed in UI and tests; Classic Expert is included only if it remains a constant-table extension.
+- [x] Fly bands and assist behavior are deterministic and option-driven.
+- [x] Home Pond assets expand beyond the four M2 images and `ASSET_MANIFEST.md` records provenance and local processing.
+- [x] No live OpenAI API calls are required or made for asset generation during implementation.
+- [x] Audio unlock, mute, and volume state exist and gameplay continues if audio fails.
+- [x] Reduced motion and high contrast/enhanced outline options affect runtime presentation.
+- [x] Desktop UI has semantic controls, visible focus, clean pause/results/replay, and no primary diagnostic-looking shell.
+- [x] HUD/results text does not overlap at `800x600`, `1024x768`, `1366x768`, `1920x1080`, and `390x844`.
+- [x] Same seed/options/input script produces identical replay summary in automated tests.
+- [x] Playwright covers Classic Single, Local Versus, short result, assets, audio UI, options, and responsive layout.
+- [x] `npm run build`, `npm run test:unit`, `npm run test:e2e`, `npm test`, and Docker build pass.
+- [x] Docker/Coolify verification notes are current.
+- [x] No campaign, extra biomes, bosses, leaderboard, monetization, or unrelated runtime rewrite is introduced.
