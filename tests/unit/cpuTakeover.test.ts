@@ -141,13 +141,12 @@ describe('CPU opponent and AI takeover', () => {
     expect(p1.lastHumanInputElapsedSeconds).toBe(elapsedBeforeHumanInput)
   })
 
-  it('keeps legacy P1 tongue scoring available while P1 holds a jump charge', () => {
+  it('keeps P1 tongue scoring available while P1 holds a side-lily jump charge', () => {
     const game = createGame({ seed: 1, mode: 'classic-single' })
     const [p1, p2] = game.players
 
     game.commands.start = true
     updateGame(game, 0)
-    advanceFrames(game, Math.floor(4.8 / STEP_SECONDS))
 
     game.commands.chargeJump = true
     updateGame(game, STEP_SECONDS)
@@ -157,6 +156,7 @@ describe('CPU opponent and AI takeover', () => {
     expect(game.score).toBe(0)
     expect(p2.score).toBe(0)
 
+    insertEntity(game, { id: 33, kind: 'fly', x: p1.state.homeX, y: p1.state.homeY, vx: 0, vy: 0, radius: 8 })
     game.commands.chargeJump = true
     game.commands.tongue = true
     updateGame(game, STEP_SECONDS)

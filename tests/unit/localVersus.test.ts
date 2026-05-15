@@ -47,7 +47,7 @@ describe('local versus simulation contract', () => {
     expect(p1.commands).not.toBe(p2.commands)
   })
 
-  it('applies P1 movement without moving P2', () => {
+  it('maps P1 movement to jump intent without moving P2', () => {
     const game = startLocalVersus()
     const [p1, p2] = game.players
     const initialP1X = p1.state.x
@@ -56,12 +56,13 @@ describe('local versus simulation contract', () => {
     p1.commands.moveRight = true
     updateGame(game, STEP_SECONDS)
 
-    expect(p1.state.x).toBeGreaterThan(initialP1X)
+    expect(p1.state.x).toBe(initialP1X)
+    expect(p1.state.jump.intentX).toBe(1)
     expect(game.player.x).toBe(p1.state.x)
     expect(p2.state.x).toBe(initialP2X)
   })
 
-  it('applies P2 movement without moving P1 or corrupting the P1 mirror', () => {
+  it('maps P2 movement to jump intent without moving P1 or corrupting the P1 mirror', () => {
     const game = startLocalVersus()
     const [p1, p2] = game.players
     const initialP1X = p1.state.x
@@ -71,7 +72,8 @@ describe('local versus simulation contract', () => {
     p2.commands.moveLeft = true
     updateGame(game, STEP_SECONDS)
 
-    expect(p2.state.x).toBeLessThan(initialP2X)
+    expect(p2.state.x).toBe(initialP2X)
+    expect(p2.state.jump.intentX).toBe(-1)
     expect(p1.state.x).toBe(initialP1X)
     expect(game.player.x).toBe(initialMirrorX)
     expect(game.player.x).toBe(p1.state.x)

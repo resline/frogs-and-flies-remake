@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Frogs and Flies 2 M1', () => {
   test('keeps Space jump charging separate from tongue fire', async ({ page }) => {
-    await page.goto('/?seed=1&smokeElapsedSeconds=4.8')
+    await page.goto('/?seed=1&smokeElapsedSeconds=6.5')
 
     const state = page.getByTestId('game-state')
     const score = page.getByTestId('score')
@@ -95,6 +95,9 @@ test.describe('Frogs and Flies 2 M1', () => {
 
     await page.keyboard.down('Space')
     await expect(state).toHaveAttribute('data-jump-phase', 'charging')
+    await expect
+      .poll(async () => Number(await state.getAttribute('data-jump-charge-seconds')), { timeout: 2_000 })
+      .toBeGreaterThanOrEqual(0.45)
     await page.keyboard.up('Space')
 
     await expect(state).toHaveAttribute('data-jump-phase', 'jumping')

@@ -16,9 +16,7 @@ function startGame(seed = 1) {
 describe('M0 scoring and power', () => {
   it('adds score when a tongue hit catches a fly', () => {
     const game = startGame()
-    insertEntity(game, { id: 10, kind: 'fly', x: 400, y: 300, vx: 0, radius: 24 })
-    game.player.x = 400
-    game.player.y = 500
+    insertEntity(game, { id: 10, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 24 })
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
     expect(game.players[0].score).toBeGreaterThan(0)
@@ -33,17 +31,15 @@ describe('M0 scoring and power', () => {
 
   it('adds a combo bonus for consecutive catches', () => {
     const game = startGame()
-    game.player.x = 400
-    game.player.y = 500
 
-    insertEntity(game, { id: 10, kind: 'fly', x: 400, y: 500, vx: 0, radius: 8 })
+    insertEntity(game, { id: 10, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
     const firstCatchScore = game.players[0].score
     expect(game.players[0].stats.combo).toBe(1)
     expect(game.combo).toBe(game.players[0].stats.combo)
 
-    insertEntity(game, { id: 11, kind: 'fly', x: 400, y: 500, vx: 0, radius: 8 })
+    insertEntity(game, { id: 11, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
     expect(game.players[0].stats.combo).toBe(2)
@@ -69,16 +65,15 @@ describe('M0 scoring and power', () => {
 
   it('Rush expands catch radius for exactly 5 deterministic seconds', () => {
     const game = startGame()
+    const rushOnlyFlyX = game.player.homeX + game.constants.baseCatchRadius + 8
 
-    game.player.x = 400
-    game.player.y = 500
-    insertEntity(game, { id: 12, kind: 'fly', x: 400 + game.constants.baseCatchRadius + 8, y: 500, vx: 0, radius: 8 })
+    insertEntity(game, { id: 12, kind: 'fly', x: rushOnlyFlyX, y: game.player.homeY, vx: 0, radius: 8 })
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
     expect(game.players[0].score).toBe(0)
     expect(game.entities[12]).toBeDefined()
 
-    insertEntity(game, { id: 11, kind: 'power', powerKind: 'rush', x: game.player.x, y: game.player.y, vx: 0, radius: 24 })
+    insertEntity(game, { id: 11, kind: 'power', powerKind: 'rush', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 24 })
     updateGame(game, STEP_SECONDS)
     expect(game.players[0].power.kind).toBe('rush')
     expect(game.power.kind).toBe(game.players[0].power.kind)
@@ -99,9 +94,7 @@ describe('M0 scoring and power', () => {
 
   it('removes the combo after firing without a catch', () => {
     const game = startGame()
-    game.player.x = 400
-    game.player.y = 500
-    insertEntity(game, { id: 10, kind: 'fly', x: 400, y: 500, vx: 0, radius: 8 })
+    insertEntity(game, { id: 10, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
 
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
@@ -120,10 +113,8 @@ describe('M0 scoring and power', () => {
     const game = startGame()
     const [p1, p2] = game.players
 
-    game.player.x = 420
-    game.player.y = 500
-    insertEntity(game, { id: 10, kind: 'fly', x: 420, y: 500, vx: 0, radius: 8 })
-    insertEntity(game, { id: 11, kind: 'power', powerKind: 'rush', x: 420, y: 500, vx: 0, radius: 8 })
+    insertEntity(game, { id: 10, kind: 'fly', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
+    insertEntity(game, { id: 11, kind: 'power', powerKind: 'rush', x: game.player.homeX, y: game.player.homeY, vx: 0, radius: 8 })
 
     game.commands.fire = true
     updateGame(game, STEP_SECONDS)
