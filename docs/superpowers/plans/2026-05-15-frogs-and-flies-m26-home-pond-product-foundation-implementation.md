@@ -127,7 +127,7 @@ docker run --rm --name frogs-and-flies-m26 -p 18080:80 frogs-and-flies-m26-produ
 - Read: `README.md`
 - Read: `ASSET_MANIFEST.md`
 
-- [ ] **Step 1: Confirm branch and worktree**
+- [x] **Step 1: Confirm branch and worktree**
 
 Run:
 
@@ -138,7 +138,7 @@ git status --short --branch
 
 Expected: branch is `ff2-m0-pixijs`; status has no unrelated dirty files. If unrelated dirty files exist, stop and ask the owner before changing anything.
 
-- [ ] **Step 2: Confirm plan/spec alignment**
+- [x] **Step 2: Confirm plan/spec alignment**
 
 Run:
 
@@ -149,7 +149,7 @@ sed -n '221,520p' docs/superpowers/specs/2026-05-15-frogs-and-flies-m26-home-pon
 
 Expected: spec states the full product objective is not complete, M2.5 is only a deployed vertical slice, Option A is recommended, and the milestone is product foundation around Classic Single and Local Versus.
 
-- [ ] **Step 3: Confirm package scripts**
+- [x] **Step 3: Confirm package scripts**
 
 Run:
 
@@ -159,7 +159,7 @@ npm run
 
 Expected: scripts include `build`, `test`, `test:unit`, `test:e2e`, `preview`, `start`, and `dev`.
 
-- [ ] **Step 4: Run baseline unit tests**
+- [x] **Step 4: Run baseline unit tests**
 
 Run:
 
@@ -169,7 +169,7 @@ npm run test:unit
 
 Expected: Vitest exits `0`; current baseline is 21 unit files and 81 tests passing. If the count changes because previous work landed, record the new count.
 
-- [ ] **Step 5: Run baseline build**
+- [x] **Step 5: Run baseline build**
 
 Run:
 
@@ -179,7 +179,7 @@ npm run build
 
 Expected: `tsc && vite build` exits `0` and writes `dist/`. Do not commit generated `dist/`.
 
-- [ ] **Step 6: Check free ports**
+- [x] **Step 6: Check free ports**
 
 Run:
 
@@ -190,7 +190,7 @@ lsof -iTCP:18080 -sTCP:LISTEN || true
 
 Expected: no process is listening. If occupied, choose another explicit port and document it in the final verification notes.
 
-- [ ] **Step 7: Commit boundary**
+- [x] **Step 7: Commit boundary**
 
 Run:
 
