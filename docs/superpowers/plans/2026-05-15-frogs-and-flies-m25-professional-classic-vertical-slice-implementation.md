@@ -174,7 +174,7 @@ Required Task 6 processing commands:
 **Files:**
 - Read only: all repo files.
 
-- [ ] **Step 1: Confirm current branch and dirty files**
+- [x] **Step 1: Confirm current branch and dirty files**
 
 Run: `git status --short`
 
@@ -182,35 +182,35 @@ Expected clean: no output.
 
 Expected dirty: output lists changed files. If any dirty file is in `src/**`, `tests/**`, `public/**`, `ASSET_MANIFEST.md`, `README.md`, or `docs/**`, inspect ownership before editing and do not overwrite unrelated work.
 
-- [ ] **Step 2: Confirm current scripts**
+- [x] **Step 2: Confirm current scripts**
 
 Run: `cat package.json`
 
 Expected: scripts include `build`, `test`, `test:unit`, `test:e2e`, `preview`, and `start`.
 
-- [ ] **Step 3: Run baseline build**
+- [x] **Step 3: Run baseline build**
 
 Run: `npm run build`
 
 Expected pass: command exits `0`.
 
-- [ ] **Step 4: Run baseline unit tests**
+- [x] **Step 4: Run baseline unit tests**
 
 Run: `npm run test:unit`
 
 Expected pass: command exits `0`.
 
-- [ ] **Step 5: Run baseline E2E tests**
+- [x] **Step 5: Run baseline E2E tests**
 
 Run: `npm run test:e2e`
 
 Expected pass: command exits `0`.
 
-- [ ] **Step 6: Record baseline if anything is already failing**
+- [x] **Step 6: Record baseline if anything is already failing**
 
 If any baseline command fails, create a short note in the implementation summary before changing production behavior. Do not mask baseline failures by loosening M2.5 tests.
 
-- [ ] **Step 7: Commit boundary**
+- [x] **Step 7: Commit boundary**
 
 Run: `git status --short`
 
