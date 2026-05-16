@@ -223,7 +223,7 @@ No commit is expected for Task 1 unless the plan checkboxes are being updated by
 - Create: `tests/unit/campaignRegistry.test.ts`
 - Modify only if needed: `vitest.config.ts`
 
-- [ ] **Step 1: Write failing registry tests**
+- [x] **Step 1: Write failing registry tests**
 
 In `tests/unit/campaignRegistry.test.ts`, assert:
 
@@ -252,7 +252,7 @@ expect(validateCampaignRegistry(brokenRegistryWithMissingContentProfile)).toCont
 )
 ```
 
-- [ ] **Step 2: Run registry tests red**
+- [x] **Step 2: Run registry tests red**
 
 Run:
 
@@ -262,7 +262,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts
 
 Expected: FAIL because `src/content/registry.ts` does not exist.
 
-- [ ] **Step 3: Implement minimal content types**
+- [x] **Step 3: Implement minimal content types**
 
 Create `src/content/types.ts` with exported literal id unions and interfaces:
 
@@ -284,7 +284,7 @@ Create `src/content/types.ts` with exported literal id unions and interfaces:
 
 Keep string copy in definitions, not duplicated in DOM code.
 
-- [ ] **Step 4: Implement the M2.7 registry**
+- [x] **Step 4: Implement the M2.7 registry**
 
 Create `src/content/registry.ts` with:
 
@@ -312,7 +312,7 @@ Use placeholder thresholds from the spec unless a later objective test proves th
 - 1-2: score 500 and catches 8, stars 500/800/1100
 - 1-3: score 700, stars 700/1000/1300
 
-- [ ] **Step 5: Run registry tests green**
+- [x] **Step 5: Run registry tests green**
 
 Run:
 
@@ -322,7 +322,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 6: Run focused existing unit tests**
+- [x] **Step 6: Run focused existing unit tests**
 
 Run:
 
@@ -332,7 +332,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts tests/unit/runtimeParams.te
 
 Expected: PASS; content registry does not affect shell/runtime params yet.
 
-- [ ] **Step 7: Scope guard**
+- [x] **Step 7: Scope guard**
 
 Run:
 
@@ -342,7 +342,7 @@ rg -n "queen|boss|biome|hazard|shop|coin|leaderboard|account|cloud|analytics|tel
 
 Expected: no new source references from this task except existing docs/tests or false positives already present before M2.7. Record any false positives.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Run:
 
