@@ -12,7 +12,41 @@ describe('M2.6 runtime shell state', () => {
     const state = createInitialShellState()
 
     expect(['splash', 'main-menu']).toContain(state.screen)
-    expect(getVisibleShellControls(state)).toEqual(expect.arrayContaining(['play', 'settings', 'high-scores']))
+    expect(getVisibleShellControls(state)).toEqual(expect.arrayContaining(['campaign', 'play', 'settings', 'high-scores']))
+  })
+
+  it('routes through campaign and prologue shell states without adding a campaign match mode', () => {
+    const initialState = createInitialShellState()
+    expect(getVisibleShellControls(initialState)).toEqual(
+      expect.arrayContaining(['campaign', 'play', 'settings', 'high-scores']),
+    )
+
+    const campaignState = apply(initialState, { type: 'openCampaign' })
+    expect(campaignState.screen).toBe('campaign')
+    expect(getVisibleShellControls(campaignState)).toEqual(
+      expect.arrayContaining(['start-prologue', 'continue-campaign', 'replay-prologue', 'campaign-level', 'main-menu']),
+    )
+
+    const prologueState = apply(campaignState, { type: 'openPrologue' })
+    expect(prologueState.screen).toBe('prologue')
+    expect(getVisibleShellControls(prologueState)).toEqual(
+      expect.arrayContaining([
+        'prologue-next',
+        'prologue-back',
+        'prologue-skip',
+        'start-campaign-level',
+        'main-menu',
+      ]),
+    )
+
+    expect(apply(prologueState, { type: 'startCampaignLevel' }).screen).toBe('gameplay')
+
+    const resultsState = apply(apply(campaignState, { type: 'startCampaignLevel' }), { type: 'showResults' })
+    expect(apply(resultsState, { type: 'returnToCampaign' }).screen).toBe('campaign')
+    expect(apply(resultsState, { type: 'nextCampaignLevel' }).screen).toBe('gameplay')
+    expect(getVisibleShellControls(resultsState)).toEqual(
+      expect.arrayContaining(['campaign-results', 'next-campaign-level', 'classic-modes', 'main-menu']),
+    )
   })
 
   it('moves from play to the two supported player-facing mode selections', () => {

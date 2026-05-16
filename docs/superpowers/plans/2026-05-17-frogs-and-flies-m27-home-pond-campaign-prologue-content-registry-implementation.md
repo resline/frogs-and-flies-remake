@@ -581,7 +581,7 @@ Expected: commit created.
 - Modify: `src/runtime/shell.ts`
 - Modify: `tests/unit/runtimeShell.test.ts`
 
-- [ ] **Step 1: Write failing shell reducer tests**
+- [x] **Step 1: Write failing shell reducer tests**
 
 In `tests/unit/runtimeShell.test.ts`, assert:
 
@@ -598,7 +598,7 @@ expect(apply(resultsState, { type: 'nextCampaignLevel' }).screen).toBe('gameplay
 
 Also assert that mode select still exposes only `classic-single`, `local-versus`, and `main-menu`.
 
-- [ ] **Step 2: Run shell tests red**
+- [x] **Step 2: Run shell tests red**
 
 Run:
 
@@ -608,7 +608,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts
 
 Expected: FAIL because campaign shell actions/controls do not exist.
 
-- [ ] **Step 3: Implement shell state expansion**
+- [x] **Step 3: Implement shell state expansion**
 
 In `src/runtime/shell.ts`:
 
@@ -635,7 +635,7 @@ In `src/runtime/shell.ts`:
 - Keep `selectedMode: MatchMode`; do not add `campaign` to `MatchMode`.
 - Keep compatibility `startGameplay` and forced results transitions used by older tests.
 
-- [ ] **Step 4: Run shell tests green**
+- [x] **Step 4: Run shell tests green**
 
 Run:
 
@@ -645,7 +645,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Run registry/progress tests**
+- [x] **Step 5: Run registry/progress tests**
 
 Run:
 
@@ -655,7 +655,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts tests/unit/campaignProg
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 

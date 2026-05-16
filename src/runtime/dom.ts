@@ -504,6 +504,8 @@ function focusShellScreenPanel(dom: DomState, screen: ShellState['screen']): voi
   const panelByScreen: Record<ShellState['screen'], HTMLElement> = {
     splash: dom.mainMenuPanel,
     'main-menu': dom.mainMenuPanel,
+    campaign: dom.mainMenuPanel,
+    prologue: dom.mainMenuPanel,
     'mode-select': dom.modeSelectPanel,
     settings: dom.settingsPanel,
     'high-scores': dom.highScoresPanel,

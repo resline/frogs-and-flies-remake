@@ -3,6 +3,8 @@ import type { MatchMode } from '../game/types'
 export type ShellScreen =
   | 'splash'
   | 'main-menu'
+  | 'campaign'
+  | 'prologue'
   | 'mode-select'
   | 'settings'
   | 'high-scores'
@@ -17,6 +19,11 @@ export interface ShellState {
 
 export type ShellAction =
   | { type: 'bootReady' }
+  | { type: 'openCampaign' }
+  | { type: 'openPrologue' }
+  | { type: 'startCampaignLevel' }
+  | { type: 'returnToCampaign' }
+  | { type: 'nextCampaignLevel' }
   | { type: 'play' }
   | { type: 'selectMode'; mode: MatchMode }
   | { type: 'openSettings' }
@@ -30,9 +37,21 @@ export type ShellAction =
   | { type: 'mainMenu' }
 
 export type ShellControl =
+  | 'campaign'
   | 'play'
   | 'settings'
   | 'high-scores'
+  | 'start-prologue'
+  | 'continue-campaign'
+  | 'replay-prologue'
+  | 'campaign-level'
+  | 'prologue-next'
+  | 'prologue-back'
+  | 'prologue-skip'
+  | 'start-campaign-level'
+  | 'campaign-results'
+  | 'next-campaign-level'
+  | 'classic-modes'
   | 'classic-single'
   | 'local-versus'
   | 'start-gameplay'
@@ -69,6 +88,22 @@ export function reduceShellState(state: ShellState, action: ShellAction): ShellT
   switch (action.type) {
     case 'bootReady':
       return { state: state.screen === 'splash' ? { ...state, screen: 'main-menu' } : state }
+    case 'openCampaign':
+      return { state: { ...state, screen: 'campaign' } }
+    case 'openPrologue':
+      return state.screen === 'campaign'
+        ? { state: { ...state, screen: 'prologue' } }
+        : invalid(state, action.type, 'invalid-transition')
+    case 'startCampaignLevel':
+      return state.screen === 'campaign' || state.screen === 'prologue' || state.screen === 'results'
+        ? { state: { ...state, screen: 'gameplay' } }
+        : invalid(state, action.type, 'invalid-transition')
+    case 'returnToCampaign':
+      return state.screen === 'results' || state.screen === 'prologue'
+        ? { state: { ...state, screen: 'campaign' } }
+        : invalid(state, action.type, 'invalid-transition')
+    case 'nextCampaignLevel':
+      return state.screen === 'results' ? { state: { ...state, screen: 'gameplay' } } : invalid(state, action.type, 'invalid-transition')
     case 'play':
       return { state: { ...state, screen: 'mode-select' } }
     case 'selectMode':
@@ -106,7 +141,11 @@ export function getVisibleShellControls(state: ShellState): ShellControl[] {
   switch (state.screen) {
     case 'splash':
     case 'main-menu':
-      return ['play', 'settings', 'high-scores']
+      return ['campaign', 'play', 'settings', 'high-scores']
+    case 'campaign':
+      return ['start-prologue', 'continue-campaign', 'replay-prologue', 'campaign-level', 'main-menu']
+    case 'prologue':
+      return ['prologue-next', 'prologue-back', 'prologue-skip', 'start-campaign-level', 'main-menu']
     case 'mode-select':
       return ['classic-single', 'local-versus', 'main-menu']
     case 'settings':
@@ -117,7 +156,7 @@ export function getVisibleShellControls(state: ShellState): ShellControl[] {
     case 'pause':
       return ['resume', 'restart', 'settings', 'main-menu']
     case 'results':
-      return ['replay', 'change-mode', 'main-menu']
+      return ['replay', 'campaign-results', 'next-campaign-level', 'classic-modes', 'change-mode', 'main-menu']
   }
 }
 
