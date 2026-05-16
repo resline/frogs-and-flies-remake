@@ -676,7 +676,7 @@ Expected: commit created.
 - Create: `tests/e2e/m27-campaign-flow.spec.ts`
 - Modify: `tests/e2e/m26-shell.spec.ts`
 
-- [ ] **Step 1: Write failing E2E for campaign entry and locked level list**
+- [x] **Step 1: Write failing E2E for campaign entry and locked level list**
 
 Create `tests/e2e/m27-campaign-flow.spec.ts` with a first describe block:
 
@@ -709,7 +709,7 @@ test('advances and skips prologue with native controls', async ({ page }) => {
 })
 ```
 
-- [ ] **Step 2: Update M2.6 main-menu assertion red**
+- [x] **Step 2: Update M2.6 main-menu assertion red**
 
 In `tests/e2e/m26-shell.spec.ts`, update the first shell test to expect Campaign on the main menu, but keep the mode-select test rejecting Campaign in mode select:
 
@@ -719,7 +719,7 @@ await expect(page.getByRole('button', { name: 'Campaign' })).toBeVisible()
 await expect(page.getByRole('button', { name: /Online|Tournament|Practice/ })).toHaveCount(0)
 ```
 
-- [ ] **Step 3: Run E2E red**
+- [x] **Step 3: Run E2E red**
 
 Run:
 
@@ -729,7 +729,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts tests/e2e/m26-shell.spec
 
 Expected: FAIL because DOM Campaign/prologue controls do not exist.
 
-- [ ] **Step 4: Add DOM state elements**
+- [x] **Step 4: Add DOM state elements**
 
 In `src/runtime/dom.ts`, add to `DomState`:
 
@@ -755,7 +755,7 @@ Create semantic elements:
 
 Use registry strings for titles/copy by receiving campaign sync data from runtime. Do not duplicate the three level titles in multiple places.
 
-- [ ] **Step 5: Extend shell sync contract**
+- [x] **Step 5: Extend shell sync contract**
 
 In `src/runtime/dom.ts`, extend `ShellDomSyncState` with optional campaign UI data:
 
@@ -768,7 +768,7 @@ In `src/runtime/dom.ts`, extend `ShellDomSyncState` with optional campaign UI da
 
 Keep this object simple and read-only for DOM.
 
-- [ ] **Step 6: Add DOM visibility and focus handoff**
+- [x] **Step 6: Add DOM visibility and focus handoff**
 
 In `syncShellDom()`:
 
@@ -789,7 +789,7 @@ Level rows should expose:
 - `data-stars`
 - `data-best-score`
 
-- [ ] **Step 7: Wire basic runtime handlers**
+- [x] **Step 7: Wire basic runtime handlers**
 
 In `src/runtime/app.ts`, wire handlers enough for this task:
 
@@ -804,7 +804,7 @@ In `src/runtime/app.ts`, wire handlers enough for this task:
 
 Do not launch gameplay from campaign yet except if needed for a later task. Passing/launch/result logic belongs in Task 7.
 
-- [ ] **Step 8: Style campaign/prologue panels**
+- [x] **Step 8: Style campaign/prologue panels**
 
 In `src/style.css`, add `.m27-campaign-panel`, `.m27-level-list`, `.m27-level-row`, `.m27-prologue-panel`, and compact responsive rules.
 
@@ -816,7 +816,7 @@ Requirements:
 - High contrast and reduced motion use existing classes.
 - No decorative cards inside cards. Level rows can be repeated row/card-like items with radius <= 8 px.
 
-- [ ] **Step 9: Run focused E2E green**
+- [x] **Step 9: Run focused E2E green**
 
 Run:
 
@@ -826,7 +826,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts tests/e2e/m26-shell.spec
 
 Expected: PASS for campaign entry/prologue shell tests and M2.6 shell regression.
 
-- [ ] **Step 10: Run focused unit tests**
+- [x] **Step 10: Run focused unit tests**
 
 Run:
 
@@ -836,7 +836,7 @@ npm run test:unit -- tests/unit/runtimeShell.test.ts tests/unit/campaignRegistry
 
 Expected: PASS.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 Run:
 

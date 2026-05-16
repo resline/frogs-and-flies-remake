@@ -1,5 +1,6 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
+import type { CampaignDefinition, CampaignLevelDefinition, CampaignLevelId, PrologueDefinition } from '../content/types'
 import type { AudioManagerState } from './audio'
 import type { RuntimeOptions } from './options'
 import type { SaveData, SaveLoadStatus, SaveWriteStatus } from './save'
@@ -27,14 +28,31 @@ export type DomState = {
   theEnd: HTMLElement
   mainMenuPanel: HTMLElement
   modeSelectPanel: HTMLElement
+  campaignPanel: HTMLElement
+  prologuePanel: HTMLElement
   settingsPanel: HTMLElement
   highScoresPanel: HTMLElement
   gameplayPanel: HTMLElement
   pausePanel: HTMLElement
   resultsActions: HTMLElement
+  campaignButton: HTMLElement
   playButton: HTMLElement
   openSettingsButton: HTMLElement
   openHighScoresButton: HTMLElement
+  campaignStartPrologueButton: HTMLElement
+  campaignContinueButton: HTMLElement
+  campaignReplayPrologueButton: HTMLElement
+  campaignMainMenuButton: HTMLElement
+  campaignLevelList: HTMLElement
+  campaignStatus: HTMLElement
+  prologueTitle: HTMLElement
+  prologueText: HTMLElement
+  prologueProgress: HTMLElement
+  prologueNextButton: HTMLElement
+  prologueBackButton: HTMLElement
+  prologueSkipButton: HTMLElement
+  prologueStartLevelButton: HTMLElement
+  prologueMainMenuButton: HTMLElement
   mainMenuModeButton: HTMLElement
   mainMenuSettingsButton: HTMLElement
   mainMenuHighScoresButton: HTMLElement
@@ -79,6 +97,13 @@ export interface ShellDomSyncState {
   roundRecorded: boolean
   highScoreStatus?: string
   save: SaveData
+  campaign?: CampaignDefinition
+  campaignLevels?: readonly CampaignLevelDefinition[]
+  prologue?: PrologueDefinition
+  prologuePanelIndex?: number
+  activeCampaignLevelId?: CampaignLevelId
+  latestCampaignResultSummary?: string
+  campaignProgress?: SaveData['campaign']
 }
 
 export function createDomState(root: HTMLElement): DomState {
@@ -118,6 +143,8 @@ export function createDomState(root: HTMLElement): DomState {
 
   const mainMenuPanel = getOrCreate(root, 'section', 'm26-main-menu', controls)
   const modeSelectPanel = getOrCreate(root, 'section', 'm26-mode-select', controls)
+  const campaignPanel = getOrCreate(root, 'section', 'm27-campaign', controls)
+  const prologuePanel = getOrCreate(root, 'section', 'm27-prologue', controls)
   const settingsPanel = getOrCreate(root, 'section', 'm26-settings', controls)
   const highScoresPanel = getOrCreateTestElement(root, 'high-scores-panel', 'section', controls)
   const gameplayPanel = getOrCreate(root, 'section', 'm26-gameplay-controls', controls)
@@ -130,7 +157,13 @@ export function createDomState(root: HTMLElement): DomState {
   const replayControls = getOrCreate(root, 'div', 'm25-replay-controls', resultsActions)
   const secondaryControls = getOrCreate(root, 'div', 'm25-secondary-controls', settingsPanel)
   const options = getOrCreate(root, 'div', 'm25-options', settingsPanel)
-  for (const panel of [mainMenuPanel, modeSelectPanel, settingsPanel, highScoresPanel, gameplayPanel, pausePanel]) {
+  campaignPanel.setAttribute('data-testid', 'campaign-home-pond')
+  prologuePanel.setAttribute('data-testid', 'campaign-prologue')
+  campaignPanel.setAttribute('aria-label', 'Home Pond campaign')
+  prologuePanel.setAttribute('aria-label', 'Home Pond prologue')
+  campaignPanel.classList.add('m27-campaign-panel')
+  prologuePanel.classList.add('m27-prologue-panel')
+  for (const panel of [mainMenuPanel, modeSelectPanel, campaignPanel, prologuePanel, settingsPanel, highScoresPanel, gameplayPanel, pausePanel]) {
     panel.classList.add('m26-shell-panel')
     panel.tabIndex = -1
   }
@@ -143,9 +176,36 @@ export function createDomState(root: HTMLElement): DomState {
   secondaryControls.classList.add('m25-control-group')
   options.classList.add('m25-options')
 
+  const campaignButton = getOrCreateButton(root, 'shell-campaign', 'Campaign', mainMenuPanel)
   const playButton = getOrCreateButton(root, 'shell-play', 'Play', mainMenuPanel)
   const openSettingsButton = getOrCreateButton(root, 'shell-settings', 'Settings', mainMenuPanel)
   const openHighScoresButton = getOrCreateButton(root, 'shell-high-scores', 'High Scores', mainMenuPanel)
+  const campaignHeader = getOrCreate(root, 'header', 'm27-campaign-header', campaignPanel)
+  const campaignTitle = getOrCreate(root, 'h2', 'm27-campaign-title', campaignHeader)
+  const campaignStatus = getOrCreateTestElement(root, 'campaign-status', 'p', campaignHeader)
+  const campaignActions = getOrCreate(root, 'div', 'm27-campaign-actions', campaignPanel)
+  const campaignLevelList = getOrCreate(root, 'div', 'm27-level-list', campaignPanel)
+  const campaignStartPrologueButton = getOrCreateButton(root, 'campaign-start-prologue', 'Start Prologue', campaignActions)
+  const campaignContinueButton = getOrCreateButton(root, 'campaign-continue', 'Continue', campaignActions)
+  const campaignReplayPrologueButton = getOrCreateButton(root, 'campaign-replay-prologue', 'Replay Prologue', campaignActions)
+  const campaignMainMenuButton = getOrCreateButton(root, 'campaign-main-menu', 'Main Menu', campaignActions)
+  campaignTitle.textContent = campaignTitle.textContent?.trim() || 'Home Pond'
+  campaignLevelList.setAttribute('role', 'list')
+  campaignLevelList.setAttribute('aria-label', 'Home Pond prologue levels')
+  campaignActions.classList.add('m27-campaign-actions')
+  campaignLevelList.classList.add('m27-level-list')
+  const prologueTitle = getOrCreate(root, 'h2', 'm27-prologue-title', prologuePanel)
+  const prologueText = getOrCreateTestElement(root, 'prologue-text', 'p', prologuePanel)
+  const prologueProgress = getOrCreateTestElement(root, 'prologue-progress', 'p', prologuePanel)
+  const prologueActions = getOrCreate(root, 'div', 'm27-prologue-actions', prologuePanel)
+  const prologueBackButton = getOrCreateButton(root, 'prologue-back', 'Back', prologueActions)
+  const prologueNextButton = getOrCreateButton(root, 'prologue-next', 'Next', prologueActions)
+  const prologueSkipButton = getOrCreateButton(root, 'prologue-skip', 'Skip', prologueActions)
+  const prologueStartLevelButton = getOrCreateButton(root, 'prologue-start-level', 'Start 1-1 First Hunt', prologueActions)
+  const prologueMainMenuButton = getOrCreateButton(root, 'prologue-main-menu', 'Main Menu', prologueActions)
+  prologueActions.classList.add('m27-prologue-actions')
+  prologueText.setAttribute('aria-live', 'polite')
+  prologueProgress.classList.add('m27-prologue-progress')
   const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', modeControls)
   const localVersusButton = getOrCreateButton(root, 'mode-local-versus', 'Local Versus', modeControls)
   const difficultyClassicAssistButton = getOrCreateButton(root, 'difficulty-classic-assist', 'Assist', difficultyControls)
@@ -213,14 +273,31 @@ export function createDomState(root: HTMLElement): DomState {
     theEnd,
     mainMenuPanel,
     modeSelectPanel,
+    campaignPanel,
+    prologuePanel,
     settingsPanel,
     highScoresPanel,
     gameplayPanel,
     pausePanel,
     resultsActions,
+    campaignButton,
     playButton,
     openSettingsButton,
     openHighScoresButton,
+    campaignStartPrologueButton,
+    campaignContinueButton,
+    campaignReplayPrologueButton,
+    campaignMainMenuButton,
+    campaignLevelList,
+    campaignStatus,
+    prologueTitle,
+    prologueText,
+    prologueProgress,
+    prologueNextButton,
+    prologueBackButton,
+    prologueSkipButton,
+    prologueStartLevelButton,
+    prologueMainMenuButton,
     mainMenuModeButton,
     mainMenuSettingsButton,
     mainMenuHighScoresButton,
@@ -474,9 +551,12 @@ function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.shell.setAttribute('data-save-status', saveStatus)
   dom.shell.setAttribute('data-storage-available', String(storageAvailable))
   dom.shell.setAttribute('data-round-recorded', String(roundRecorded))
+  syncCampaignShellMarkers(dom, shellSync)
 
   setPanelVisible(dom.mainMenuPanel, shell.screen === 'main-menu' || shell.screen === 'splash')
   setPanelVisible(dom.modeSelectPanel, shell.screen === 'mode-select')
+  setPanelVisible(dom.campaignPanel, shell.screen === 'campaign')
+  setPanelVisible(dom.prologuePanel, shell.screen === 'prologue')
   setPanelVisible(dom.settingsPanel, shell.screen === 'settings')
   setPanelVisible(dom.highScoresPanel, shell.screen === 'high-scores')
   setPanelVisible(dom.gameplayPanel, shell.screen === 'gameplay')
@@ -492,6 +572,8 @@ function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.results.hidden = shell.screen !== 'results'
   syncModeControl(dom.classicSingleButton, shell.selectedMode, 'classic-single')
   syncModeControl(dom.localVersusButton, shell.selectedMode, 'local-versus')
+  syncCampaignPanel(dom, shellSync)
+  syncProloguePanel(dom, shellSync)
   syncHighScores(dom.highScoresPanel, save)
   syncResultLine(dom.results, 'results-high-score-status', highScoreStatus ?? 'Local high score status pending.')
 }
@@ -504,8 +586,8 @@ function focusShellScreenPanel(dom: DomState, screen: ShellState['screen']): voi
   const panelByScreen: Record<ShellState['screen'], HTMLElement> = {
     splash: dom.mainMenuPanel,
     'main-menu': dom.mainMenuPanel,
-    campaign: dom.mainMenuPanel,
-    prologue: dom.mainMenuPanel,
+    campaign: dom.campaignPanel,
+    prologue: dom.prologuePanel,
     'mode-select': dom.modeSelectPanel,
     settings: dom.settingsPanel,
     'high-scores': dom.highScoresPanel,
@@ -515,6 +597,107 @@ function focusShellScreenPanel(dom: DomState, screen: ShellState['screen']): voi
   }
 
   panelByScreen[screen].focus({ preventScroll: true })
+}
+
+function syncCampaignShellMarkers(dom: DomState, shellSync: ShellDomSyncState): void {
+  const campaign = shellSync.campaign
+  const prologue = shellSync.prologue
+  const progress = shellSync.campaignProgress ?? shellSync.save.campaign
+  const prologueSeen = prologue ? progress.seenPrologueIds.includes(prologue.id) : false
+
+  if (campaign) {
+    dom.shell.setAttribute('data-campaign-id', campaign.id)
+  } else {
+    dom.shell.removeAttribute('data-campaign-id')
+  }
+  dom.shell.setAttribute('data-prologue-seen', String(prologueSeen))
+  dom.shell.setAttribute('data-last-selected-campaign-level', progress.lastSelectedLevelId ?? '')
+  if (shellSync.activeCampaignLevelId) {
+    dom.shell.setAttribute('data-active-campaign-level', shellSync.activeCampaignLevelId)
+  } else {
+    dom.shell.removeAttribute('data-active-campaign-level')
+  }
+}
+
+function syncCampaignPanel(dom: DomState, shellSync: ShellDomSyncState): void {
+  const campaign = shellSync.campaign
+  const prologue = shellSync.prologue
+  const levels = shellSync.campaignLevels ?? []
+  const progress = shellSync.campaignProgress ?? shellSync.save.campaign
+  if (!campaign || !prologue) {
+    return
+  }
+
+  const prologueSeen = progress.seenPrologueIds.includes(prologue.id)
+  const campaignComplete = campaign.levelIds.every((levelId) => progress.levels[levelId]?.passed === true)
+  const status = campaignComplete ? 'Complete' : prologueSeen ? 'In Progress' : 'New'
+
+  dom.campaignPanel.setAttribute('data-campaign-id', campaign.id)
+  dom.campaignPanel.setAttribute('data-prologue-id', prologue.id)
+  dom.campaignStatus.textContent = `${campaign.title} campaign status: ${status}.`
+  dom.campaignStatus.setAttribute('data-campaign-status', status.toLowerCase().replace(/\s+/g, '-'))
+  dom.campaignStartPrologueButton.hidden = prologueSeen
+  dom.campaignContinueButton.hidden = !prologueSeen || campaignComplete
+  dom.campaignReplayPrologueButton.hidden = !prologueSeen || !prologue.replayable
+  setButtonDisabled(dom.campaignContinueButton, true)
+
+  dom.campaignLevelList.replaceChildren(
+    ...levels.map((level) => createCampaignLevelRow(level, progress.levels[level.id])),
+  )
+}
+
+function createCampaignLevelRow(
+  level: CampaignLevelDefinition,
+  progress: SaveData['campaign']['levels'][string] | undefined,
+): HTMLElement {
+  const row = document.createElement('article')
+  const status = progress?.passed ? 'Passed' : progress?.unlocked ? 'Unlocked' : 'Locked'
+  const stars = progress?.stars ?? 0
+  const bestScore = progress?.bestScore ?? 0
+
+  row.className = 'm27-level-row'
+  row.setAttribute('role', 'listitem')
+  row.setAttribute('data-testid', `campaign-level-${level.id}`)
+  row.setAttribute('data-level-id', level.id)
+  row.setAttribute('data-unlocked', String(progress?.unlocked === true))
+  row.setAttribute('data-passed', String(progress?.passed === true))
+  row.setAttribute('data-stars', String(stars))
+  row.setAttribute('data-best-score', String(bestScore))
+
+  const heading = document.createElement('h3')
+  heading.textContent = `${level.chapterLabel} ${level.title}`
+  const meta = document.createElement('p')
+  meta.textContent = `${status} - ${stars} stars - best ${bestScore}`
+
+  row.append(heading, meta)
+  return row
+}
+
+function syncProloguePanel(dom: DomState, shellSync: ShellDomSyncState): void {
+  const prologue = shellSync.prologue
+  const level = shellSync.campaignLevels?.find((candidate) => candidate.id === prologue?.startLevelId)
+  if (!prologue || prologue.panels.length === 0) {
+    return
+  }
+
+  const maxIndex = prologue.panels.length - 1
+  const panelIndex = Math.max(0, Math.min(shellSync.prologuePanelIndex ?? 0, maxIndex))
+  const panel = prologue.panels[panelIndex]
+  const isFirstPanel = panelIndex === 0
+  const isFinalPanel = panelIndex === maxIndex
+
+  dom.prologuePanel.setAttribute('data-prologue-id', prologue.id)
+  dom.prologuePanel.setAttribute('data-prologue-panel-index', String(panelIndex))
+  dom.prologuePanel.setAttribute('data-prologue-panel-count', String(prologue.panels.length))
+  dom.prologuePanel.setAttribute('data-prologue-tone', panel.visualTone)
+  dom.prologueTitle.textContent = prologue.title
+  dom.prologueText.textContent = panel.text
+  dom.prologueProgress.textContent = `Panel ${panelIndex + 1} of ${prologue.panels.length}`
+  dom.prologueBackButton.hidden = isFirstPanel
+  dom.prologueNextButton.hidden = isFinalPanel
+  dom.prologueStartLevelButton.hidden = !isFinalPanel
+  dom.prologueStartLevelButton.textContent = level ? `Start ${level.chapterLabel} ${level.title}` : 'Start 1-1 First Hunt'
+  setButtonDisabled(dom.prologueStartLevelButton, true)
 }
 
 function syncHighScores(element: HTMLElement, save: SaveData): void {
@@ -570,6 +753,14 @@ function createInputRemapButtons(root: HTMLElement, parent: HTMLElement): void {
 function setPanelVisible(element: HTMLElement, visible: boolean): void {
   element.hidden = !visible
   element.style.display = visible ? '' : 'none'
+}
+
+function setButtonDisabled(element: HTMLElement, disabled: boolean): void {
+  element.toggleAttribute('disabled', disabled)
+  element.setAttribute('aria-disabled', String(disabled))
+  if (element instanceof HTMLButtonElement) {
+    element.disabled = disabled
+  }
 }
 
 function syncResultLine(parent: HTMLElement, testId: string, text: string): void {

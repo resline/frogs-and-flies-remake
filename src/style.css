@@ -252,6 +252,70 @@ button[data-selected="true"] {
   justify-content: flex-start;
 }
 
+.m27-campaign-panel,
+.m27-prologue-panel {
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  text-align: left;
+  width: min(520px, calc(100vw - 32px));
+}
+
+.m27-campaign-panel h2,
+.m27-campaign-panel h3,
+.m27-prologue-panel h2 {
+  letter-spacing: 0;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.m27-campaign-panel h2,
+.m27-prologue-panel h2 {
+  font-size: 18px;
+}
+
+.m27-campaign-panel h3 {
+  font-size: 14px;
+}
+
+.m27-campaign-panel p,
+.m27-prologue-panel p {
+  line-height: 1.3;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.m27-campaign-actions,
+.m27-prologue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m27-level-list {
+  display: grid;
+  gap: 8px;
+}
+
+.m27-level-row {
+  background: rgba(5, 20, 22, 0.74);
+  border: 1px solid rgba(229, 255, 224, 0.2);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+}
+
+.m27-level-row[data-unlocked="false"] {
+  opacity: 0.72;
+}
+
+.m27-prologue-progress {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 #m26-settings .m25-control-group,
 #m26-settings .m25-options {
   display: flex;
@@ -421,5 +485,16 @@ button[data-selected="true"] {
 
   .m25-option-control {
     min-height: 32px;
+  }
+
+  .m27-campaign-panel,
+  .m27-prologue-panel {
+    width: calc(100vw - 16px);
+  }
+
+  .m27-campaign-actions button,
+  .m27-prologue-actions button {
+    flex: 1 1 128px;
+    min-width: 0;
   }
 }

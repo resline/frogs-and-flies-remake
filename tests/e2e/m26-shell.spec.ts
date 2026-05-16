@@ -25,6 +25,7 @@ test.describe('M2.6 product shell flow', () => {
     await expect(shell).toHaveAttribute('data-save-status', /^(loaded|defaulted|invalid|unsupported-version|storage-unavailable|saved)$/)
     await expect(shell).toHaveAttribute('data-storage-available', /^(true|false)$/)
 
+    await expect(page.getByRole('button', { name: 'Campaign' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'High Scores' })).toBeVisible()
@@ -166,7 +167,7 @@ async function readSavedRoundTracking(page: import('@playwright/test').Page): Pr
   startedRoundCount?: number
 }> {
   return page.evaluate(() => {
-    const raw = localStorage.getItem('frogs-and-flies.save.v1')
+    const raw = localStorage.getItem('frogs-and-flies.save.v2') ?? localStorage.getItem('frogs-and-flies.save.v1')
     if (!raw) {
       return {}
     }

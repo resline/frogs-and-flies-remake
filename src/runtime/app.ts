@@ -4,6 +4,8 @@ import { createGame } from '../game/createGame'
 import { createFixedStep } from '../game/fixedStep'
 import { buildResults } from '../game/match'
 import { drainGameplayAudioEvents, updateGame } from '../game/update'
+import { HOME_POND_CAMPAIGN, HOME_POND_LEVELS, HOME_POND_PROLOGUE } from '../content/registry'
+import type { CampaignLevelId } from '../content/types'
 import {
   addRuntimeInputAction,
   applyRuntimeInput,
@@ -13,6 +15,7 @@ import {
   handleRuntimeKeyUp,
   type RuntimeInputAction,
 } from './input'
+import { markPrologueSeen } from './campaignProgress'
 import { createGamepadPoller, type GamepadInputSnapshot } from './gamepad'
 import { createRenderScene, renderScene, type RenderFrameMarkers, type RenderScene } from '../render/scene'
 import { createAudioManager } from './audio'
@@ -87,6 +90,7 @@ export async function startRuntime(
   let saveStatus: SaveLoadStatus | SaveWriteStatus = persistence.saveStatus ?? 'defaulted'
   let storageAvailable = saveStatus !== 'storage-unavailable'
   let shellState: ShellState = createInitialShellState(currentRuntimeParams.mode)
+  let prologuePanelIndex = 0
   const runtimeSessionId = createRuntimeSessionId()
   let roundCounter = 0
   let activeRoundId = ''
@@ -134,6 +138,11 @@ export async function startRuntime(
       roundRecorded,
       highScoreStatus,
       save: saveData,
+      campaign: HOME_POND_CAMPAIGN,
+      campaignLevels: HOME_POND_LEVELS,
+      prologue: HOME_POND_PROLOGUE,
+      prologuePanelIndex,
+      activeCampaignLevelId: readActiveCampaignLevelId(saveData.campaign.lastSelectedLevelId),
     })
     syncInputRuntimeMarkers(dom.shell, runtimeInput, gamepadSnapshot)
     if (dom.canvas) {
@@ -304,6 +313,10 @@ export async function startRuntime(
     transitionShell({ type: 'play' })
     refresh()
   }
+  const handleCampaignClick = () => {
+    transitionShell({ type: 'openCampaign' })
+    refresh()
+  }
   const handleOpenSettingsClick = () => {
     transitionShell({ type: 'openSettings' })
     refresh()
@@ -313,6 +326,40 @@ export async function startRuntime(
     refresh()
   }
   const handleMainMenuClick = () => {
+    transitionShell({ type: 'mainMenu' })
+    refresh()
+  }
+  const handleCampaignMainMenuClick = () => {
+    transitionShell({ type: 'mainMenu' })
+    refresh()
+  }
+  const handleStartPrologueClick = () => {
+    prologuePanelIndex = 0
+    transitionShell({ type: 'openPrologue' })
+    refresh()
+  }
+  const handleReplayPrologueClick = () => {
+    prologuePanelIndex = 0
+    transitionShell({ type: 'openPrologue' })
+    refresh()
+  }
+  const handlePrologueNextClick = () => {
+    prologuePanelIndex = Math.min(prologuePanelIndex + 1, HOME_POND_PROLOGUE.panels.length - 1)
+    refresh()
+  }
+  const handlePrologueBackClick = () => {
+    prologuePanelIndex = Math.max(prologuePanelIndex - 1, 0)
+    refresh()
+  }
+  const handlePrologueSkipClick = () => {
+    persistSave({
+      ...saveData,
+      campaign: markPrologueSeen(saveData.campaign, HOME_POND_PROLOGUE.id),
+    })
+    transitionShell({ type: 'returnToCampaign' })
+    refresh()
+  }
+  const handlePrologueMainMenuClick = () => {
     transitionShell({ type: 'mainMenu' })
     refresh()
   }
@@ -411,9 +458,18 @@ export async function startRuntime(
     audio.setMonoAudio(currentRuntimeParams.options.monoAudio)
   }
 
+  dom.campaignButton.addEventListener('click', handleCampaignClick)
   dom.playButton.addEventListener('click', handlePlayClick)
   dom.openSettingsButton.addEventListener('click', handleOpenSettingsClick)
   dom.openHighScoresButton.addEventListener('click', handleOpenHighScoresClick)
+  dom.campaignStartPrologueButton.addEventListener('click', handleStartPrologueClick)
+  dom.campaignContinueButton.addEventListener('click', handleStartPrologueClick)
+  dom.campaignReplayPrologueButton.addEventListener('click', handleReplayPrologueClick)
+  dom.campaignMainMenuButton.addEventListener('click', handleCampaignMainMenuClick)
+  dom.prologueNextButton.addEventListener('click', handlePrologueNextClick)
+  dom.prologueBackButton.addEventListener('click', handlePrologueBackClick)
+  dom.prologueSkipButton.addEventListener('click', handlePrologueSkipClick)
+  dom.prologueMainMenuButton.addEventListener('click', handlePrologueMainMenuClick)
   dom.mainMenuModeButton.addEventListener('click', handleMainMenuClick)
   dom.mainMenuSettingsButton.addEventListener('click', handleMainMenuClick)
   dom.mainMenuHighScoresButton.addEventListener('click', handleMainMenuClick)
@@ -554,9 +610,18 @@ export async function startRuntime(
     replay,
     destroy: () => {
       destroyed = true
+      dom.campaignButton.removeEventListener('click', handleCampaignClick)
       dom.playButton.removeEventListener('click', handlePlayClick)
       dom.openSettingsButton.removeEventListener('click', handleOpenSettingsClick)
       dom.openHighScoresButton.removeEventListener('click', handleOpenHighScoresClick)
+      dom.campaignStartPrologueButton.removeEventListener('click', handleStartPrologueClick)
+      dom.campaignContinueButton.removeEventListener('click', handleStartPrologueClick)
+      dom.campaignReplayPrologueButton.removeEventListener('click', handleReplayPrologueClick)
+      dom.campaignMainMenuButton.removeEventListener('click', handleCampaignMainMenuClick)
+      dom.prologueNextButton.removeEventListener('click', handlePrologueNextClick)
+      dom.prologueBackButton.removeEventListener('click', handlePrologueBackClick)
+      dom.prologueSkipButton.removeEventListener('click', handlePrologueSkipClick)
+      dom.prologueMainMenuButton.removeEventListener('click', handlePrologueMainMenuClick)
       dom.mainMenuModeButton.removeEventListener('click', handleMainMenuClick)
       dom.mainMenuSettingsButton.removeEventListener('click', handleMainMenuClick)
       dom.mainMenuHighScoresButton.removeEventListener('click', handleMainMenuClick)
@@ -821,4 +886,8 @@ function syncInputRuntimeMarkers(element: HTMLElement, input: { activeInputDevic
 
 function scoreEntriesForMode(save: SaveData, mode: MatchMode): SaveData['highScores']['classicSingle'] {
   return mode === 'classic-single' ? save.highScores.classicSingle : save.highScores.localVersus
+}
+
+function readActiveCampaignLevelId(value: string | undefined): CampaignLevelId | undefined {
+  return HOME_POND_LEVELS.some((level) => level.id === value) ? (value as CampaignLevelId) : undefined
 }
