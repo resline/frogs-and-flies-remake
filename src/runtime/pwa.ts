@@ -10,6 +10,7 @@ export interface PwaCacheUrlOptions {
 }
 
 export interface ServiceWorkerRegistrationOptions {
+  cacheStorage?: Pick<CacheStorage, 'open'>
   markerElement?: HTMLElement | null
   serviceWorker?: ServiceWorkerContainer
   serviceWorkerPath?: string
@@ -60,36 +61,62 @@ export async function registerServiceWorker(options: ServiceWorkerRegistrationOp
   const serviceWorkerPath = options.serviceWorkerPath ?? '/service-worker.js'
 
   if (!serviceWorker) {
+    markPwaRuntimeCacheReady(options.markerElement, false)
     return markPwaRegistration(options.markerElement, 'unsupported')
   }
 
   try {
     await serviceWorker.register(serviceWorkerPath)
-    await warmPwaRuntimeAssets(options)
+    markPwaRuntimeCacheReady(options.markerElement, await warmPwaRuntimeAssets(options))
     return markPwaRegistration(options.markerElement, 'registered')
   } catch (error) {
     console.warn('Service worker registration failed.', error)
+    markPwaRuntimeCacheReady(options.markerElement, false)
     return markPwaRegistration(options.markerElement, 'failed')
   }
 }
 
-async function warmPwaRuntimeAssets(options: ServiceWorkerRegistrationOptions): Promise<void> {
+async function warmPwaRuntimeAssets(options: ServiceWorkerRegistrationOptions): Promise<boolean> {
   const serviceWorker = options.serviceWorker ?? navigator.serviceWorker
   const fetcher = options.fetcher ?? fetch
   const root = options.documentRoot ?? document
   const origin = options.origin ?? window.location.origin
+  const cacheStorage = options.cacheStorage ?? globalThis.caches
 
   await serviceWorker.ready
   await waitForServiceWorkerControl(serviceWorker)
 
-  await Promise.all(
-    collectPwaRuntimeAssetUrls(root, origin).map((url) =>
-      fetcher(url, {
-        cache: 'reload',
-        credentials: 'same-origin',
-      }).catch(() => undefined),
-    ),
-  )
+  const assetUrls = collectPwaRuntimeAssetUrls(root, origin)
+  const cacheResults = await Promise.all(assetUrls.map((url) => warmPwaRuntimeAsset(url, fetcher, cacheStorage)))
+
+  return cacheResults.every(Boolean)
+}
+
+async function warmPwaRuntimeAsset(
+  url: string,
+  fetcher: typeof fetch,
+  cacheStorage: Pick<CacheStorage, 'open'> | undefined,
+): Promise<boolean> {
+  if (!cacheStorage) {
+    return false
+  }
+
+  try {
+    const response = await fetcher(url, {
+      cache: 'reload',
+      credentials: 'same-origin',
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const cache = await cacheStorage.open(PWA_CACHE_NAME)
+    await cache.put(url, response.clone())
+    return true
+  } catch {
+    return false
+  }
 }
 
 async function waitForServiceWorkerControl(serviceWorker: ServiceWorkerContainer): Promise<void> {
@@ -111,6 +138,11 @@ async function waitForServiceWorkerControl(serviceWorker: ServiceWorkerContainer
 function markPwaRegistration(element: HTMLElement | null | undefined, status: PwaRegistrationStatus): PwaRegistrationStatus {
   element?.setAttribute('data-pwa-registration', status)
   return status
+}
+
+function markPwaRuntimeCacheReady(element: HTMLElement | null | undefined, ready: boolean): boolean {
+  element?.setAttribute('data-pwa-runtime-cache-ready', String(ready))
+  return ready
 }
 
 function optionalAudioPaths(): string[] {

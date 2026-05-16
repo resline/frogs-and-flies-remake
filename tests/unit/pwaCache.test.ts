@@ -3,7 +3,14 @@ import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
 import { GENERATED_GAMEPLAY_ASSET_PATHS } from '../../src/runtime/assets'
 import { LOCAL_AUDIO_ASSET_REGISTRY } from '../../src/runtime/audio'
-import { PWA_CACHE_NAME, buildPwaCacheUrls, collectPwaRuntimeAssetUrls, isSameOriginPwaUrl } from '../../src/runtime/pwa'
+import {
+  PWA_CACHE_NAME,
+  buildPwaCacheUrls,
+  collectPwaRuntimeAssetUrls,
+  isSameOriginPwaUrl,
+  registerServiceWorker,
+  type ServiceWorkerRegistrationOptions,
+} from '../../src/runtime/pwa'
 
 interface ServiceWorkerPolicyContext {
   caches?: {
@@ -135,5 +142,74 @@ describe('PWA cache contract', () => {
       expect.any(Response),
     )
     expect(cacheMatchOptions).toMatchObject({ ignoreVary: true })
+  })
+
+  it('marks runtime cache ready only after warmed runtime assets are written to the PWA cache', async () => {
+    const runtimeUrls = ['/@vite/client', '/src/main.ts']
+    const attributes = new Map<string, string>()
+    const fetches: Array<{ url: string; cache?: RequestCache; credentials?: RequestCredentials }> = []
+    const cachePuts: string[] = []
+    const markerElement = {
+      setAttribute: (name: string, value: string) => attributes.set(name, value),
+    } as HTMLElement
+    const root = {
+      querySelectorAll: () =>
+        runtimeUrls.map((src) => ({
+          getAttribute: (name: string) => (name === 'src' ? src : null),
+        })),
+    } as unknown as ParentNode
+    const serviceWorker = {
+      controller: {},
+      ready: Promise.resolve({}),
+      register: async () => ({}),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    } as unknown as ServiceWorkerContainer
+    const cacheStorage = {
+      open: async (cacheName: string) => {
+        expect(cacheName).toBe(PWA_CACHE_NAME)
+        return {
+          put: async (request: RequestInfo | URL, response: Response) => {
+            cachePuts.push(typeof request === 'string' ? request : request.url)
+            expect(response.ok).toBe(true)
+          },
+        }
+      },
+    }
+    const fetcher = async (url: RequestInfo | URL, init?: RequestInit) => {
+      fetches.push({
+        url: url.toString(),
+        cache: init?.cache,
+        credentials: init?.credentials,
+      })
+      return new Response('runtime asset')
+    }
+
+    await expect(
+      registerServiceWorker({
+        markerElement,
+        serviceWorker,
+        documentRoot: root,
+        fetcher,
+        origin: 'https://game.example',
+        cacheStorage,
+      } as ServiceWorkerRegistrationOptions & { cacheStorage: typeof cacheStorage }),
+    ).resolves.toBe('registered')
+
+    expect(fetches).toEqual([
+      {
+        url: 'https://game.example/@vite/client',
+        cache: 'reload',
+        credentials: 'same-origin',
+      },
+      {
+        url: 'https://game.example/src/main.ts',
+        cache: 'reload',
+        credentials: 'same-origin',
+      },
+    ])
+    expect(cachePuts).toEqual(['https://game.example/@vite/client', 'https://game.example/src/main.ts'])
+    expect(attributes.get('data-pwa-runtime-cache-ready')).toBe('true')
+    expect(attributes.get('data-pwa-registration')).toBe('registered')
   })
 })

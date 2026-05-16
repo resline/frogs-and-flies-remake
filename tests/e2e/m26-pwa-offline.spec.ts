@@ -56,45 +56,7 @@ test.describe('M2.6 PWA offline shell', () => {
     const registrationState = await page.getByTestId('m26-shell').getAttribute('data-pwa-registration')
     test.skip(registrationState !== 'registered', `service worker registration ${registrationState ?? 'missing'}`)
 
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready
-      if (registration.active?.state !== 'activated') {
-        await new Promise<void>((resolve) => {
-          const worker = registration.active ?? registration.installing ?? registration.waiting
-          if (!worker) {
-            resolve()
-            return
-          }
-          worker.addEventListener('statechange', () => {
-            if (worker.state === 'activated') {
-              resolve()
-            }
-          })
-        })
-      }
-    })
-    await expect
-      .poll(async () =>
-        page.evaluate(async () => {
-          const assetUrls = [
-            ...document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>(
-              'script[src], link[rel="stylesheet"][href], link[rel="modulepreload"][href]',
-            ),
-          ]
-            .map((element) => element.getAttribute('src') ?? element.getAttribute('href'))
-            .filter((url): url is string => Boolean(url))
-            .map((url) => new URL(url, window.location.origin).href)
-            .filter((url) => new URL(url).origin === window.location.origin)
-
-          if (assetUrls.length === 0) {
-            return false
-          }
-
-          const cachedAssets = await Promise.all(assetUrls.map((url) => caches.match(url)))
-          return cachedAssets.every(Boolean)
-        }),
-      )
-      .toBe(true)
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-pwa-runtime-cache-ready', 'true')
 
     await page.context().setOffline(true)
     await page.reload()
