@@ -1047,11 +1047,11 @@ Expected: Playwright config, verification E2E tests, optional axe dependency fil
 - Modify: `docs/superpowers/specs/2026-05-15-frogs-and-flies-m26-home-pond-product-foundation-design.md` only if implementation discovered a required spec correction and owner agrees.
 - Read: `docs/superpowers/plans/2026-05-15-frogs-and-flies-m26-home-pond-product-foundation-implementation.md`
 
-- [ ] **Step 1: Update README current milestone language**
+- [x] **Step 1: Update README current milestone language**
 
 Document that M2.6 is a local product foundation around the M2.5 Home Pond Classic vertical slice, not the finished full product.
 
-- [ ] **Step 2: Update controls and shell docs**
+- [x] **Step 2: Update controls and shell docs**
 
 Document:
 
@@ -1062,7 +1062,7 @@ Document:
 - Gamepad foundation if implemented or mapper-only limitation if deferred.
 - Remapping and reset defaults.
 
-- [ ] **Step 3: Update save/privacy docs**
+- [x] **Step 3: Update save/privacy docs**
 
 Document:
 
@@ -1071,7 +1071,7 @@ Document:
 - Import/export scope.
 - No backend, account, cloud save, analytics, or online leaderboard.
 
-- [ ] **Step 4: Update audio docs**
+- [x] **Step 4: Update audio docs**
 
 Document:
 
@@ -1081,7 +1081,7 @@ Document:
 - Missing audio fallback.
 - No live OpenAI audio API calls.
 
-- [ ] **Step 5: Update PWA/Docker/Coolify docs**
+- [x] **Step 5: Update PWA/Docker/Coolify docs**
 
 Document:
 
@@ -1091,7 +1091,7 @@ Document:
 - Host port `18080` when `8080` is occupied.
 - Required smoke URLs and expected `200` responses.
 
-- [ ] **Step 6: Update asset manifest if audio assets exist**
+- [x] **Step 6: Update asset manifest if audio assets exist**
 
 If any `public/audio/**` files were added, update `ASSET_MANIFEST.md` with:
 
@@ -1104,7 +1104,7 @@ If any `public/audio/**` files were added, update `ASSET_MANIFEST.md` with:
 
 If no audio files were added, do not edit `ASSET_MANIFEST.md` only to mention placeholders.
 
-- [ ] **Step 7: Run README documentation tests**
+- [x] **Step 7: Run README documentation tests**
 
 Run:
 
@@ -1114,7 +1114,7 @@ npm run test:unit -- tests/unit/readmeControls.test.ts
 
 Expected pass: README tests reflect current controls and verification docs. If tests are too M2-specific, update them intentionally.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 Run:
 
