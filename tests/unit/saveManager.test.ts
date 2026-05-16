@@ -3,17 +3,79 @@ import * as saveApi from '../../src/runtime/save'
 import { readRuntimeOptions } from '../../src/runtime/options'
 import { readRuntimeParams } from '../../src/runtime/params'
 
-const { SAVE_STORAGE_KEY, createDefaultSave, createMemoryStorage } = saveApi
+const { SAVE_SCHEMA_VERSION, SAVE_STORAGE_KEY, SAVE_STORAGE_KEY_V1, createDefaultSave, createMemoryStorage } = saveApi
+
+function createLegacyV1Save(): Record<string, unknown> {
+  return {
+    version: 1,
+    settings: {
+      difficulty: 'classic-expert',
+      showTimer: false,
+      reducedMotion: true,
+      highContrast: true,
+      mute: true,
+      masterVolume: 0.4,
+      sfxVolume: 0.5,
+      musicVolume: 0.6,
+      monoAudio: true,
+      inputProfileId: 'lefty',
+    },
+    highScores: {
+      classicSingle: [
+        {
+          mode: 'classic-single',
+          difficulty: 'classic-expert',
+          score: 1230,
+          winner: 'p1',
+          playerId: 'p1',
+          catches: 12,
+          attempts: 15,
+          accuracy: 0.8,
+          maxCombo: 5,
+          seed: 42,
+          completedAt: '2026-05-15T12:00:00.000Z',
+          durationSeconds: 180,
+        },
+      ],
+      localVersus: [],
+    },
+    stats: {
+      roundsStarted: 3,
+      roundsCompleted: 2,
+      totalCatches: 24,
+      totalAttempts: 31,
+      totalSplashes: 7,
+      bestCombo: 5,
+      totalPlaySeconds: 360,
+    },
+    inputProfiles: [
+      {
+        id: 'lefty',
+        name: 'Lefty',
+        bindings: [{ action: 'p1.jump', codes: ['KeyW'], playerId: 'p1' }],
+      },
+    ],
+    completedRoundIds: ['round-1'],
+    startedRoundIds: ['round-1', 'round-2'],
+  }
+}
 
 describe('SaveManager defaults', () => {
-  it('creates the v1 default save schema', () => {
+  it('creates the v2 default save schema with campaign progress', () => {
     const save = createDefaultSave()
 
-    expect(save.version).toBe(1)
+    expect(SAVE_SCHEMA_VERSION).toBe(2)
+    expect(SAVE_STORAGE_KEY).toBe('frogs-and-flies.save.v2')
+    expect(SAVE_STORAGE_KEY_V1).toBe('frogs-and-flies.save.v1')
+    expect(save.version).toBe(2)
     expect(save.settings.difficulty).toBe('classic-standard')
     expect(save.highScores.classicSingle).toEqual([])
     expect(save.highScores.localVersus).toEqual([])
     expect(save.stats.roundsStarted).toBe(0)
+    expect(save.campaign.levels['home-pond-1-1-first-hunt'].unlocked).toBe(true)
+    expect(save.campaign.levels['home-pond-1-2-quick-tongue'].unlocked).toBe(false)
+    expect(save.campaign.levels['home-pond-1-3-nightfall-feast'].unlocked).toBe(false)
+    expect(save.campaign.lastSelectedLevelId).toBe('home-pond-1-1-first-hunt')
   })
 })
 
@@ -63,6 +125,28 @@ describe('SaveManager storage resilience', () => {
 
     expect(result.status).toBe('unsupported-version')
     expect(result.data).toEqual(createDefaultSave())
+  })
+
+  it('migrates valid v1 saves into v2 without deleting the legacy key', () => {
+    const legacy = createLegacyV1Save()
+    const storage = createMemoryStorage({
+      [SAVE_STORAGE_KEY_V1]: JSON.stringify(legacy),
+    })
+    const manager = createSaveManager()({ storage })
+
+    const result = manager.load()
+
+    expect(result.status).toBe('migrated')
+    expect(result.data.version).toBe(2)
+    expect(result.data.settings).toMatchObject(legacy.settings as Record<string, unknown>)
+    expect(result.data.highScores).toEqual(legacy.highScores)
+    expect(result.data.stats).toEqual(legacy.stats)
+    expect(result.data.inputProfiles).toEqual(legacy.inputProfiles)
+    expect(result.data.completedRoundIds).toEqual(legacy.completedRoundIds)
+    expect(result.data.startedRoundIds).toEqual(legacy.startedRoundIds)
+    expect(result.data.campaign.levels['home-pond-1-1-first-hunt'].unlocked).toBe(true)
+    expect(storage.getItem(SAVE_STORAGE_KEY_V1)).toBe(JSON.stringify(legacy))
+    expect(storage.getItem(SAVE_STORAGE_KEY)).toContain('"version":2')
   })
 
   it('returns defaults with storage-unavailable status when storage throws', () => {
@@ -271,10 +355,11 @@ describe('SaveManager import and export', () => {
   it('exports stable pretty JSON containing version and subdocuments', () => {
     const json = exportJson()(createDefaultSave())
 
-    expect(json).toContain('{\n  "version": 1,')
+    expect(json).toContain('{\n  "version": 2,')
     expect(json).toContain('"settings"')
     expect(json).toContain('"highScores"')
     expect(json).toContain('"stats"')
+    expect(json).toContain('"campaign"')
     expect(JSON.parse(json)).toEqual(createDefaultSave())
   })
 
@@ -286,7 +371,19 @@ describe('SaveManager import and export', () => {
 
     expect(result.status).toBe('imported')
     expect(result.data?.settings.highContrast).toBe(true)
-    expect(result.data?.version).toBe(1)
+    expect(result.data?.version).toBe(2)
+  })
+
+  it('imports valid v1 JSON as migrated v2 data', () => {
+    const legacy = createLegacyV1Save()
+
+    const result = importJson()(JSON.stringify(legacy))
+
+    expect(result.status).toBe('imported')
+    expect(result.data?.version).toBe(2)
+    expect(result.data?.settings).toMatchObject(legacy.settings as Record<string, unknown>)
+    expect(result.data?.highScores).toEqual(legacy.highScores)
+    expect(result.data?.campaign.levels['home-pond-1-1-first-hunt'].unlocked).toBe(true)
   })
 
   it('rejects malformed JSON and unsupported versions', () => {

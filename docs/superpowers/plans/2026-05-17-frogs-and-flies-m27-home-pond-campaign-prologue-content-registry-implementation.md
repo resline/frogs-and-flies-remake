@@ -439,7 +439,7 @@ Expected: commit created; `src/game/**` unchanged.
 - Create: `tests/unit/campaignProgress.test.ts`
 - Modify later E2E save-key helpers in Task 7.
 
-- [ ] **Step 1: Write failing v2 default and migration tests**
+- [x] **Step 1: Write failing v2 default and migration tests**
 
 In `tests/unit/saveManager.test.ts`, update defaults and add v1 migration tests:
 
@@ -474,7 +474,7 @@ expect(loadInvalidV2().status).toBe('invalid')
 expect(loadFutureV2().status).toBe('unsupported-version')
 ```
 
-- [ ] **Step 2: Write failing campaign progress helper tests**
+- [x] **Step 2: Write failing campaign progress helper tests**
 
 In `tests/unit/campaignProgress.test.ts`, assert:
 
@@ -487,7 +487,7 @@ In `tests/unit/campaignProgress.test.ts`, assert:
 - Replaying with lower score/stars does not lower best progress.
 - Unknown saved ids do not crash and required known levels are restored.
 
-- [ ] **Step 3: Run save/progress tests red**
+- [x] **Step 3: Run save/progress tests red**
 
 Run:
 
@@ -497,7 +497,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.
 
 Expected: FAIL because v2 fields/helpers do not exist.
 
-- [ ] **Step 4: Implement v2 save types and keys**
+- [x] **Step 4: Implement v2 save types and keys**
 
 In `src/runtime/save.ts`:
 
@@ -510,7 +510,7 @@ In `src/runtime/save.ts`:
 - Keep v1 validation available as an internal migration step.
 - Do not delete v1 storage on migration.
 
-- [ ] **Step 5: Implement progress helpers**
+- [x] **Step 5: Implement progress helpers**
 
 Create `src/runtime/campaignProgress.ts` with pure helpers:
 
@@ -530,7 +530,7 @@ Rules:
 - Passing unlocks only the next registered level.
 - 1-1 is always unlocked after validation.
 
-- [ ] **Step 6: Implement load order and migration write**
+- [x] **Step 6: Implement load order and migration write**
 
 In `createSaveManager().load()`:
 
@@ -543,7 +543,7 @@ In `createSaveManager().load()`:
 
 Keep `exportJson` and `importJson` validating v2; if import receives valid v1, either import as migrated v2 or return `unsupported-version` only if tests explicitly choose that behavior. Prefer migrated v2 for local user convenience and test it.
 
-- [ ] **Step 7: Run save/progress tests green**
+- [x] **Step 7: Run save/progress tests green**
 
 Run:
 
@@ -553,7 +553,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.
 
 Expected: PASS.
 
-- [ ] **Step 8: Run dependent unit tests**
+- [x] **Step 8: Run dependent unit tests**
 
 Run:
 
@@ -563,7 +563,7 @@ npm run test:unit -- tests/unit/runtimeOptions.test.ts tests/unit/runtimeParams.
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 Run:
 

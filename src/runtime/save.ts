@@ -1,9 +1,15 @@
 import { isDifficultyMode } from '../game/difficulty'
 import type { DifficultyMode, MatchMode, MatchWinner, PlayerId } from '../game/types'
+import {
+  cloneCampaignProgress,
+  createDefaultCampaignProgress,
+  validateCampaignProgress,
+} from './campaignProgress'
 import { createDefaultInputProfiles } from './inputBindings'
 
-export const SAVE_SCHEMA_VERSION = 1
-export const SAVE_STORAGE_KEY = 'frogs-and-flies.save.v1'
+export const SAVE_SCHEMA_VERSION = 2
+export const SAVE_STORAGE_KEY_V1 = 'frogs-and-flies.save.v1'
+export const SAVE_STORAGE_KEY = 'frogs-and-flies.save.v2'
 
 export interface StorageLike {
   getItem(key: string): string | null
@@ -63,8 +69,32 @@ export interface AggregateStats {
   totalPlaySeconds: number
 }
 
-export interface SaveData {
-  version: typeof SAVE_SCHEMA_VERSION
+export interface CampaignObjectiveStats {
+  attempts: number
+  passes: number
+  bestScore: number
+  bestCatches?: number
+  bestTimeRemainingSeconds?: number
+}
+
+export interface CampaignLevelProgress {
+  unlocked: boolean
+  passed: boolean
+  bestScore: number
+  stars: 0 | 1 | 2 | 3
+  objectiveStats: CampaignObjectiveStats
+  lastPlayedAt?: string
+}
+
+export interface CampaignProgress {
+  seenPrologueIds: string[]
+  levels: Record<string, CampaignLevelProgress>
+  lastSelectedCampaignId?: string
+  lastSelectedLevelId?: string
+}
+
+interface SaveDataV1 {
+  version: 1
   settings: SaveSettings
   highScores: {
     classicSingle: ScoreEntry[]
@@ -76,7 +106,14 @@ export interface SaveData {
   startedRoundIds: string[]
 }
 
-export type SaveLoadStatus = 'loaded' | 'defaulted' | 'invalid' | 'unsupported-version' | 'storage-unavailable'
+export interface SaveData extends Omit<SaveDataV1, 'version'> {
+  version: typeof SAVE_SCHEMA_VERSION
+  campaign: CampaignProgress
+}
+
+type SaveCoreFields = Omit<SaveDataV1, 'version'>
+
+export type SaveLoadStatus = 'loaded' | 'defaulted' | 'invalid' | 'unsupported-version' | 'storage-unavailable' | 'migrated'
 export type SaveWriteStatus = 'saved' | 'invalid' | 'storage-unavailable'
 
 export interface SaveWarning {
@@ -126,6 +163,20 @@ const HIGH_SCORE_LIMIT = 10
 export function createDefaultSave(_now: () => string = () => new Date().toISOString()): SaveData {
   return {
     version: SAVE_SCHEMA_VERSION,
+    ...createDefaultSaveCore(),
+    campaign: createDefaultCampaignProgress(),
+  }
+}
+
+function createDefaultV1Save(): SaveDataV1 {
+  return {
+    version: 1,
+    ...createDefaultSaveCore(),
+  }
+}
+
+function createDefaultSaveCore(): SaveCoreFields {
+  return {
     settings: {
       difficulty: 'classic-standard',
       showTimer: true,
@@ -189,6 +240,29 @@ export function createSaveManager(options: {
     }
   }
 
+  function loadJson(text: string, status: 'loaded' | 'migrated'): SaveLoadResult {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      warn({ status: 'invalid', message: 'Save data is not valid JSON.' })
+      return defaults('invalid')
+    }
+
+    if (isFutureVersion(parsed)) {
+      warn({ status: 'unsupported-version', message: 'Save data uses an unsupported future version.' })
+      return defaults('unsupported-version')
+    }
+
+    const data = migrate(parsed)
+    if (!data) {
+      warn({ status: 'invalid', message: 'Save data could not be validated.' })
+      return defaults('invalid')
+    }
+
+    return { status, data }
+  }
+
   return {
     load(): SaveLoadResult {
       if (!storage) {
@@ -204,33 +278,31 @@ export function createSaveManager(options: {
         return defaults('storage-unavailable')
       }
 
-      if (text === null) {
+      if (text !== null) {
+        return loadJson(text, 'loaded')
+      }
+
+      let legacyText: string | null
+      try {
+        legacyText = storage.getItem(SAVE_STORAGE_KEY_V1)
+      } catch {
+        warn({ status: 'storage-unavailable', message: 'Legacy save storage could not be read.' })
+        return defaults('storage-unavailable')
+      }
+
+      if (legacyText === null) {
         return defaults('defaulted')
       }
 
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(text)
-      } catch {
-        warn({ status: 'invalid', message: 'Save data is not valid JSON.' })
-        return defaults('invalid')
+      const migrated = loadJson(legacyText, 'migrated')
+      if (migrated.status === 'migrated') {
+        try {
+          storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(migrated.data))
+        } catch {
+          warn({ status: 'storage-unavailable', message: 'Migrated save data could not be written.' })
+        }
       }
-
-      if (isFutureVersion(parsed)) {
-        warn({ status: 'unsupported-version', message: 'Save data uses an unsupported future version.' })
-        return defaults('unsupported-version')
-      }
-
-      const data = migrate(parsed)
-      if (!data) {
-        warn({ status: 'invalid', message: 'Save data could not be validated.' })
-        return defaults('invalid')
-      }
-
-      return {
-        status: 'loaded',
-        data,
-      }
+      return migrated
     },
 
     save(next: SaveData): SaveWriteResult {
@@ -278,13 +350,15 @@ export function createSaveManager(options: {
 }
 
 export function migrate(raw: unknown): SaveData | undefined {
-  if (!isRecord(raw) || raw.version !== SAVE_SCHEMA_VERSION) {
+  if (!isRecord(raw)) {
     return undefined
   }
 
   switch (raw.version) {
+    case SAVE_SCHEMA_VERSION:
+      return validateV2(raw)
     case 1:
-      return validateV1(raw)
+      return migrateV1ToV2(validateV1(raw))
     default:
       return undefined
   }
@@ -355,7 +429,7 @@ export function importJson(json: string): SaveImportResult {
   return data ? { status: 'imported', data } : { status: 'invalid' }
 }
 
-function validateV1(raw: Record<string, unknown>): SaveData {
+function validateV2(raw: Record<string, unknown>): SaveData {
   const defaults = createDefaultSave()
 
   return {
@@ -366,6 +440,37 @@ function validateV1(raw: Record<string, unknown>): SaveData {
     inputProfiles: validateInputProfiles(raw.inputProfiles, defaults.inputProfiles),
     completedRoundIds: validateStringArray(raw.completedRoundIds),
     startedRoundIds: validateStringArray(raw.startedRoundIds),
+    campaign: validateCampaignProgress(raw.campaign),
+  }
+}
+
+function validateV1(raw: Record<string, unknown>): SaveDataV1 {
+  const defaults = createDefaultV1Save()
+
+  return {
+    version: 1,
+    settings: validateSettings(raw.settings, defaults.settings),
+    highScores: validateHighScores(raw.highScores),
+    stats: validateStats(raw.stats, defaults.stats),
+    inputProfiles: validateInputProfiles(raw.inputProfiles, defaults.inputProfiles),
+    completedRoundIds: validateStringArray(raw.completedRoundIds),
+    startedRoundIds: validateStringArray(raw.startedRoundIds),
+  }
+}
+
+function migrateV1ToV2(save: SaveDataV1): SaveData {
+  return {
+    version: SAVE_SCHEMA_VERSION,
+    settings: { ...save.settings },
+    highScores: cloneHighScores(save.highScores),
+    stats: { ...save.stats },
+    inputProfiles: save.inputProfiles.map((profile) => ({
+      ...profile,
+      bindings: profile.bindings.map(cloneInputBinding),
+    })),
+    completedRoundIds: [...save.completedRoundIds],
+    startedRoundIds: [...save.startedRoundIds],
+    campaign: createDefaultCampaignProgress(),
   }
 }
 
@@ -410,6 +515,7 @@ function cloneSave(save: SaveData): SaveData {
     })),
     completedRoundIds: [...save.completedRoundIds],
     startedRoundIds: [...save.startedRoundIds],
+    campaign: cloneCampaignProgress(save.campaign),
   }
 }
 
