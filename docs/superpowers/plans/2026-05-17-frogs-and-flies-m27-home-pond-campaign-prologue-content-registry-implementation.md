@@ -136,7 +136,7 @@ Stop local dev/preview/Docker processes started for verification before handing 
 - Read: `tests/unit/saveManager.test.ts`
 - Read: `tests/e2e/m26-shell.spec.ts`
 
-- [ ] **Step 1: Confirm branch and worktree**
+- [x] **Step 1: Confirm branch and worktree**
 
 Run:
 
@@ -148,7 +148,7 @@ git log --oneline --decorate -5
 
 Expected: branch is `ff2-m0-pixijs`; HEAD includes `8c49a13 docs: add m27 campaign prologue spec`; no unrelated dirty files. If unrelated dirty files exist, stop and ask for consolidation guidance.
 
-- [ ] **Step 2: Confirm spec scope**
+- [x] **Step 2: Confirm spec scope**
 
 Run:
 
@@ -159,7 +159,7 @@ sed -n '260,620p' docs/superpowers/specs/2026-05-16-frogs-and-flies-m27-home-pon
 
 Expected: spec requires exactly one Home Pond campaign, one prologue, three levels, three content profiles, SaveManager v2 migration, and no broad content expansion.
 
-- [ ] **Step 3: Confirm scripts**
+- [x] **Step 3: Confirm scripts**
 
 Run:
 
@@ -169,7 +169,7 @@ npm run
 
 Expected: scripts include `build`, `test`, `test:unit`, `test:e2e`, `dev`, `preview`, and `start`.
 
-- [ ] **Step 4: Run baseline unit tests**
+- [x] **Step 4: Run baseline unit tests**
 
 Run:
 
@@ -179,7 +179,7 @@ npm run test:unit
 
 Expected: Vitest exits `0`; current baseline is 26 unit files and 128 tests passing. If counts changed before this task starts, record the new count in the worker status.
 
-- [ ] **Step 5: Run baseline build**
+- [x] **Step 5: Run baseline build**
 
 Run:
 
@@ -189,7 +189,7 @@ npm run build
 
 Expected: `tsc && vite build` exits `0`; `dist/` is generated but not committed.
 
-- [ ] **Step 6: Check verification ports**
+- [x] **Step 6: Check verification ports**
 
 Run:
 
@@ -200,7 +200,7 @@ lsof -iTCP:18080 -sTCP:LISTEN || true
 
 Expected: no listeners. If occupied, choose another explicit port and record it.
 
-- [ ] **Step 7: Clean generated output**
+- [x] **Step 7: Clean generated output**
 
 Run:
 
@@ -211,7 +211,7 @@ git status --short
 
 Expected: no source changes from baseline verification.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 No commit is expected for Task 1 unless the plan checkboxes are being updated by the executing worker.
 
