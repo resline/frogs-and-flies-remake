@@ -127,10 +127,8 @@ test.describe('M2.6 product shell flow', () => {
     await expect(page.getByTestId('high-scores-panel')).not.toContainText(/online|global|account|cloud/i)
   })
 
-  test('keeps shell screens and native controls within common viewports', async ({ page }) => {
-    test.setTimeout(120_000)
-
-    for (const viewport of RESPONSIVE_VIEWPORTS) {
+  for (const viewport of RESPONSIVE_VIEWPORTS) {
+    test(`keeps shell screens and native controls within the ${viewport.width}x${viewport.height} viewport`, async ({ page }) => {
       await page.setViewportSize(viewport)
       await page.goto('/?seed=2617&durationSeconds=10&theEndSeconds=0.1')
       await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} main menu`)
@@ -159,8 +157,8 @@ test.describe('M2.6 product shell flow', () => {
       await page.getByTestId('shell-high-scores').click({ force: true })
       await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'high-scores')
       await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} high scores`)
-    }
-  })
+    })
+  }
 })
 
 async function readSavedRoundTracking(page: import('@playwright/test').Page): Promise<{

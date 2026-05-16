@@ -152,6 +152,7 @@ test.describe('Frogs and Flies 2 M2.5 Classic Vertical Slice', () => {
     await expect(page.getByTestId('game-state')).toHaveAttribute('data-time-of-day', 'night')
 
     await page.goto('/?seed=25&durationSeconds=6&smokeState=the-end')
+    await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'the-end')
     expect(await readTheEndSnapshot(page)).toEqual({
       state: 'the-end',
       text: 'THE END',

@@ -11,6 +11,7 @@ export type DomState = {
   hud: HTMLElement
   controls: HTMLElement
   chromeLayoutKey?: string
+  activeShellScreen?: ShellState['screen']
   canvas?: HTMLCanvasElement
   state: HTMLElement
   score: HTMLElement
@@ -131,7 +132,9 @@ export function createDomState(root: HTMLElement): DomState {
   const options = getOrCreate(root, 'div', 'm25-options', settingsPanel)
   for (const panel of [mainMenuPanel, modeSelectPanel, settingsPanel, highScoresPanel, gameplayPanel, pausePanel]) {
     panel.classList.add('m26-shell-panel')
+    panel.tabIndex = -1
   }
+  resultsActions.tabIndex = -1
   modeControls.classList.add('m25-control-group')
   difficultyControls.classList.add('m25-control-group')
   actionControls.classList.add('m25-control-group')
@@ -464,6 +467,7 @@ function syncResults(element: HTMLElement, game: GameState): void {
 
 function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   const { shell, save, saveStatus, storageAvailable, roundRecorded, highScoreStatus } = shellSync
+  const previousShellScreen = dom.activeShellScreen
 
   dom.shell.setAttribute('data-shell-screen', shell.screen)
   dom.shell.setAttribute('data-selected-mode', shell.selectedMode)
@@ -478,6 +482,10 @@ function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   setPanelVisible(dom.gameplayPanel, shell.screen === 'gameplay')
   setPanelVisible(dom.pausePanel, shell.screen === 'pause')
   setPanelVisible(dom.resultsActions, shell.screen === 'results')
+  if (previousShellScreen && previousShellScreen !== shell.screen) {
+    focusShellScreenPanel(dom, shell.screen)
+  }
+  dom.activeShellScreen = shell.screen
 
   dom.startButton.hidden = shell.screen !== 'mode-select'
   dom.pauseButton.hidden = shell.screen !== 'gameplay'
@@ -486,6 +494,25 @@ function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   syncModeControl(dom.localVersusButton, shell.selectedMode, 'local-versus')
   syncHighScores(dom.highScoresPanel, save)
   syncResultLine(dom.results, 'results-high-score-status', highScoreStatus ?? 'Local high score status pending.')
+}
+
+function focusShellScreenPanel(dom: DomState, screen: ShellState['screen']): void {
+  if (!document.hasFocus()) {
+    return
+  }
+
+  const panelByScreen: Record<ShellState['screen'], HTMLElement> = {
+    splash: dom.mainMenuPanel,
+    'main-menu': dom.mainMenuPanel,
+    'mode-select': dom.modeSelectPanel,
+    settings: dom.settingsPanel,
+    'high-scores': dom.highScoresPanel,
+    gameplay: dom.gameplayPanel,
+    pause: dom.pausePanel,
+    results: dom.resultsActions,
+  }
+
+  panelByScreen[screen].focus({ preventScroll: true })
 }
 
 function syncHighScores(element: HTMLElement, save: SaveData): void {
