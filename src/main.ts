@@ -1,6 +1,7 @@
 import './style.css'
 import { startRuntime } from './runtime/app'
 import { readRuntimeParams } from './runtime/params'
+import { registerServiceWorker } from './runtime/pwa'
 import { createSaveManager } from './runtime/save'
 
 const saveManager = createSaveManager()
@@ -16,4 +17,8 @@ void startRuntime(appRoot, params, {
   saveManager,
   saveData: saveLoad.data,
   saveStatus: saveLoad.status,
+}).then(() => {
+  void registerServiceWorker({
+    markerElement: appRoot.querySelector<HTMLElement>('[data-testid="m26-shell"]'),
+  })
 })

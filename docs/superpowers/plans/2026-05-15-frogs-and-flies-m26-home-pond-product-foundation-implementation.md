@@ -795,7 +795,7 @@ Expected: audio runtime/tests/settings/docs and optional local audio files only.
 - Modify: `README.md`
 - Avoid modifying: `package.json`, `package-lock.json` unless manual service worker proves insufficient and `vite-plugin-pwa` is explicitly accepted.
 
-- [ ] **Step 1: Write failing manifest/offline tests**
+- [x] **Step 1: Write failing manifest/offline tests**
 
 Create `tests/e2e/m26-pwa-offline.spec.ts` covering:
 
@@ -805,7 +805,7 @@ Create `tests/e2e/m26-pwa-offline.spec.ts` covering:
 - First online load registers service worker or reports registration failure through a marker.
 - Offline reload after first online load reaches shell.
 
-- [ ] **Step 2: Run red PWA E2E tests**
+- [x] **Step 2: Run red PWA E2E tests**
 
 Run against preview, not dev:
 
@@ -817,15 +817,15 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-pwa-
 
 Expected fail: manifest and service worker do not exist.
 
-- [ ] **Step 3: Add manifest**
+- [x] **Step 3: Add manifest**
 
 Create `public/manifest.webmanifest`. Use existing `public/favicon.png` as an icon if no better icons exist. Keep metadata local and static.
 
-- [ ] **Step 4: Link manifest and theme metadata**
+- [x] **Step 4: Link manifest and theme metadata**
 
 Modify `index.html` to link the manifest and theme color.
 
-- [ ] **Step 5: Write failing service worker unit tests**
+- [x] **Step 5: Write failing service worker unit tests**
 
 Create `tests/unit/pwaCache.test.ts` for exported constants if using a generated module, or test a pure helper that returns cache lists:
 
@@ -833,7 +833,7 @@ Create `tests/unit/pwaCache.test.ts` for exported constants if using a generated
 - Cache list includes `/`, `/manifest.webmanifest`, required Home Pond asset paths, and optional audio paths only when present.
 - Cross-origin URLs are rejected.
 
-- [ ] **Step 6: Implement manual service worker**
+- [x] **Step 6: Implement manual service worker**
 
 Create `public/service-worker.js` with:
 
@@ -846,15 +846,15 @@ Create `public/service-worker.js` with:
 
 Keep it simple and static. Prefer this over `vite-plugin-pwa`.
 
-- [ ] **Step 7: Register service worker**
+- [x] **Step 7: Register service worker**
 
 Create `src/runtime/pwa.ts` with `registerServiceWorker()` and state result markers. Modify `src/main.ts` or runtime startup to call it after boot. Registration failure must not block app boot.
 
-- [ ] **Step 8: Update nginx caching**
+- [x] **Step 8: Update nginx caching**
 
 Modify `nginx.conf` so `service-worker.js` and `manifest.webmanifest` are not served with long immutable caching. Keep hashed build assets and images cacheable.
 
-- [ ] **Step 9: Run PWA/offline tests**
+- [x] **Step 9: Run PWA/offline tests**
 
 Run:
 
@@ -867,7 +867,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-pwa-
 
 Expected pass: manifest, service worker, and offline shell smoke pass.
 
-- [ ] **Step 10: Run Docker static smoke**
+- [x] **Step 10: Run Docker static smoke**
 
 Run:
 
@@ -889,7 +889,7 @@ curl -I http://127.0.0.1:18080/assets/fly-wing-a.png
 
 Expected: `/`, manifest, service worker, and required assets return `200`. Service worker should have JavaScript content type. Use host `18080`; container port is `80`.
 
-- [ ] **Step 11: Update Coolify docs**
+- [x] **Step 11: Update Coolify docs**
 
 Update `README.md` with:
 
@@ -900,7 +900,7 @@ Update `README.md` with:
 - Verify manifest, service worker, required assets, and offline shell.
 - No backend or analytics service is required.
 
-- [ ] **Step 12: Commit boundary**
+- [x] **Step 12: Commit boundary**
 
 Run:
 

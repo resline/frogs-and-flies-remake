@@ -1,0 +1,18 @@
+{
+  "name": "Frogs & Flies Home Pond",
+  "short_name": "Frogs",
+  "description": "A local browser remake of Frogs and Flies built around the Home Pond classic match.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#123c40",
+  "background_color": "#061c20",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
+}

@@ -32,6 +32,7 @@ M2 is a PixiJS v8 browser vertical slice of a Frogs and Flies-style arcade round
 - Mode, difficulty, match, audio, and replay controls are native keyboard-focusable controls with visible focus states and selected/checked ARIA state.
 - Reduced motion softens rapid render pulses and rotating effects; high contrast increases outlines/contrast for frogs, flies, tongue, lilies, and UI controls.
 - Audio uses an autoplay-safe Web Audio baseline. SFX unlock only after the explicit audio button is pressed, and queued gameplay sounds are dropped safely if browser audio is unavailable.
+- PWA metadata and a static service worker support a local offline shell for the Home Pond slice.
 
 ## Determinism And Smoke Parameters
 
@@ -64,6 +65,15 @@ npm test
 
 `npm test` runs Vitest unit tests and Playwright E2E smoke tests, including an assertion that generated gameplay assets loaded into the PixiJS runtime.
 
+PWA/offline verification:
+
+```bash
+npm run test:unit -- tests/unit/pwaCache.test.ts
+npm run build
+npm run preview -- --host 127.0.0.1 --port 5176 --strictPort
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-pwa-offline.spec.ts --project=chromium
+```
+
 ## Build
 
 ```bash
@@ -79,14 +89,16 @@ docker build -t frogs-and-flies-remake .
 docker run --rm -p 8080:80 frogs-and-flies-remake
 ```
 
-The Docker image builds the app with Node 22 Alpine and serves `dist` from nginx 1.27 Alpine using `nginx.conf`.
+The Docker image builds the app with the repository `Dockerfile`, uses Node 22 Alpine for the build, and serves `dist` from nginx 1.27 Alpine on container port `80` using `nginx.conf`.
 
 Coolify / Docker verification:
 
 - Build with the repository `Dockerfile`; the container serves nginx on published container port `80`.
 - Configure the health check to load `/`.
+- No backend, analytics, account, cloud save, or network service is required.
 - Manual smoke URL: `/?durationSeconds=3&theEndSeconds=0.1&simulationSpeed=20`.
-- Verify required assets return `200`, for example `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, and `/assets/fly-wing-a.png`.
+- Verify `/manifest.webmanifest`, `/service-worker.js`, and required assets return `200`, for example `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, and `/assets/fly-wing-a.png`.
+- Verify the service worker registers through the `data-pwa-registration` marker and that an offline reload reaches the local shell.
 - If optional audio files are deployed, verify the expected `/audio/...` files return `200`.
 - For local Docker verification, substitute the host port when `8080` is occupied, for example `docker run --rm -p 18080:80 frogs-and-flies-remake`.
 
