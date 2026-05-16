@@ -167,7 +167,7 @@ async function readSavedRoundTracking(page: import('@playwright/test').Page): Pr
   startedRoundCount?: number
 }> {
   return page.evaluate(() => {
-    const raw = localStorage.getItem('frogs-and-flies.save.v2') ?? localStorage.getItem('frogs-and-flies.save.v1')
+    const raw = localStorage.getItem('frogs-and-flies.save.v2')
     if (!raw) {
       return {}
     }

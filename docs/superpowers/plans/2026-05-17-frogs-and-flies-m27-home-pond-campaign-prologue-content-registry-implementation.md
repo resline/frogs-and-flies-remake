@@ -861,7 +861,7 @@ Expected: commit created.
 - Modify: `tests/e2e/m26-audio.spec.ts`
 - Modify: `tests/e2e/m26-input.spec.ts`
 
-- [ ] **Step 1: Write failing E2E for launching 1-1**
+- [x] **Step 1: Write failing E2E for launching 1-1**
 
 Add to `tests/e2e/m27-campaign-flow.spec.ts`:
 
@@ -879,7 +879,7 @@ test('starts 1-1 from final prologue panel as Classic Single gameplay', async ({
 })
 ```
 
-- [ ] **Step 2: Write failing E2E for fail/replay**
+- [x] **Step 2: Write failing E2E for fail/replay**
 
 Use a short no-input round:
 
@@ -898,7 +898,7 @@ test('records a failed campaign attempt without unlocking the next level', async
 })
 ```
 
-- [ ] **Step 3: Write failing E2E for pass/unlock persistence**
+- [x] **Step 3: Write failing E2E for pass/unlock persistence**
 
 Prefer real deterministic input. If a pass cannot be made stable with current gameplay controls, add smoke-only campaign result params in this task:
 
@@ -934,7 +934,7 @@ test('passing 1-1 unlocks 1-2 and persists across reload', async ({ page }) => {
 
 Add equivalent focused tests for 1-2 unlocking 1-3 and 1-3 marking Home Pond complete. These can reuse the same save across one test or set validated v2 localStorage fixtures; at least one unlock path must go through runtime results.
 
-- [ ] **Step 4: Run campaign E2E red**
+- [x] **Step 4: Run campaign E2E red**
 
 Run:
 
@@ -944,7 +944,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium
 
 Expected: FAIL because launch/result recording is incomplete.
 
-- [ ] **Step 5: Add active campaign context**
+- [x] **Step 5: Add active campaign context**
 
 In `src/runtime/app.ts`, add runtime-only state:
 
@@ -964,7 +964,7 @@ Rules:
 - Do not store context in `GameState`.
 - Do not import content registry from `src/game/**`.
 
-- [ ] **Step 6: Implement level launch mapping**
+- [x] **Step 6: Implement level launch mapping**
 
 In `src/runtime/app.ts`:
 
@@ -979,7 +979,7 @@ In `src/runtime/app.ts`:
 - It sets shell screen to `gameplay`.
 - It updates shell markers including `data-active-campaign-level`.
 
-- [ ] **Step 7: Implement prologue final start**
+- [x] **Step 7: Implement prologue final start**
 
 In `src/runtime/app.ts`:
 
@@ -987,7 +987,7 @@ In `src/runtime/app.ts`:
 - It launches `HOME_POND_PROLOGUE.startLevelId`.
 - Skip marks prologue seen but returns to campaign and does not launch or unlock.
 
-- [ ] **Step 8: Implement campaign result recording**
+- [x] **Step 8: Implement campaign result recording**
 
 In `src/runtime/app.ts`, after `recordCompletedRoundIfNeeded()` or in a parallel guarded function:
 
@@ -1000,7 +1000,7 @@ In `src/runtime/app.ts`, after `recordCompletedRoundIfNeeded()` or in a parallel
 - Never record twice for one attempt.
 - Never unlock from a non-campaign round or forced results without active campaign context.
 
-- [ ] **Step 9: Add result actions**
+- [x] **Step 9: Add result actions**
 
 In `src/runtime/dom.ts` and `src/runtime/app.ts`, add:
 
@@ -1018,7 +1018,7 @@ Actions:
 - Classic Modes returns to mode select.
 - Main Menu remains available.
 
-- [ ] **Step 10: Update E2E save-key helpers**
+- [x] **Step 10: Update E2E save-key helpers**
 
 In M2.6 E2E tests that read the current primary save, use `frogs-and-flies.save.v2`. Keep separate M2.7 migration tests proving v1 is read and preserved.
 
@@ -1029,7 +1029,7 @@ Files likely affected:
 - `tests/e2e/m26-audio.spec.ts`
 - `tests/e2e/m26-shell.spec.ts`
 
-- [ ] **Step 11: Run campaign E2E green**
+- [x] **Step 11: Run campaign E2E green**
 
 Run:
 
@@ -1039,7 +1039,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium
 
 Expected: PASS.
 
-- [ ] **Step 12: Run M2.6 regression E2E focused**
+- [x] **Step 12: Run M2.6 regression E2E focused**
 
 Run:
 
@@ -1049,7 +1049,7 @@ npx playwright test tests/e2e/m26-shell.spec.ts tests/e2e/m26-persistence.spec.t
 
 Expected: PASS; Classic Single, Local Versus, settings, input, audio, and high scores still work.
 
-- [ ] **Step 13: Run focused unit tests**
+- [x] **Step 13: Run focused unit tests**
 
 Run:
 
@@ -1059,7 +1059,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.
 
 Expected: PASS.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 Run:
 

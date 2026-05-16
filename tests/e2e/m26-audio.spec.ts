@@ -1,12 +1,19 @@
 import { expect, test } from '@playwright/test'
 
-const SAVE_KEY = 'frogs-and-flies.save.v1'
+const SAVE_KEY = 'frogs-and-flies.save.v2'
+const LEGACY_SAVE_KEY = 'frogs-and-flies.save.v1'
 
 test.describe('M2.6 audio pipeline markers', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     testInfo.setTimeout(60_000)
     await page.goto('/')
-    await page.evaluate((key) => localStorage.removeItem(key), SAVE_KEY)
+    await page.evaluate(
+      ({ currentKey, legacyKey }) => {
+        localStorage.removeItem(currentKey)
+        localStorage.removeItem(legacyKey)
+      },
+      { currentKey: SAVE_KEY, legacyKey: LEGACY_SAVE_KEY },
+    )
   })
 
   test('changing volumes updates markers and persists after reload', async ({ page }) => {

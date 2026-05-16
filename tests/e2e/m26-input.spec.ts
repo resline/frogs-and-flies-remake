@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const SAVE_STORAGE_KEY = 'frogs-and-flies.save.v1'
+const SAVE_STORAGE_KEY = 'frogs-and-flies.save.v2'
 
 test.describe('M2.6 input foundation', () => {
   test.beforeEach(async ({ page }, testInfo) => {

@@ -12,6 +12,7 @@ export type DomState = {
   hud: HTMLElement
   controls: HTMLElement
   chromeLayoutKey?: string
+  campaignLevelListKey?: string
   activeShellScreen?: ShellState['screen']
   canvas?: HTMLCanvasElement
   state: HTMLElement
@@ -53,6 +54,11 @@ export type DomState = {
   prologueSkipButton: HTMLElement
   prologueStartLevelButton: HTMLElement
   prologueMainMenuButton: HTMLElement
+  campaignResultStatus: HTMLElement
+  campaignReplayLevelButton: HTMLElement
+  campaignNextLevelButton: HTMLElement
+  campaignResultsReturnButton: HTMLElement
+  campaignClassicModesButton: HTMLElement
   mainMenuModeButton: HTMLElement
   mainMenuSettingsButton: HTMLElement
   mainMenuHighScoresButton: HTMLElement
@@ -102,8 +108,16 @@ export interface ShellDomSyncState {
   prologue?: PrologueDefinition
   prologuePanelIndex?: number
   activeCampaignLevelId?: CampaignLevelId
-  latestCampaignResultSummary?: string
+  latestCampaignResultSummary?: CampaignResultDomSummary
   campaignProgress?: SaveData['campaign']
+}
+
+export interface CampaignResultDomSummary {
+  levelId: CampaignLevelId
+  statusText: string
+  passed: boolean
+  stars: 0 | 1 | 2 | 3
+  nextLevelId?: CampaignLevelId
 }
 
 export function createDomState(root: HTMLElement): DomState {
@@ -222,6 +236,12 @@ export function createDomState(root: HTMLElement): DomState {
   const replayButton = getOrCreateButton(root, 'replay-game', 'Replay', replayControls)
   const changeModeButton = getOrCreateButton(root, 'change-mode', 'Change Mode', resultsActions)
   const mainMenuResultsButton = getOrCreateButton(root, 'results-main-menu', 'Main Menu', resultsActions)
+  const campaignResultStatus = getOrCreateTestElement(root, 'campaign-result-status', 'div', results)
+  const campaignReplayLevelButton = getOrCreateButton(root, 'campaign-replay-level', 'Replay Level', resultsActions)
+  const campaignNextLevelButton = getOrCreateButton(root, 'campaign-next-level', 'Next Level', resultsActions)
+  const campaignResultsReturnButton = getOrCreateButton(root, 'campaign-results-return', 'Campaign', resultsActions)
+  const campaignClassicModesButton = getOrCreateButton(root, 'campaign-classic-modes', 'Classic Modes', resultsActions)
+  campaignResultStatus.setAttribute('aria-live', 'polite')
   const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', pausePanel)
   const restartButton = getOrCreateButton(root, 'restart-game', 'Restart', pausePanel)
   const pauseSettingsButton = getOrCreateButton(root, 'pause-settings', 'Settings', pausePanel)
@@ -298,6 +318,11 @@ export function createDomState(root: HTMLElement): DomState {
     prologueSkipButton,
     prologueStartLevelButton,
     prologueMainMenuButton,
+    campaignResultStatus,
+    campaignReplayLevelButton,
+    campaignNextLevelButton,
+    campaignResultsReturnButton,
+    campaignClassicModesButton,
     mainMenuModeButton,
     mainMenuSettingsButton,
     mainMenuHighScoresButton,
@@ -576,6 +601,7 @@ function syncShellDom(dom: DomState, shellSync: ShellDomSyncState): void {
   syncProloguePanel(dom, shellSync)
   syncHighScores(dom.highScoresPanel, save)
   syncResultLine(dom.results, 'results-high-score-status', highScoreStatus ?? 'Local high score status pending.')
+  syncCampaignResultActions(dom, shellSync)
 }
 
 function focusShellScreenPanel(dom: DomState, screen: ShellState['screen']): void {
@@ -639,11 +665,26 @@ function syncCampaignPanel(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.campaignStartPrologueButton.hidden = prologueSeen
   dom.campaignContinueButton.hidden = !prologueSeen || campaignComplete
   dom.campaignReplayPrologueButton.hidden = !prologueSeen || !prologue.replayable
-  setButtonDisabled(dom.campaignContinueButton, true)
+  setButtonDisabled(dom.campaignContinueButton, !prologueSeen || campaignComplete)
 
-  dom.campaignLevelList.replaceChildren(
-    ...levels.map((level) => createCampaignLevelRow(level, progress.levels[level.id])),
-  )
+  const levelListKey = levels
+    .map((level) => {
+      const levelProgress = progress.levels[level.id]
+      return [
+        level.id,
+        levelProgress?.unlocked === true,
+        levelProgress?.passed === true,
+        levelProgress?.stars ?? 0,
+        levelProgress?.bestScore ?? 0,
+      ].join(':')
+    })
+    .join('|')
+  if (dom.campaignLevelListKey !== levelListKey) {
+    dom.campaignLevelList.replaceChildren(
+      ...levels.map((level) => createCampaignLevelRow(level, progress.levels[level.id])),
+    )
+    dom.campaignLevelListKey = levelListKey
+  }
 }
 
 function createCampaignLevelRow(
@@ -668,8 +709,16 @@ function createCampaignLevelRow(
   heading.textContent = `${level.chapterLabel} ${level.title}`
   const meta = document.createElement('p')
   meta.textContent = `${status} - ${stars} stars - best ${bestScore}`
+  const action = document.createElement('button')
+  const unlocked = progress?.unlocked === true
+  action.type = 'button'
+  action.textContent = unlocked ? `${progress?.passed ? 'Replay' : 'Start'} ${level.chapterLabel}` : `Locked ${level.chapterLabel}`
+  action.setAttribute('data-testid', `campaign-level-action-${level.id}`)
+  action.setAttribute('data-campaign-level-id', level.id)
+  action.disabled = !unlocked
+  action.setAttribute('aria-disabled', String(!unlocked))
 
-  row.append(heading, meta)
+  row.append(heading, meta, action)
   return row
 }
 
@@ -697,7 +746,38 @@ function syncProloguePanel(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.prologueNextButton.hidden = isFinalPanel
   dom.prologueStartLevelButton.hidden = !isFinalPanel
   dom.prologueStartLevelButton.textContent = level ? `Start ${level.chapterLabel} ${level.title}` : 'Start 1-1 First Hunt'
-  setButtonDisabled(dom.prologueStartLevelButton, true)
+  setButtonDisabled(dom.prologueStartLevelButton, !level)
+}
+
+function syncCampaignResultActions(dom: DomState, shellSync: ShellDomSyncState): void {
+  const result = shellSync.latestCampaignResultSummary
+  const visible = shellSync.shell.screen === 'results' && result !== undefined
+
+  dom.campaignResultStatus.hidden = !visible
+  dom.campaignReplayLevelButton.hidden = !visible
+  dom.campaignResultsReturnButton.hidden = !visible
+  dom.campaignClassicModesButton.hidden = !visible
+  dom.campaignNextLevelButton.hidden = !visible || !result?.nextLevelId
+  dom.replayButton.hidden = visible
+  dom.changeModeButton.hidden = visible
+
+  if (!result) {
+    dom.campaignResultStatus.textContent = ''
+    dom.campaignResultStatus.removeAttribute('data-campaign-result-level')
+    dom.campaignResultStatus.removeAttribute('data-campaign-result-passed')
+    dom.campaignResultStatus.removeAttribute('data-campaign-result-stars')
+    return
+  }
+
+  dom.campaignResultStatus.textContent = result.statusText
+  dom.campaignResultStatus.setAttribute('data-campaign-result-level', result.levelId)
+  dom.campaignResultStatus.setAttribute('data-campaign-result-passed', String(result.passed))
+  dom.campaignResultStatus.setAttribute('data-campaign-result-stars', String(result.stars))
+  if (result.nextLevelId) {
+    dom.campaignNextLevelButton.setAttribute('data-next-campaign-level', result.nextLevelId)
+  } else {
+    dom.campaignNextLevelButton.removeAttribute('data-next-campaign-level')
+  }
 }
 
 function syncHighScores(element: HTMLElement, save: SaveData): void {

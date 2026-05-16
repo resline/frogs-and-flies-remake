@@ -4,8 +4,15 @@ import { createGame } from '../game/createGame'
 import { createFixedStep } from '../game/fixedStep'
 import { buildResults } from '../game/match'
 import { drainGameplayAudioEvents, updateGame } from '../game/update'
-import { HOME_POND_CAMPAIGN, HOME_POND_LEVELS, HOME_POND_PROLOGUE } from '../content/registry'
-import type { CampaignLevelId } from '../content/types'
+import { evaluateCampaignObjective } from '../content/objectives'
+import {
+  getCampaignLevel,
+  getNextCampaignLevel,
+  HOME_POND_CAMPAIGN,
+  HOME_POND_LEVELS,
+  HOME_POND_PROLOGUE,
+} from '../content/registry'
+import type { CampaignId, CampaignLevelId } from '../content/types'
 import {
   addRuntimeInputAction,
   applyRuntimeInput,
@@ -15,12 +22,17 @@ import {
   handleRuntimeKeyUp,
   type RuntimeInputAction,
 } from './input'
-import { markPrologueSeen } from './campaignProgress'
+import {
+  getFirstUnlockedIncompleteLevel,
+  markPrologueSeen,
+  recordCampaignLevelResult,
+  selectCampaignLevel,
+} from './campaignProgress'
 import { createGamepadPoller, type GamepadInputSnapshot } from './gamepad'
 import { createRenderScene, renderScene, type RenderFrameMarkers, type RenderScene } from '../render/scene'
 import { createAudioManager } from './audio'
 import { loadGeneratedGameplayAssets } from './assets'
-import { createDomState, mountCanvas, syncDom } from './dom'
+import { createDomState, mountCanvas, syncDom, type CampaignResultDomSummary } from './dom'
 import type { RuntimeParams } from './params'
 import type { GameState, MatchMode } from '../game/types'
 import type { RuntimeOptions } from './options'
@@ -76,6 +88,13 @@ export interface RuntimePersistenceServices {
   saveStatus?: SaveLoadStatus | SaveWriteStatus
 }
 
+interface ActiveCampaignContext {
+  campaignId: CampaignId
+  levelId: CampaignLevelId
+  attemptId: string
+  launchedFrom: 'campaign'
+}
+
 export async function startRuntime(
   root: HTMLElement,
   runtimeParams: RuntimeParams,
@@ -91,6 +110,9 @@ export async function startRuntime(
   let storageAvailable = saveStatus !== 'storage-unavailable'
   let shellState: ShellState = createInitialShellState(currentRuntimeParams.mode)
   let prologuePanelIndex = 0
+  let activeCampaignContext: ActiveCampaignContext | undefined
+  let latestCampaignResultSummary: CampaignResultDomSummary | undefined
+  let campaignResultRecordedAttemptId = ''
   const runtimeSessionId = createRuntimeSessionId()
   let roundCounter = 0
   let activeRoundId = ''
@@ -130,6 +152,7 @@ export async function startRuntime(
     if (game.phase === 'results') {
       showResultsIfNeeded()
       recordCompletedRoundIfNeeded()
+      recordCampaignResultIfNeeded()
     }
     syncDom(dom, game, currentRuntimeParams.options, audio.getState(), {
       shell: shellState,
@@ -142,7 +165,8 @@ export async function startRuntime(
       campaignLevels: HOME_POND_LEVELS,
       prologue: HOME_POND_PROLOGUE,
       prologuePanelIndex,
-      activeCampaignLevelId: readActiveCampaignLevelId(saveData.campaign.lastSelectedLevelId),
+      activeCampaignLevelId: activeCampaignContext?.levelId,
+      latestCampaignResultSummary,
     })
     syncInputRuntimeMarkers(dom.shell, runtimeInput, gamepadSnapshot)
     if (dom.canvas) {
@@ -169,6 +193,12 @@ export async function startRuntime(
     shellState = next.state
   }
 
+  function clearActiveCampaignContext(): void {
+    activeCampaignContext = undefined
+    latestCampaignResultSummary = undefined
+    campaignResultRecordedAttemptId = ''
+  }
+
   function beginRound(): void {
     roundCounter += 1
     activeRoundId = `${runtimeSessionId}:${currentRuntimeParams.mode}:${currentRuntimeParams.seed}:${roundCounter}`
@@ -181,8 +211,33 @@ export async function startRuntime(
     if (game.mode !== shellState.selectedMode) {
       resetGame({ ...currentRuntimeParams, mode: shellState.selectedMode })
     }
+    clearActiveCampaignContext()
     beginRound()
     transitionShell({ type: 'startGameplay' })
+    runCommand('start')
+  }
+
+  function launchCampaignLevel(levelId: CampaignLevelId): void {
+    const level = getCampaignLevel(levelId)
+    if (!level || saveData.campaign.levels[level.id]?.unlocked !== true) {
+      return
+    }
+
+    latestCampaignResultSummary = undefined
+    campaignResultRecordedAttemptId = ''
+    persistSave({
+      ...saveData,
+      campaign: selectCampaignLevel(saveData.campaign, level.campaignId, level.id),
+    })
+    resetGame({ ...currentRuntimeParams, mode: 'classic-single' })
+    transitionShell({ type: 'startCampaignLevel' })
+    beginRound()
+    activeCampaignContext = {
+      campaignId: level.campaignId,
+      levelId: level.id,
+      attemptId: activeRoundId,
+      launchedFrom: 'campaign',
+    }
     runCommand('start')
   }
 
@@ -220,6 +275,47 @@ export async function startRuntime(
     roundRecorded = true
     highScoreStatus = afterCount > beforeCount ? 'New local high score recorded.' : 'Local high score already recorded.'
     persistSave(nextSave)
+  }
+
+  function recordCampaignResultIfNeeded(): void {
+    const context = activeCampaignContext
+    if (!context || !activeRoundId || context.attemptId !== activeRoundId || campaignResultRecordedAttemptId === activeRoundId) {
+      return
+    }
+
+    const level = getCampaignLevel(context.levelId)
+    if (!level) {
+      return
+    }
+
+    const player = game.players[0]
+    const stats = {
+      score: currentRuntimeParams.campaignSmokeScore ?? player?.score ?? 0,
+      catches: currentRuntimeParams.campaignSmokeCatches ?? player?.stats.catches ?? 0,
+      timeRemainingSeconds: game.remainingSeconds,
+    }
+    const evaluation = evaluateCampaignObjective(level, stats)
+    const nextCampaignProgress = recordCampaignLevelResult(
+      saveData.campaign,
+      level,
+      evaluation,
+      stats,
+      new Date().toISOString(),
+    )
+    const nextLevel = evaluation.passed ? getNextCampaignLevel(level.id) : undefined
+
+    campaignResultRecordedAttemptId = activeRoundId
+    persistSave({
+      ...saveData,
+      campaign: nextCampaignProgress,
+    })
+    latestCampaignResultSummary = {
+      levelId: level.id,
+      statusText: formatCampaignResultStatus(level.chapterLabel, evaluation.passed, nextLevel?.chapterLabel),
+      passed: evaluation.passed,
+      stars: evaluation.stars,
+      ...(nextLevel && nextCampaignProgress.levels[nextLevel.id]?.unlocked ? { nextLevelId: nextLevel.id } : {}),
+    }
   }
 
   function persistCurrentSettings(): void {
@@ -267,7 +363,12 @@ export async function startRuntime(
   }
 
   const replay = () => {
+    if (latestCampaignResultSummary?.levelId) {
+      launchCampaignLevel(latestCampaignResultSummary.levelId)
+      return
+    }
     transitionShell({ type: shellState.screen === 'results' ? 'replay' : 'startGameplay' })
+    clearActiveCampaignContext()
     beginRound()
     resetGame(currentRuntimeParams, true)
   }
@@ -326,12 +427,27 @@ export async function startRuntime(
     refresh()
   }
   const handleMainMenuClick = () => {
+    clearActiveCampaignContext()
     transitionShell({ type: 'mainMenu' })
     refresh()
   }
   const handleCampaignMainMenuClick = () => {
+    clearActiveCampaignContext()
     transitionShell({ type: 'mainMenu' })
     refresh()
+  }
+  const handleCampaignContinueClick = () => {
+    const level = getFirstUnlockedIncompleteLevel(saveData.campaign, HOME_POND_CAMPAIGN)
+    if (level) {
+      launchCampaignLevel(level.id)
+    }
+  }
+  const handleCampaignLevelListClick = (event: Event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>('[data-campaign-level-id]')
+    const levelId = readActiveCampaignLevelId(button?.getAttribute('data-campaign-level-id') ?? undefined)
+    if (levelId) {
+      launchCampaignLevel(levelId)
+    }
   }
   const handleStartPrologueClick = () => {
     prologuePanelIndex = 0
@@ -359,11 +475,41 @@ export async function startRuntime(
     transitionShell({ type: 'returnToCampaign' })
     refresh()
   }
+  const handlePrologueStartLevelClick = () => {
+    persistSave({
+      ...saveData,
+      campaign: markPrologueSeen(saveData.campaign, HOME_POND_PROLOGUE.id),
+    })
+    launchCampaignLevel(HOME_POND_PROLOGUE.startLevelId)
+  }
   const handlePrologueMainMenuClick = () => {
+    clearActiveCampaignContext()
     transitionShell({ type: 'mainMenu' })
     refresh()
   }
   const handleChangeModeClick = () => {
+    clearActiveCampaignContext()
+    transitionShell({ type: 'changeMode' })
+    resetGame(currentRuntimeParams)
+  }
+  const handleCampaignReplayLevelClick = () => {
+    if (latestCampaignResultSummary?.levelId) {
+      launchCampaignLevel(latestCampaignResultSummary.levelId)
+    }
+  }
+  const handleCampaignNextLevelClick = () => {
+    const nextLevelId = latestCampaignResultSummary?.nextLevelId
+    if (nextLevelId) {
+      launchCampaignLevel(nextLevelId)
+    }
+  }
+  const handleCampaignResultsReturnClick = () => {
+    clearActiveCampaignContext()
+    transitionShell({ type: 'returnToCampaign' })
+    refresh()
+  }
+  const handleCampaignClassicModesClick = () => {
+    clearActiveCampaignContext()
     transitionShell({ type: 'changeMode' })
     resetGame(currentRuntimeParams)
   }
@@ -384,6 +530,13 @@ export async function startRuntime(
     transitionShell({ type: 'startGameplay' })
     resetGame(currentRuntimeParams, true)
     beginRound()
+    if (activeCampaignContext) {
+      activeCampaignContext = {
+        ...activeCampaignContext,
+        attemptId: activeRoundId,
+      }
+      campaignResultRecordedAttemptId = ''
+    }
   }
   const handleShowTimerChange = () => updateRuntimeOptions({ showTimer: dom.showTimerInput.checked })
   const handleReducedMotionChange = () => updateRuntimeOptions({ reducedMotion: dom.reducedMotionInput.checked })
@@ -463,13 +616,19 @@ export async function startRuntime(
   dom.openSettingsButton.addEventListener('click', handleOpenSettingsClick)
   dom.openHighScoresButton.addEventListener('click', handleOpenHighScoresClick)
   dom.campaignStartPrologueButton.addEventListener('click', handleStartPrologueClick)
-  dom.campaignContinueButton.addEventListener('click', handleStartPrologueClick)
+  dom.campaignContinueButton.addEventListener('click', handleCampaignContinueClick)
   dom.campaignReplayPrologueButton.addEventListener('click', handleReplayPrologueClick)
   dom.campaignMainMenuButton.addEventListener('click', handleCampaignMainMenuClick)
+  dom.campaignLevelList.addEventListener('click', handleCampaignLevelListClick)
   dom.prologueNextButton.addEventListener('click', handlePrologueNextClick)
   dom.prologueBackButton.addEventListener('click', handlePrologueBackClick)
   dom.prologueSkipButton.addEventListener('click', handlePrologueSkipClick)
+  dom.prologueStartLevelButton.addEventListener('click', handlePrologueStartLevelClick)
   dom.prologueMainMenuButton.addEventListener('click', handlePrologueMainMenuClick)
+  dom.campaignReplayLevelButton.addEventListener('click', handleCampaignReplayLevelClick)
+  dom.campaignNextLevelButton.addEventListener('click', handleCampaignNextLevelClick)
+  dom.campaignResultsReturnButton.addEventListener('click', handleCampaignResultsReturnClick)
+  dom.campaignClassicModesButton.addEventListener('click', handleCampaignClassicModesClick)
   dom.mainMenuModeButton.addEventListener('click', handleMainMenuClick)
   dom.mainMenuSettingsButton.addEventListener('click', handleMainMenuClick)
   dom.mainMenuHighScoresButton.addEventListener('click', handleMainMenuClick)
@@ -615,13 +774,19 @@ export async function startRuntime(
       dom.openSettingsButton.removeEventListener('click', handleOpenSettingsClick)
       dom.openHighScoresButton.removeEventListener('click', handleOpenHighScoresClick)
       dom.campaignStartPrologueButton.removeEventListener('click', handleStartPrologueClick)
-      dom.campaignContinueButton.removeEventListener('click', handleStartPrologueClick)
+      dom.campaignContinueButton.removeEventListener('click', handleCampaignContinueClick)
       dom.campaignReplayPrologueButton.removeEventListener('click', handleReplayPrologueClick)
       dom.campaignMainMenuButton.removeEventListener('click', handleCampaignMainMenuClick)
+      dom.campaignLevelList.removeEventListener('click', handleCampaignLevelListClick)
       dom.prologueNextButton.removeEventListener('click', handlePrologueNextClick)
       dom.prologueBackButton.removeEventListener('click', handlePrologueBackClick)
       dom.prologueSkipButton.removeEventListener('click', handlePrologueSkipClick)
+      dom.prologueStartLevelButton.removeEventListener('click', handlePrologueStartLevelClick)
       dom.prologueMainMenuButton.removeEventListener('click', handlePrologueMainMenuClick)
+      dom.campaignReplayLevelButton.removeEventListener('click', handleCampaignReplayLevelClick)
+      dom.campaignNextLevelButton.removeEventListener('click', handleCampaignNextLevelClick)
+      dom.campaignResultsReturnButton.removeEventListener('click', handleCampaignResultsReturnClick)
+      dom.campaignClassicModesButton.removeEventListener('click', handleCampaignClassicModesClick)
       dom.mainMenuModeButton.removeEventListener('click', handleMainMenuClick)
       dom.mainMenuSettingsButton.removeEventListener('click', handleMainMenuClick)
       dom.mainMenuHighScoresButton.removeEventListener('click', handleMainMenuClick)
@@ -886,6 +1051,20 @@ function syncInputRuntimeMarkers(element: HTMLElement, input: { activeInputDevic
 
 function scoreEntriesForMode(save: SaveData, mode: MatchMode): SaveData['highScores']['classicSingle'] {
   return mode === 'classic-single' ? save.highScores.classicSingle : save.highScores.localVersus
+}
+
+function formatCampaignResultStatus(
+  chapterLabel: string,
+  passed: boolean,
+  nextChapterLabel: string | undefined,
+): string {
+  if (!passed) {
+    return `${chapterLabel} failed - try again.`
+  }
+  if (nextChapterLabel) {
+    return `${chapterLabel} passed - ${nextChapterLabel} unlocked.`
+  }
+  return `${chapterLabel} passed - Home Pond complete.`
 }
 
 function readActiveCampaignLevelId(value: string | undefined): CampaignLevelId | undefined {

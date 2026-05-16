@@ -29,4 +29,18 @@ describe('M2 runtime params', () => {
     expect(params.theEndSeconds).toBe(0.5)
     expect(params.simulationSpeed).toBe(20)
   })
+
+  it('parses campaign smoke objective params for focused E2E only', () => {
+    const params = readRuntimeParams(new URLSearchParams('campaignSmokeScore=900&campaignSmokeCatches=9'))
+
+    expect(params.campaignSmokeScore).toBe(900)
+    expect(params.campaignSmokeCatches).toBe(9)
+  })
+
+  it('ignores invalid campaign smoke objective params', () => {
+    const params = readRuntimeParams(new URLSearchParams('campaignSmokeScore=-1&campaignSmokeCatches=not-a-number'))
+
+    expect(params.campaignSmokeScore).toBeUndefined()
+    expect(params.campaignSmokeCatches).toBeUndefined()
+  })
 })

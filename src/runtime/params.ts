@@ -10,6 +10,8 @@ export type RuntimeParams = {
   theEndSeconds?: number
   smokeState?: GamePhase
   smokeElapsedSeconds?: number
+  campaignSmokeScore?: number
+  campaignSmokeCatches?: number
   simulationSpeed: number
   options: RuntimeOptions
 }
@@ -20,6 +22,8 @@ export function readRuntimeParams(searchParams: URLSearchParams, savedDefaults: 
     mode: readMode(searchParams.get('mode')),
     smokeState: readPhase(searchParams.get('smokeState')),
     smokeElapsedSeconds: readNonNegativeNumber(searchParams.get('smokeElapsedSeconds')),
+    campaignSmokeScore: readNonNegativeNumber(searchParams.get('campaignSmokeScore')),
+    campaignSmokeCatches: readNonNegativeNumber(searchParams.get('campaignSmokeCatches')),
     durationSeconds: readNonNegativeNumber(searchParams.get('durationSeconds')),
     theEndSeconds: readNonNegativeNumber(searchParams.get('theEndSeconds')),
     simulationSpeed: readPositiveNumber(searchParams.get('simulationSpeed'), 1),
