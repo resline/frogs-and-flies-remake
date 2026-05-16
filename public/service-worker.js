@@ -1,4 +1,4 @@
-const PWA_CACHE_NAME = 'frogs-and-flies-m26-v1'
+const PWA_CACHE_NAME = 'frogs-and-flies-m26-v2'
 
 const APP_SHELL_CACHE_URLS = [
   '/',
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (isImmutableAssetPath(url.pathname)) {
+  if (isRuntimeCacheableRequest(request, url)) {
     event.respondWith(cacheFirst(request))
     return
   }
@@ -72,7 +72,7 @@ self.addEventListener('fetch', (event) => {
 })
 
 function cacheFirst(request) {
-  return caches.match(request).then((cachedResponse) => {
+  return caches.match(request, { ignoreVary: true }).then((cachedResponse) => {
     if (cachedResponse) {
       return cachedResponse
     }
@@ -89,4 +89,25 @@ function cacheFirst(request) {
 
 function isImmutableAssetPath(pathname) {
   return pathname.startsWith('/assets/') || pathname === '/favicon.png'
+}
+
+function isRuntimeCacheableRequest(request, url) {
+  if (url.origin !== self.location.origin) {
+    return false
+  }
+
+  if (isImmutableAssetPath(url.pathname)) {
+    return true
+  }
+
+  return (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    pathnameHasExtension(url.pathname, '.js') ||
+    pathnameHasExtension(url.pathname, '.css')
+  )
+}
+
+function pathnameHasExtension(pathname, extension) {
+  return pathname.toLowerCase().endsWith(extension)
 }
