@@ -1130,7 +1130,7 @@ Expected: README, readme tests, and optional asset manifest only. Commit message
 - Read/verify: all changed files.
 - Modify only if a final gate fails: task-owned implementation/test/doc files from previous tasks.
 
-- [ ] **Step 1: Run full unit suite**
+- [x] **Step 1: Run full unit suite**
 
 Run:
 
@@ -1140,7 +1140,7 @@ npm run test:unit
 
 Expected: all Vitest tests pass.
 
-- [ ] **Step 2: Run full E2E suite**
+- [x] **Step 2: Run full E2E suite**
 
 Run:
 
@@ -1150,7 +1150,7 @@ npm run test:e2e
 
 Expected: all configured Playwright projects pass. If WebKit/Firefox cannot run in the environment, record blocker and prove Chromium passes.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run:
 
@@ -1160,7 +1160,7 @@ npm test
 
 Expected: unit and E2E suites pass.
 
-- [ ] **Step 4: Run production build**
+- [x] **Step 4: Run production build**
 
 Run:
 
@@ -1170,7 +1170,7 @@ npm run build
 
 Expected: TypeScript and Vite build exit `0`.
 
-- [ ] **Step 5: Run production preview smoke on 5176**
+- [x] **Step 5: Run production preview smoke on 5176**
 
 Run:
 
@@ -1186,7 +1186,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-shel
 
 Expected: preview serves production build and smoke tests pass.
 
-- [ ] **Step 6: Build Docker image**
+- [x] **Step 6: Build Docker image**
 
 Run:
 
@@ -1196,7 +1196,7 @@ docker build -t frogs-and-flies-m26-product-foundation .
 
 Expected: Docker build exits `0`.
 
-- [ ] **Step 7: Run Docker production smoke**
+- [x] **Step 7: Run Docker production smoke**
 
 Run:
 
@@ -1216,7 +1216,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:18080 npx playwright test tests/e2e/m26-she
 
 Expected: static production smoke passes on host port `18080`.
 
-- [ ] **Step 8: Run scope exclusion search**
+- [x] **Step 8: Run scope exclusion search**
 
 Run:
 
@@ -1226,7 +1226,7 @@ rg -n "campaign|biome|boss|leaderboard|backend|account|cloud save|networking|ana
 
 Expected: matches are only non-goal/future-scope/documentation references. No implementation surface exists for excluded systems.
 
-- [ ] **Step 9: Run live-network/API guard**
+- [x] **Step 9: Run live-network/API guard**
 
 Run:
 
@@ -1236,7 +1236,7 @@ rg -n "fetch\\(|XMLHttpRequest|WebSocket|EventSource|navigator\\.sendBeacon|OPEN
 
 Expected: no runtime live network/API dependency for boot, assets, audio, saves, settings, leaderboard, analytics, or shell. Service worker same-origin fetch handling is acceptable.
 
-- [ ] **Step 10: Inspect final dirty state**
+- [x] **Step 10: Inspect final dirty state**
 
 Run:
 
@@ -1246,7 +1246,7 @@ git status --short
 
 Expected: only intentional M2.6 files changed. No `dist/`, `test-results/`, `playwright-report/`, or generated screenshots are staged unless explicitly intended.
 
-- [ ] **Step 11: Final commit boundary**
+- [x] **Step 11: Final commit boundary**
 
 Run:
 
@@ -1259,23 +1259,23 @@ Expected: commit contains only intentional M2.6 implementation, tests, and docs.
 
 ## Acceptance Checklist
 
-- [ ] The implementation and docs state that the full product objective is not complete and M2.5 is only a deployed vertical slice.
-- [ ] SaveManager v1 persists settings, high scores, aggregate local stats, schema version, and migration/default behavior.
-- [ ] SaveManager handles unavailable storage, invalid data, unknown versions, export, and import according to implementation scope.
-- [ ] The app has splash or boot state, main menu, mode select, settings, high scores, gameplay, pause, and results.
-- [ ] Classic Single and Local Versus remain the only player-facing gameplay modes.
-- [ ] Results update high scores and stats exactly once per completed round.
-- [ ] Input is modeled through named actions, default bindings, conflict-aware remapping, and SaveManager persistence hooks.
-- [ ] Keyboard and pointer/touch remain functional.
-- [ ] Gamepad mapping foundation exists or is explicitly deferred with tested mapper boundaries and markers.
-- [ ] Audio v1 decision is recorded as Web Audio or Howler, with measured tradeoffs if adding a dependency.
-- [ ] Authored local SFX/music placeholder paths are defined without live network/API calls.
-- [ ] Audio has master/SFX/music volume concepts, mute, mono flag, unlock behavior, and graceful missing-audio fallback.
-- [ ] PWA manifest and service worker/offline shell are implemented and smoke-tested.
-- [ ] Docker/nginx and Coolify static deployment notes are updated for manifest, service worker, assets, and offline shell checks.
+- [x] The implementation and docs state that the full product objective is not complete and M2.5 is only a deployed vertical slice.
+- [x] SaveManager v1 persists settings, high scores, aggregate local stats, schema version, and migration/default behavior.
+- [x] SaveManager handles unavailable storage, invalid data, unknown versions, export, and import according to implementation scope.
+- [x] The app has splash or boot state, main menu, mode select, settings, high scores, gameplay, pause, and results.
+- [x] Classic Single and Local Versus remain the only player-facing gameplay modes.
+- [x] Results update high scores and stats exactly once per completed round.
+- [x] Input is modeled through named actions, default bindings, conflict-aware remapping, and SaveManager persistence hooks.
+- [x] Keyboard and pointer/touch remain functional.
+- [x] Gamepad mapping foundation exists or is explicitly deferred with tested mapper boundaries and markers.
+- [x] Audio v1 decision is recorded as Web Audio or Howler, with measured tradeoffs if adding a dependency.
+- [x] Authored local SFX/music placeholder paths are defined without live network/API calls.
+- [x] Audio has master/SFX/music volume concepts, mute, mono flag, unlock behavior, and graceful missing-audio fallback.
+- [x] PWA manifest and service worker/offline shell are implemented and smoke-tested.
+- [x] Docker/nginx and Coolify static deployment notes are updated for manifest, service worker, assets, and offline shell checks.
 - [x] Multi-browser Playwright shell/gameplay smoke passes or unsupported browser blockers are documented.
 - [x] Axe-core or equivalent shell accessibility audit passes for serious/critical issues if package/setup is accepted.
 - [x] Screenshot/no-overlap checks cover shell states and common viewports.
 - [x] A small performance smoke runs with clear, loose thresholds.
-- [ ] `npm run build`, focused unit tests, Playwright tests, full test, and Docker/static smoke pass before completion is claimed.
-- [ ] No campaign, extra biomes, bosses, online leaderboard, backend, analytics, monetization, shop, payments, ads, final Spine/TexturePacker pipeline, or live OpenAI image/audio API calls are introduced.
+- [x] `npm run build`, focused unit tests, Playwright tests, full test, and Docker/static smoke pass before completion is claimed.
+- [x] No campaign, extra biomes, bosses, online leaderboard, backend, analytics, monetization, shop, payments, ads, final Spine/TexturePacker pipeline, or live OpenAI image/audio API calls are introduced.
