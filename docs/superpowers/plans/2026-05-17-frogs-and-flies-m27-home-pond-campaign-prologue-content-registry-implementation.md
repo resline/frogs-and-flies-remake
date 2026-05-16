@@ -437,7 +437,7 @@ Expected: commit created; `src/game/**` unchanged.
 - Create: `src/runtime/campaignProgress.ts`
 - Modify: `tests/unit/saveManager.test.ts`
 - Create: `tests/unit/campaignProgress.test.ts`
-- Modify later E2E save-key helpers in Task 8.
+- Modify later E2E save-key helpers in Task 7.
 
 - [ ] **Step 1: Write failing v2 default and migration tests**
 
