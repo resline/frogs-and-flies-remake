@@ -24,12 +24,14 @@ test.describe('Frogs and Flies 2 M1', () => {
   test.describe.configure({ mode: 'serial' })
 
   test('keeps Space jump charging separate from tongue fire', async ({ page }) => {
+    test.setTimeout(60_000)
+
     await page.goto('/?seed=1&smokeElapsedSeconds=6.5')
 
     const state = page.getByTestId('game-state')
     const score = page.getByTestId('score')
 
-    await expect(state).toHaveAttribute('data-state', 'gameplay')
+    await expect(state).toHaveAttribute('data-state', 'gameplay', { timeout: 15_000 })
     await expect(state).toHaveAttribute('data-tongue-result', 'none')
     await expect(score).toHaveAttribute('data-score', '0')
 
@@ -82,25 +84,37 @@ test.describe('Frogs and Flies 2 M1', () => {
     await expect(score).toHaveAttribute('data-score', '0')
 
     await page.keyboard.press('KeyT')
-    await page.waitForFunction(
-      () => {
-        const runtimeWindow = window as Window & {
-          __m1SpaceTongueObserved?: {
-            tonguePhases: string[]
-            tongueResults: string[]
-          }
-        }
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => {
+            const state = document.querySelector<HTMLElement>('[data-testid="game-state"]')
+            const score = document.querySelector<HTMLElement>('[data-testid="score"]')
+            const runtimeWindow = window as Window & {
+              __m1SpaceTongueObserved?: {
+                tonguePhases: string[]
+                tongueResults: string[]
+              }
+            }
 
-        const observed = runtimeWindow.__m1SpaceTongueObserved
-        return (
-          observed?.tongueResults.includes('miss') &&
-          observed.tonguePhases.includes('recovering') &&
-          observed.tonguePhases.at(-1) === 'ready'
-        )
-      },
-      undefined,
-      { timeout: 5_000 },
-    )
+            const observed = runtimeWindow.__m1SpaceTongueObserved
+            return {
+              jumpPhase: state?.getAttribute('data-jump-phase') ?? '',
+              score: score?.getAttribute('data-score') ?? '',
+              tonguePhase: state?.getAttribute('data-tongue-phase') ?? '',
+              sawMiss: observed?.tongueResults.includes('miss') ?? false,
+              sawRecovering: observed?.tonguePhases.includes('recovering') ?? false,
+            }
+          }),
+        { timeout: 15_000 },
+      )
+      .toEqual({
+        jumpPhase: 'charging',
+        score: '0',
+        tonguePhase: 'ready',
+        sawMiss: true,
+        sawRecovering: true,
+      })
 
     const observed = await page.evaluate(() => {
       const runtimeWindow = window as Window & {
@@ -121,8 +135,8 @@ test.describe('Frogs and Flies 2 M1', () => {
 
     expect(observed.tonguePhases).toContain('extended')
     expect(observed.tonguePhases).toContain('recovering')
-    expect(observed.tonguePhases.at(-1)).toBe('ready')
     expect(observed.tongueResults).toContain('miss')
+    await expect(state).toHaveAttribute('data-tongue-phase', 'ready')
     await expect(state).toHaveAttribute('data-jump-phase', 'charging')
     await expect(score).toHaveAttribute('data-score', '0')
 

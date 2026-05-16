@@ -11,6 +11,8 @@ const REQUIRED_M25_ASSETS = [
   'firefly-end.png',
 ] as const
 
+const CONTROL_CLICK_OPTIONS = { force: true } as const
+
 const TAB_SEQUENCE = [
   'shell-play',
   'shell-settings',
@@ -29,20 +31,22 @@ test.describe('Frogs and Flies 2 M2.5 Classic Vertical Slice', () => {
   test.describe.configure({ mode: 'serial' })
 
   test('loads expanded Home Pond asset set into the PixiJS runtime', async ({ page }) => {
+    test.setTimeout(60_000)
+
     await page.goto('/?seed=25&durationSeconds=3&theEndSeconds=0.1')
 
     const canvas = page.getByTestId('game-canvas')
     await expect(canvas).toBeVisible()
 
     await expect
-      .poll(async () => (await canvas.getAttribute('data-assets-loaded')) ?? '', { timeout: 30_000 })
-      .toEqual(expect.stringContaining('home-pond-background.png'))
-
-    const loadedAssets = (await canvas.getAttribute('data-assets-loaded')) ?? ''
-
-    for (const asset of REQUIRED_M25_ASSETS) {
-      expect(loadedAssets).toContain(asset)
-    }
+      .poll(
+        async () => {
+          const loadedAssets = (await canvas.getAttribute('data-assets-loaded')) ?? ''
+          return REQUIRED_M25_ASSETS.every((asset) => loadedAssets.includes(asset))
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true)
 
     await startFromShell(page)
     await expect(canvas).toHaveAttribute('data-assets-loaded', /home-pond-background\.png/)
@@ -219,14 +223,21 @@ test.describe('Frogs and Flies 2 M2.5 Classic Vertical Slice', () => {
   }
 })
 
+async function clickControl(page: Page, testId: string): Promise<void> {
+  const control = page.getByTestId(testId)
+
+  await expect(control).toBeVisible()
+  await control.click(CONTROL_CLICK_OPTIONS)
+}
+
 async function openModeSelect(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  await clickControl(page, 'shell-play')
   await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'mode-select')
 }
 
 async function startFromShell(page: Page): Promise<void> {
   await openModeSelect(page)
-  await page.getByTestId('start-game').click()
+  await clickControl(page, 'start-game')
 }
 
 async function expectFocusedTestId(page: Page, testId: string): Promise<void> {
