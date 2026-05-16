@@ -362,7 +362,7 @@ Expected: commit created; no generated artifacts staged.
 - Create: `tests/unit/campaignObjectives.test.ts`
 - Modify: `src/content/types.ts` only if objective result types belong there.
 
-- [ ] **Step 1: Write failing objective tests**
+- [x] **Step 1: Write failing objective tests**
 
 In `tests/unit/campaignObjectives.test.ts`, assert:
 
@@ -382,7 +382,7 @@ expect(validateCampaignRegistry(registryWithDescendingStars)).toContainEqual(
 )
 ```
 
-- [ ] **Step 2: Run objective tests red**
+- [x] **Step 2: Run objective tests red**
 
 Run:
 
@@ -392,7 +392,7 @@ npm run test:unit -- tests/unit/campaignObjectives.test.ts
 
 Expected: FAIL because `src/content/objectives.ts` does not exist.
 
-- [ ] **Step 3: Implement pure objective helpers**
+- [x] **Step 3: Implement pure objective helpers**
 
 Create `src/content/objectives.ts` with:
 
@@ -408,7 +408,7 @@ Rules:
 - Stars are 0 for failed objective, otherwise 1/2/3 based on thresholds.
 - Stars never depend on save state; monotonic save update happens later.
 
-- [ ] **Step 4: Run objective and registry tests green**
+- [x] **Step 4: Run objective and registry tests green**
 
 Run:
 
@@ -418,7 +418,7 @@ npm run test:unit -- tests/unit/campaignObjectives.test.ts tests/unit/campaignRe
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
