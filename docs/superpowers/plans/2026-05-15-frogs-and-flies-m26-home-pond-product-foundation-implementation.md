@@ -921,7 +921,7 @@ Expected: manifest, service worker, PWA runtime, nginx, README, and PWA tests on
 - Modify or reuse: `tests/e2e/m26-shell.spec.ts`
 - Modify or reuse: `tests/e2e/m26-pwa-offline.spec.ts`
 
-- [ ] **Step 1: Add multi-browser Playwright projects**
+- [x] **Step 1: Add multi-browser Playwright projects**
 
 Modify `playwright.config.ts` to:
 
@@ -936,7 +936,7 @@ command: 'npm run dev -- --host 127.0.0.1 --port 5176 --strictPort'
 url: 'http://127.0.0.1:5176'
 ```
 
-- [ ] **Step 2: Run browser install check**
+- [x] **Step 2: Run browser install check**
 
 Run:
 
@@ -946,7 +946,7 @@ npx playwright install --dry-run
 
 Expected: command lists browser install targets without changing source. If browsers are missing locally/CI, install them using the project-standard method and document it.
 
-- [ ] **Step 3: Run Chromium, Firefox, and WebKit shell smoke**
+- [x] **Step 3: Run Chromium, Firefox, and WebKit shell smoke**
 
 Run:
 
@@ -958,7 +958,7 @@ npx playwright test tests/e2e/m26-shell.spec.ts --project=webkit
 
 Expected: all supported browser projects pass. If a browser is unsupported in the environment, document the blocker with exact error output.
 
-- [ ] **Step 4: Decide axe-core dependency**
+- [x] **Step 4: Decide axe-core dependency**
 
 If automated accessibility audit is accepted, run:
 
@@ -970,7 +970,7 @@ Expected: `package.json` and `package-lock.json` update with dev dependency only
 
 If dependency is rejected, do not edit package files; instead document a manual accessibility gate in `README.md` and keep semantic/focus E2E checks.
 
-- [ ] **Step 5: Write accessibility E2E tests**
+- [x] **Step 5: Write accessibility E2E tests**
 
 Create `tests/e2e/m26-accessibility.spec.ts`:
 
@@ -979,7 +979,7 @@ Create `tests/e2e/m26-accessibility.spec.ts`:
 - Always assert native controls have accessible names and focus order works.
 - Keep canvas limitations explicit.
 
-- [ ] **Step 6: Run accessibility tests**
+- [x] **Step 6: Run accessibility tests**
 
 Run:
 
@@ -989,7 +989,7 @@ npx playwright test tests/e2e/m26-accessibility.spec.ts --project=chromium
 
 Expected pass: accessibility shell audit passes, or manual fallback checks pass if axe was not accepted.
 
-- [ ] **Step 7: Upgrade screenshot/no-overlap coverage**
+- [x] **Step 7: Upgrade screenshot/no-overlap coverage**
 
 Extend E2E helpers to cover:
 
@@ -1010,7 +1010,7 @@ Viewports:
 
 Expected: visible text and controls do not overlap or leave viewport; canvas remains nonblank.
 
-- [ ] **Step 8: Add small performance smoke**
+- [x] **Step 8: Add small performance smoke**
 
 Create `tests/e2e/m26-performance.spec.ts` with loose thresholds:
 
@@ -1019,7 +1019,7 @@ Create `tests/e2e/m26-performance.spec.ts` with loose thresholds:
 - No single interaction produces an extreme long task if browser exposes long-task entries.
 - Bundle or static asset size increases are logged if practical; do not fail on small expected changes.
 
-- [ ] **Step 9: Run verification E2E set**
+- [x] **Step 9: Run verification E2E set**
 
 Run:
 
@@ -1029,7 +1029,7 @@ npx playwright test tests/e2e/m26-shell.spec.ts tests/e2e/m26-persistence.spec.t
 
 Expected pass: all M2.6 Playwright tests pass across configured projects or unsupported browser blockers are documented.
 
-- [ ] **Step 10: Commit boundary**
+- [x] **Step 10: Commit boundary**
 
 Run:
 
@@ -1273,9 +1273,9 @@ Expected: commit contains only intentional M2.6 implementation, tests, and docs.
 - [ ] Audio has master/SFX/music volume concepts, mute, mono flag, unlock behavior, and graceful missing-audio fallback.
 - [ ] PWA manifest and service worker/offline shell are implemented and smoke-tested.
 - [ ] Docker/nginx and Coolify static deployment notes are updated for manifest, service worker, assets, and offline shell checks.
-- [ ] Multi-browser Playwright shell/gameplay smoke passes or unsupported browser blockers are documented.
-- [ ] Axe-core or equivalent shell accessibility audit passes for serious/critical issues if package/setup is accepted.
-- [ ] Screenshot/no-overlap checks cover shell states and common viewports.
-- [ ] A small performance smoke runs with clear, loose thresholds.
+- [x] Multi-browser Playwright shell/gameplay smoke passes or unsupported browser blockers are documented.
+- [x] Axe-core or equivalent shell accessibility audit passes for serious/critical issues if package/setup is accepted.
+- [x] Screenshot/no-overlap checks cover shell states and common viewports.
+- [x] A small performance smoke runs with clear, loose thresholds.
 - [ ] `npm run build`, focused unit tests, Playwright tests, full test, and Docker/static smoke pass before completion is claimed.
 - [ ] No campaign, extra biomes, bosses, online leaderboard, backend, analytics, monetization, shop, payments, ads, final Spine/TexturePacker pipeline, or live OpenAI image/audio API calls are introduced.

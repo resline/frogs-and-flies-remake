@@ -92,8 +92,10 @@ export function createDomState(root: HTMLElement): DomState {
   shell.classList.add('game-shell')
   shell.setAttribute('data-testid', 'm26-shell')
   hud.setAttribute('data-testid', 'm25-hud')
+  hud.setAttribute('role', 'region')
   hud.setAttribute('aria-label', 'Round status')
   controls.setAttribute('data-testid', 'm25-controls')
+  controls.setAttribute('role', 'region')
   controls.setAttribute('aria-label', 'Product shell controls')
   shell.style.position = 'relative'
 
@@ -181,6 +183,7 @@ export function createDomState(root: HTMLElement): DomState {
   const touchPauseButton = getOrCreateButton(root, 'touch-pause', 'Pause', touchZones)
   const touchConfirmButton = getOrCreateButton(root, 'touch-confirm', 'Confirm', touchZones)
   touchZones.setAttribute('data-testid', 'touch-zones')
+  touchZones.setAttribute('role', 'group')
   touchZones.setAttribute('aria-label', 'Touch controls')
   touchZones.setAttribute('data-touch-zones-ready', 'true')
   for (const button of [touchLeftButton, touchRightButton, touchJumpButton, touchTongueButton, touchPauseButton, touchConfirmButton]) {

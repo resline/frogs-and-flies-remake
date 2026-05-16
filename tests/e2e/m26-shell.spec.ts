@@ -1,4 +1,14 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { PNG } from 'pngjs'
+
+const RESPONSIVE_VIEWPORTS = [
+  { width: 390, height: 844 },
+  { width: 800, height: 600 },
+  { width: 1024, height: 768 },
+  { width: 1366, height: 768 },
+  { width: 1920, height: 1080 },
+] as const
 
 test.describe('M2.6 product shell flow', () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -30,7 +40,7 @@ test.describe('M2.6 product shell flow', () => {
   })
 
   test('exposes product settings controls', async ({ page }) => {
-    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.getByTestId('shell-settings').click()
 
     await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'settings')
     await expect(page.getByTestId('difficulty-classic-assist')).toBeVisible()
@@ -58,7 +68,7 @@ test.describe('M2.6 product shell flow', () => {
     await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'pause')
     await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Restart' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible()
+    await expect(page.getByTestId('pause-settings')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Main Menu' })).toBeVisible()
   })
 
@@ -116,6 +126,41 @@ test.describe('M2.6 product shell flow', () => {
     await expect(page.getByTestId('high-scores-panel')).toContainText(/local/i)
     await expect(page.getByTestId('high-scores-panel')).not.toContainText(/online|global|account|cloud/i)
   })
+
+  test('keeps shell screens and native controls within common viewports', async ({ page }) => {
+    test.setTimeout(120_000)
+
+    for (const viewport of RESPONSIVE_VIEWPORTS) {
+      await page.setViewportSize(viewport)
+      await page.goto('/?seed=2617&durationSeconds=10&theEndSeconds=0.1')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} main menu`)
+
+      await page.getByTestId('shell-settings').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'settings')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} settings`)
+
+      await page.goto('/?seed=2618&durationSeconds=10&theEndSeconds=0.1')
+      await page.getByTestId('shell-play').click({ force: true })
+      await page.getByTestId('mode-classic-single').click({ force: true })
+      await page.getByTestId('start-game').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'gameplay')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} gameplay`)
+      await expectCanvasNonblank(page)
+
+      await page.getByTestId('pause-game').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'pause')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} pause`)
+
+      await page.goto('/?seed=2619&smokeState=results')
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'results')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} results`)
+
+      await page.goto('/?seed=2620&durationSeconds=10&theEndSeconds=0.1')
+      await page.getByTestId('shell-high-scores').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'high-scores')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} high scores`)
+    }
+  })
 })
 
 async function readSavedRoundTracking(page: import('@playwright/test').Page): Promise<{
@@ -133,4 +178,83 @@ async function readSavedRoundTracking(page: import('@playwright/test').Page): Pr
       startedRoundCount: save.startedRoundIds?.length,
     }
   })
+}
+
+async function expectShellScreenFits(
+  page: Page,
+  viewport: { width: number; height: number },
+  screenName: string,
+): Promise<void> {
+  const boxes = await page.locator('button:visible, input:visible, select:visible').evaluateAll((elements) => {
+    return elements.map((element, index) => {
+      const rect = element.getBoundingClientRect()
+      const testId = element.getAttribute('data-testid')
+      const text = element.textContent?.trim()
+
+      return {
+        name: testId || text || `${index + 1}`,
+        box: {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+        },
+      }
+    })
+  })
+
+  expect(boxes.length, `${screenName} visible native controls`).toBeGreaterThan(0)
+
+  for (const { name, box } of boxes) {
+    expect(box.width, `${screenName} ${name} width`).toBeGreaterThan(0)
+    expect(box.height, `${screenName} ${name} height`).toBeGreaterThan(0)
+    expectBoxFitsViewport(name, box, viewport)
+  }
+
+  for (let left = 0; left < boxes.length; left += 1) {
+    for (let right = left + 1; right < boxes.length; right += 1) {
+      expect(boxesOverlap(boxes[left].box, boxes[right].box), `${boxes[left].name} overlaps ${boxes[right].name}`).toBe(false)
+    }
+  }
+}
+
+type Box = { x: number; y: number; width: number; height: number }
+
+function expectBoxFitsViewport(name: string, box: Box, viewport: { width: number; height: number }): void {
+  const tolerance = 1
+
+  expect(box.x, `${name} should fit horizontally`).toBeGreaterThanOrEqual(-tolerance)
+  expect(box.y, `${name} should fit vertically`).toBeGreaterThanOrEqual(-tolerance)
+  expect(box.x + box.width, `${name} should fit horizontally`).toBeLessThanOrEqual(viewport.width + tolerance)
+  expect(box.y + box.height, `${name} should fit vertically`).toBeLessThanOrEqual(viewport.height + tolerance)
+}
+
+function boxesOverlap(a: Box, b: Box): boolean {
+  const tolerance = 1
+
+  return (
+    a.x < b.x + b.width - tolerance &&
+    a.x + a.width > b.x + tolerance &&
+    a.y < b.y + b.height - tolerance &&
+    a.y + a.height > b.y + tolerance
+  )
+}
+
+async function expectCanvasNonblank(page: Page): Promise<void> {
+  const canvas = page.getByTestId('game-canvas')
+
+  await expect(canvas).toBeVisible()
+
+  const screenshot = PNG.sync.read(await canvas.screenshot())
+  const seen = new Set<string>()
+  const stride = Math.max(4, Math.floor(screenshot.data.length / 2000 / 4) * 4)
+
+  for (let index = 0; index < screenshot.data.length; index += stride) {
+    seen.add(
+      `${screenshot.data[index]},${screenshot.data[index + 1]},${screenshot.data[index + 2]},${screenshot.data[index + 3]}`,
+    )
+  }
+
+  expect(screenshot.width * screenshot.height).toBeGreaterThan(0)
+  expect(seen.size).toBeGreaterThan(3)
 }
