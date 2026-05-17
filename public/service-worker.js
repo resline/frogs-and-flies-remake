@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isRuntimeCacheableRequest(request, url)) {
-    event.respondWith(cacheFirst(request))
+    event.respondWith(runtimeCacheableResponse(request))
     return
   }
 
@@ -109,18 +109,55 @@ self.addEventListener('fetch', (event) => {
 })
 
 function cacheFirst(request) {
-  return caches.match(request, { ignoreVary: true }).then((cachedResponse) => {
-    if (cachedResponse) {
-      return cachedResponse
-    }
-
-    return fetch(request).then((response) => {
-      if (response.ok) {
-        const copy = response.clone()
-        caches.open(PWA_CACHE_NAME).then((cache) => cache.put(request, copy))
+  return caches
+    .match(request, { ignoreVary: true })
+    .then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse
       }
+
+      return fetch(request).then((response) => {
+        cacheRuntimeResponse(request, response)
+        return response
+      })
+    })
+    .catch(() => createOfflineAssetResponse())
+}
+
+function runtimeCacheableResponse(request) {
+  if (request.mode === 'no-cors') {
+    return networkFirst(request)
+  }
+
+  return cacheFirst(request)
+}
+
+function networkFirst(request) {
+  return fetch(request)
+    .then((response) => {
+      cacheRuntimeResponse(request, response)
       return response
     })
+    .catch(() => cacheFirst(request))
+}
+
+function cacheRuntimeResponse(request, response) {
+  if (!response.ok) {
+    return
+  }
+
+  try {
+    const copy = response.clone()
+    caches.open(PWA_CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined)
+  } catch (_error) {
+    // Cache writes are opportunistic; the original network response should still satisfy the request.
+  }
+}
+
+function createOfflineAssetResponse() {
+  return new Response('', {
+    status: 504,
+    statusText: 'Offline asset unavailable',
   })
 }
 

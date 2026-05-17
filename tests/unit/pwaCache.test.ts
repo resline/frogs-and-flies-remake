@@ -19,8 +19,12 @@ import {
 interface ServiceWorkerPolicyContext {
   caches?: {
     match: (request: Request, options?: CacheQueryOptions) => Promise<Response | undefined>
+    open?: (cacheName: string) => Promise<{ put: (request: Request, response: Response) => Promise<void> }>
   }
   cacheFirst?: (request: Request) => Promise<Response>
+  runtimeCacheableResponse?: (request: Request) => Promise<Response>
+  fetch?: (request: Request) => Promise<Response>
+  Response?: typeof Response
   self: {
     addEventListener: () => void
     location: { origin: string }
@@ -33,6 +37,7 @@ interface ServiceWorkerPolicyContext {
 function loadServiceWorkerPolicy(overrides: Partial<ServiceWorkerPolicyContext> = {}): ServiceWorkerPolicyContext {
   const source = readFileSync(new URL('../../public/service-worker.js', import.meta.url), 'utf8')
   const context: ServiceWorkerPolicyContext = {
+    Response,
     self: {
       addEventListener: () => undefined,
       location: { origin: 'https://game.example' },
@@ -194,6 +199,65 @@ describe('PWA cache contract', () => {
       expect.any(Response),
     )
     expect(cacheMatchOptions).toMatchObject({ ignoreVary: true })
+  })
+
+  it('returns an offline asset response instead of rejecting runtime cache fetch failures', async () => {
+    const context = loadServiceWorkerPolicy({
+      caches: {
+        match: async () => undefined,
+      },
+      fetch: async () => {
+        throw new TypeError('network offline')
+      },
+    })
+
+    const response = await context.cacheFirst?.(new Request('https://game.example/assets/m28/m28-prologue-dawn-v1.png'))
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response?.ok).toBe(false)
+    expect(response?.status).toBe(504)
+  })
+
+  it('returns an offline asset response instead of rejecting runtime cache lookup failures', async () => {
+    const context = loadServiceWorkerPolicy({
+      caches: {
+        match: async () => {
+          throw new TypeError('cache unavailable')
+        },
+      },
+    })
+
+    const response = await context.cacheFirst?.(new Request('https://game.example/assets/m28/m28-prologue-dawn-v1.png'))
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response?.ok).toBe(false)
+    expect(response?.status).toBe(504)
+  })
+
+  it('uses network-first handling for no-cors runtime image requests', async () => {
+    let cacheChecked = false
+    let fetched = false
+    const context = loadServiceWorkerPolicy({
+      caches: {
+        match: async () => {
+          cacheChecked = true
+          throw new TypeError('cache unavailable')
+        },
+      },
+      fetch: async () => {
+        fetched = true
+        return new Response('image bytes')
+      },
+    })
+
+    const response = await context.runtimeCacheableResponse?.(
+      new Request('https://game.example/assets/m28/m28-prologue-dawn-v1.png', { mode: 'no-cors' }),
+    )
+
+    expect(response).toBeInstanceOf(Response)
+    expect(response?.ok).toBe(true)
+    expect(fetched).toBe(true)
+    expect(cacheChecked).toBe(false)
   })
 
   it('marks runtime cache ready only after warmed runtime assets are written to the PWA cache', async () => {

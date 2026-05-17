@@ -1183,7 +1183,7 @@ Expected: commit created. Omit unchanged files from `git add`.
 - Modify: this plan file only if checking boxes.
 - No code changes expected. If verification finds a bug, use systematic-debugging before patching.
 
-- [ ] **Step 1: Run full unit tests**
+- [x] **Step 1: Run full unit tests**
 
 Run:
 
@@ -1193,7 +1193,7 @@ npm run test:unit
 
 Expected: PASS.
 
-- [ ] **Step 2: Run build**
+- [x] **Step 2: Run build**
 
 Run:
 
@@ -1203,7 +1203,7 @@ npm run build
 
 Expected: PASS and `dist/` generated.
 
-- [ ] **Step 3: Run focused M2.8 and campaign regression E2E**
+- [x] **Step 3: Run focused M2.8 and campaign regression E2E**
 
 Run:
 
@@ -1217,7 +1217,7 @@ npx playwright test tests/e2e/m26-performance.spec.ts --project=chromium
 
 Expected: PASS.
 
-- [ ] **Step 4: Run full E2E**
+- [x] **Step 4: Run full E2E**
 
 Run:
 
@@ -1227,7 +1227,7 @@ npm run test:e2e
 
 Expected: PASS across Chromium, Firefox, WebKit; known documented WebKit offline service-worker reload skips may remain.
 
-- [ ] **Step 5: Run combined npm test**
+- [x] **Step 5: Run combined npm test**
 
 Run:
 
@@ -1237,7 +1237,7 @@ npm test
 
 Expected: unit and E2E pass. If this duplicates freshly completed Step 1 and Step 4 and time is constrained, consolidation may accept Step 1 plus Step 4 as equivalent evidence, but record the decision explicitly.
 
-- [ ] **Step 6: Run scope guard**
+- [x] **Step 6: Run scope guard**
 
 Run:
 
@@ -1255,7 +1255,7 @@ Expected:
 - no live runtime network/API dependency except existing same-origin service-worker/static asset fetch handling,
 - no OpenAI/ChatGPT/API key references in runtime code.
 
-- [ ] **Step 7: Clean generated files**
+- [x] **Step 7: Clean generated files**
 
 Run:
 
@@ -1266,7 +1266,7 @@ git status --short --branch
 
 Expected: clean worktree except this plan file if checkboxes are being committed.
 
-- [ ] **Step 8: Commit final plan checkbox update if changed**
+- [x] **Step 8: Commit final plan checkbox update if changed**
 
 Run:
 

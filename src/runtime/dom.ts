@@ -776,8 +776,13 @@ function syncProloguePanel(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.prologuePanel.setAttribute('data-prologue-panel-index', String(panelIndex))
   dom.prologuePanel.setAttribute('data-prologue-panel-count', String(prologue.panels.length))
   dom.prologuePanel.setAttribute('data-prologue-tone', panel.visualTone)
-  dom.prologueIllustration.setAttribute('src', M28_PROLOGUE_ASSET_PATH_BY_TONE[panel.visualTone])
-  dom.prologueIllustration.setAttribute('data-prologue-image-tone', panel.visualTone)
+  if (shellSync.shell.screen === 'prologue') {
+    dom.prologueIllustration.setAttribute('src', M28_PROLOGUE_ASSET_PATH_BY_TONE[panel.visualTone])
+    dom.prologueIllustration.setAttribute('data-prologue-image-tone', panel.visualTone)
+  } else {
+    dom.prologueIllustration.removeAttribute('src')
+    dom.prologueIllustration.removeAttribute('data-prologue-image-tone')
+  }
   dom.prologueTitle.textContent = prologue.title
   dom.prologueText.textContent = panel.text
   dom.prologueProgress.textContent = `Panel ${panelIndex + 1} of ${prologue.panels.length}`
