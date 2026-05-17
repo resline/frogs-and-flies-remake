@@ -669,7 +669,7 @@ Expected: commit is limited to game option consumption and tests. It must not in
 - Create: `tests/e2e/m29-encounter-profiles.spec.ts`
 - Modify: `tests/unit/encounterProfiles.test.ts`
 
-- [ ] **Step 1: Write failing runtime resolver tests**
+- [x] **Step 1: Write failing runtime resolver tests**
 
 In `tests/unit/encounterProfiles.test.ts`, add tests that resolve each campaign level to the intended profile and game tuning:
 
@@ -679,7 +679,7 @@ expect(resolveCampaignEncounterProfile('home-pond-1-2-quick-tongue')?.id).toBe('
 expect(resolveCampaignEncounterProfile('home-pond-1-3-nightfall-feast')?.id).toBe('home-pond-nightfall-pressure')
 ```
 
-- [ ] **Step 2: Write failing Playwright marker tests**
+- [x] **Step 2: Write failing Playwright marker tests**
 
 Create `tests/e2e/m29-encounter-profiles.spec.ts`:
 
@@ -718,7 +718,7 @@ test('classic single and local versus have no campaign encounter marker', async 
 
 Adjust selectors if the existing shell flow requires `results` cleanup between mode changes.
 
-- [ ] **Step 3: Run runtime/E2E tests red**
+- [x] **Step 3: Run runtime/E2E tests red**
 
 Run:
 
@@ -729,7 +729,7 @@ npx playwright test tests/e2e/m29-encounter-profiles.spec.ts --project=chromium
 
 Expected: FAIL because runtime does not pass profile options or expose markers.
 
-- [ ] **Step 4: Extend active campaign context**
+- [x] **Step 4: Extend active campaign context**
 
 In `src/runtime/app.ts`, extend `ActiveCampaignContext`:
 
@@ -739,7 +739,7 @@ encounterProfileId: EncounterProfileId
 
 Resolve `level.contentProfileId` to an encounter profile before `resetGame()` in `launchCampaignLevel(levelId)`. If profile lookup fails, return without launching and log no user-facing error; validation tests should make this impossible in normal builds.
 
-- [ ] **Step 5: Pass resolved tuning to `createGame()`**
+- [x] **Step 5: Pass resolved tuning to `createGame()`**
 
 In `launchCampaignLevel(levelId)`:
 
@@ -753,7 +753,7 @@ In `launchCampaignLevel(levelId)`:
   - duration precedence documented and tested
 - Do not change `startGameplay()`, `selectMode()`, `replay()` for non-campaign rounds except to clear any active campaign context.
 
-- [ ] **Step 6: Add DOM marker sync**
+- [x] **Step 6: Add DOM marker sync**
 
 In `src/runtime/dom.ts`:
 
@@ -762,7 +762,7 @@ In `src/runtime/dom.ts`:
 - Prefer setting the marker on `dom.shell`; optionally mirror to `dom.state` and `dom.canvas` only if E2E or debugging benefits.
 - Do not add player-facing text solely for the test marker.
 
-- [ ] **Step 7: Run runtime/E2E tests green**
+- [x] **Step 7: Run runtime/E2E tests green**
 
 Run:
 
@@ -776,7 +776,19 @@ git diff --check
 
 Expected: PASS; campaign profile markers appear only for campaign levels; existing M2.7 campaign flow remains green.
 
-- [ ] **Step 8: Commit**
+Task 5 handoff evidence, 2026-05-17:
+
+- RED: `npm run test:unit -- tests/unit/encounterProfiles.test.ts` failed with the expected missing runtime handoff: `TypeError: resolveCampaignLevelRuntimeEncounter is not a function`.
+- RED: `npx playwright test tests/e2e/m29-encounter-profiles.spec.ts --project=chromium` failed with the expected missing campaign marker: shell `data-campaign-encounter-profile` was absent when `home-pond-baseline-gentle` was expected; the Classic/Versus marker absence check already passed.
+- GREEN: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/campaignRegistry.test.ts` passed with 2 files and 14 tests.
+- GREEN: `npx playwright test tests/e2e/m29-encounter-profiles.spec.ts --project=chromium` passed with 2 tests.
+- GREEN: `npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium` passed with 6 tests.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`; verified they are absent.
+- Scope: changed runtime handoff/DOM marker sync, focused unit/E2E coverage, and this Task 5 evidence only; `tests/e2e/m27-campaign-flow.spec.ts` did not need edits; no `src/game/**` changes, no new entities/assets/audio/save schema/backend/localization/monetization work.
+
+- [x] **Step 8: Commit**
 
 Run:
 

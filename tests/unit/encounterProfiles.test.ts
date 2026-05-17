@@ -1,13 +1,42 @@
 import { describe, expect, it } from 'vitest'
-import { getEncounterProfile } from '../../src/content/registry'
+import { getEncounterProfile, resolveCampaignEncounterProfile } from '../../src/content/registry'
 import type { EncounterMechanicsProfileDefinition } from '../../src/content/types'
 import { getClassicDifficulty } from '../../src/game/difficulty'
+import { resolveCampaignLevelRuntimeEncounter } from '../../src/runtime/app'
 import {
   resolveCampaignLevelEncounterGameOptions,
   resolveEncounterProfileGameOptions,
 } from '../../src/runtime/encounterOptions'
 
 describe('M2.9 encounter profile game option resolver', () => {
+  it('resolves each campaign level to its runtime encounter profile handoff', () => {
+    const expectedProfiles = [
+      {
+        levelId: 'home-pond-1-1-first-hunt',
+        profileId: 'home-pond-baseline-gentle',
+        flySpawnSeconds: 0.75,
+      },
+      {
+        levelId: 'home-pond-1-2-quick-tongue',
+        profileId: 'home-pond-quick-tongue',
+        flySpawnSeconds: 0.63,
+      },
+      {
+        levelId: 'home-pond-1-3-nightfall-feast',
+        profileId: 'home-pond-nightfall-pressure',
+        flySpawnSeconds: 0.54,
+      },
+    ] as const
+
+    for (const expectedProfile of expectedProfiles) {
+      expect(resolveCampaignEncounterProfile(expectedProfile.levelId)?.id).toBe(expectedProfile.profileId)
+
+      const handoff = resolveCampaignLevelRuntimeEncounter(expectedProfile.levelId, 'classic-standard')
+      expect(handoff?.encounterProfileId).toBe(expectedProfile.profileId)
+      expect(handoff?.gameOptions.encounter.flySpawnSeconds).toBeCloseTo(expectedProfile.flySpawnSeconds)
+    }
+  })
+
   it('converts Home Pond encounter profiles into numeric createGame encounter options', () => {
     const baseline = resolveEncounterProfileGameOptions(
       getEncounterProfile('home-pond-baseline-gentle')!,

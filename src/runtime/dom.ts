@@ -1,6 +1,12 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
-import type { CampaignDefinition, CampaignLevelDefinition, CampaignLevelId, PrologueDefinition } from '../content/types'
+import type {
+  CampaignDefinition,
+  CampaignLevelDefinition,
+  CampaignLevelId,
+  EncounterProfileId,
+  PrologueDefinition,
+} from '../content/types'
 import { M28_CAMPAIGN_UI_ASSET_PATHS, M28_PROLOGUE_ASSET_PATH_BY_TONE } from './assets'
 import type { AudioManagerState } from './audio'
 import type { RuntimeOptions } from './options'
@@ -113,6 +119,7 @@ export interface ShellDomSyncState {
   prologue?: PrologueDefinition
   prologuePanelIndex?: number
   activeCampaignLevelId?: CampaignLevelId
+  activeCampaignEncounterProfileId?: EncounterProfileId
   latestCampaignResultSummary?: CampaignResultDomSummary
   campaignProgress?: SaveData['campaign']
 }
@@ -659,6 +666,11 @@ function syncCampaignShellMarkers(dom: DomState, shellSync: ShellDomSyncState): 
     dom.shell.setAttribute('data-active-campaign-level', shellSync.activeCampaignLevelId)
   } else {
     dom.shell.removeAttribute('data-active-campaign-level')
+  }
+  if (shellSync.activeCampaignEncounterProfileId) {
+    dom.shell.setAttribute('data-campaign-encounter-profile', shellSync.activeCampaignEncounterProfileId)
+  } else {
+    dom.shell.removeAttribute('data-campaign-encounter-profile')
   }
 }
 

@@ -1,6 +1,7 @@
 import { Application } from 'pixi.js'
 import { ARENA_HEIGHT, ARENA_WIDTH, FIXED_TIMESTEP_SECONDS } from '../game/constants'
 import { createGame } from '../game/createGame'
+import { getClassicDifficulty } from '../game/difficulty'
 import { createFixedStep } from '../game/fixedStep'
 import { buildResults } from '../game/match'
 import { drainGameplayAudioEvents, updateGame } from '../game/update'
@@ -11,8 +12,9 @@ import {
   HOME_POND_CAMPAIGN,
   HOME_POND_LEVELS,
   HOME_POND_PROLOGUE,
+  resolveCampaignEncounterProfile,
 } from '../content/registry'
-import type { CampaignId, CampaignLevelId } from '../content/types'
+import type { CampaignId, CampaignLevelId, EncounterProfileId } from '../content/types'
 import {
   addRuntimeInputAction,
   applyRuntimeInput,
@@ -33,6 +35,7 @@ import { createRenderScene, renderScene, type RenderFrameMarkers, type RenderSce
 import { createAudioManager } from './audio'
 import { loadGeneratedGameplayAssets } from './assets'
 import { createDomState, mountCanvas, syncDom, type CampaignResultDomSummary } from './dom'
+import { resolveEncounterProfileGameOptions, type EncounterProfileGameOptions } from './encounterOptions'
 import type { RuntimeParams } from './params'
 import type { GameState, MatchMode } from '../game/types'
 import type { RuntimeOptions } from './options'
@@ -91,8 +94,31 @@ export interface RuntimePersistenceServices {
 interface ActiveCampaignContext {
   campaignId: CampaignId
   levelId: CampaignLevelId
+  encounterProfileId: EncounterProfileId
   attemptId: string
   launchedFrom: 'campaign'
+}
+
+type RuntimeGameParams = RuntimeParams & Partial<EncounterProfileGameOptions>
+
+export interface RuntimeCampaignLevelEncounterHandoff {
+  encounterProfileId: EncounterProfileId
+  gameOptions: EncounterProfileGameOptions
+}
+
+export function resolveCampaignLevelRuntimeEncounter(
+  levelId: CampaignLevelId,
+  difficulty: RuntimeOptions['difficulty'],
+): RuntimeCampaignLevelEncounterHandoff | undefined {
+  const profile = resolveCampaignEncounterProfile(levelId)
+  if (!profile) {
+    return undefined
+  }
+
+  return {
+    encounterProfileId: profile.id,
+    gameOptions: resolveEncounterProfileGameOptions(profile, getClassicDifficulty(difficulty)),
+  }
 }
 
 export async function startRuntime(
@@ -101,7 +127,7 @@ export async function startRuntime(
   persistence: RuntimePersistenceServices = {},
 ): Promise<RuntimeHandle> {
   const dom = createDomState(root)
-  let currentRuntimeParams = runtimeParams
+  let currentRuntimeParams: RuntimeGameParams = runtimeParams
   let game = createInitialGame(currentRuntimeParams)
   let fixedStep = createRuntimeFixedStep(currentRuntimeParams)
   const saveManager = persistence.saveManager ?? createSaveManager()
@@ -166,6 +192,7 @@ export async function startRuntime(
       prologue: HOME_POND_PROLOGUE,
       prologuePanelIndex,
       activeCampaignLevelId: activeCampaignContext?.levelId,
+      activeCampaignEncounterProfileId: activeCampaignContext?.encounterProfileId,
       latestCampaignResultSummary,
     })
     syncInputRuntimeMarkers(dom.shell, runtimeInput, gamepadSnapshot)
@@ -208,8 +235,9 @@ export async function startRuntime(
   }
 
   function startGameplay(): void {
-    if (game.mode !== shellState.selectedMode) {
-      resetGame({ ...currentRuntimeParams, mode: shellState.selectedMode })
+    const gameplayParams = withoutCampaignEncounterParams({ ...currentRuntimeParams, mode: shellState.selectedMode })
+    if (game.mode !== shellState.selectedMode || currentRuntimeParams.encounter) {
+      resetGame(gameplayParams)
     }
     clearActiveCampaignContext()
     beginRound()
@@ -222,6 +250,10 @@ export async function startRuntime(
     if (!level || saveData.campaign.levels[level.id]?.unlocked !== true) {
       return
     }
+    const encounterHandoff = resolveCampaignLevelRuntimeEncounter(level.id, currentRuntimeParams.options.difficulty)
+    if (!encounterHandoff) {
+      return
+    }
 
     latestCampaignResultSummary = undefined
     campaignResultRecordedAttemptId = ''
@@ -229,12 +261,18 @@ export async function startRuntime(
       ...saveData,
       campaign: selectCampaignLevel(saveData.campaign, level.campaignId, level.id),
     })
-    resetGame({ ...currentRuntimeParams, mode: 'classic-single' })
+    resetGame({
+      ...currentRuntimeParams,
+      mode: 'classic-single',
+      // Runtime query duration stays on RuntimeParams and wins; profile duration stays inside encounter tuning.
+      encounter: encounterHandoff.gameOptions.encounter,
+    })
     transitionShell({ type: 'startCampaignLevel' })
     beginRound()
     activeCampaignContext = {
       campaignId: level.campaignId,
       levelId: level.id,
+      encounterProfileId: encounterHandoff.encounterProfileId,
       attemptId: activeRoundId,
       launchedFrom: 'campaign',
     }
@@ -344,7 +382,7 @@ export async function startRuntime(
     runtimeInput.profile = readSelectedInputProfile(saveData)
   }
 
-  const resetGame = (nextRuntimeParams = currentRuntimeParams, start = false) => {
+  const resetGame = (nextRuntimeParams: RuntimeGameParams = currentRuntimeParams, start = false) => {
     currentRuntimeParams = nextRuntimeParams
     syncAudioOptions()
     game = createGame(currentRuntimeParams)
@@ -370,7 +408,7 @@ export async function startRuntime(
     transitionShell({ type: shellState.screen === 'results' ? 'replay' : 'startGameplay' })
     clearActiveCampaignContext()
     beginRound()
-    resetGame(currentRuntimeParams, true)
+    resetGame(withoutCampaignEncounterParams(currentRuntimeParams), true)
   }
 
   const runRuntimeAction = (action: RuntimeInputAction | undefined) => {
@@ -400,7 +438,7 @@ export async function startRuntime(
       return
     }
 
-    resetGame({ ...currentRuntimeParams, mode: action.mode })
+    resetGame(withoutCampaignEncounterParams({ ...currentRuntimeParams, mode: action.mode }))
   }
 
   const handleStartClick = () => {
@@ -490,7 +528,7 @@ export async function startRuntime(
   const handleChangeModeClick = () => {
     clearActiveCampaignContext()
     transitionShell({ type: 'changeMode' })
-    resetGame(currentRuntimeParams)
+    resetGame(withoutCampaignEncounterParams(currentRuntimeParams))
   }
   const handleCampaignReplayLevelClick = () => {
     if (latestCampaignResultSummary?.levelId) {
@@ -511,7 +549,7 @@ export async function startRuntime(
   const handleCampaignClassicModesClick = () => {
     clearActiveCampaignContext()
     transitionShell({ type: 'changeMode' })
-    resetGame(currentRuntimeParams)
+    resetGame(withoutCampaignEncounterParams(currentRuntimeParams))
   }
   const handleClassicSingleClick = () => selectMode('classic-single')
   const handleLocalVersusClick = () => selectMode('local-versus')
@@ -528,7 +566,7 @@ export async function startRuntime(
   }
   const handleRestartClick = () => {
     transitionShell({ type: 'startGameplay' })
-    resetGame(currentRuntimeParams, true)
+    resetGame(activeCampaignContext ? currentRuntimeParams : withoutCampaignEncounterParams(currentRuntimeParams), true)
     beginRound()
     if (activeCampaignContext) {
       activeCampaignContext = {
@@ -582,11 +620,22 @@ export async function startRuntime(
 
   function selectMode(mode: RuntimeParams['mode']): void {
     transitionShell({ type: 'selectMode', mode })
-    resetGame({ ...currentRuntimeParams, mode })
+    resetGame(withoutCampaignEncounterParams({ ...currentRuntimeParams, mode }))
   }
 
   function resetDifficulty(difficulty: RuntimeOptions['difficulty']): void {
-    resetGame({ ...currentRuntimeParams, options: { ...currentRuntimeParams.options, difficulty } })
+    const nextRuntimeParams: RuntimeGameParams = {
+      ...currentRuntimeParams,
+      options: { ...currentRuntimeParams.options, difficulty },
+    }
+    const campaignEncounter = activeCampaignContext
+      ? resolveCampaignLevelRuntimeEncounter(activeCampaignContext.levelId, difficulty)
+      : undefined
+    resetGame(
+      campaignEncounter
+        ? { ...nextRuntimeParams, encounter: campaignEncounter.gameOptions.encounter }
+        : withoutCampaignEncounterParams(nextRuntimeParams),
+    )
     persistCurrentSettings()
   }
 
@@ -902,6 +951,11 @@ export async function startRuntime(
 function readSelectedInputProfile(save: SaveData): InputProfile {
   const selected = save.inputProfiles.find((profile) => profile.id === save.settings.inputProfileId) ?? save.inputProfiles[0]
   return toRuntimeInputProfile(selected) ?? resetProfileToDefaults(DEFAULT_INPUT_PROFILE)
+}
+
+function withoutCampaignEncounterParams(params: RuntimeGameParams): RuntimeGameParams {
+  const { encounter: _encounter, ...runtimeParams } = params
+  return runtimeParams
 }
 
 function toRuntimeInputProfile(profile: SaveData['inputProfiles'][number] | undefined): InputProfile | undefined {
