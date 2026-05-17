@@ -224,7 +224,7 @@ Attempt id format can be:
 - Read: `README.md`
 - Read: `package.json`
 
-- [ ] **Step 1: Confirm branch and dirty state**
+- [x] **Step 1: Confirm branch and dirty state**
 
 Run:
 
@@ -236,7 +236,7 @@ git log --oneline --decorate -8
 
 Expected: branch is `ff2-m0-pixijs`; worktree is clean except changes by the current worker; recent history includes `7769003 docs: add m210 campaign round identity spec`.
 
-- [ ] **Step 2: Confirm no existing M2.10 implementation work needs preservation**
+- [x] **Step 2: Confirm no existing M2.10 implementation work needs preservation**
 
 Run:
 
@@ -247,7 +247,7 @@ git status --short
 
 Expected: M2.10 terms appear only in the spec and this plan before implementation. If `src/`, `tests/`, or `README.md` already contain M2.10 code/docs, stop and inspect those edits instead of overwriting them.
 
-- [ ] **Step 3: Run focused baseline unit tests**
+- [x] **Step 3: Run focused baseline unit tests**
 
 Run:
 
@@ -257,7 +257,7 @@ npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.
 
 Expected: PASS on the M2.9 baseline.
 
-- [ ] **Step 4: Run focused baseline campaign E2E**
+- [x] **Step 4: Run focused baseline campaign E2E**
 
 Run:
 
@@ -267,7 +267,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts tests/e2e/m29-encounter-
 
 Expected: PASS on the M2.9 baseline.
 
-- [ ] **Step 5: Record baseline findings in the task handoff**
+- [x] **Step 5: Record baseline findings in the task handoff**
 
 Record these observed baseline facts:
 
@@ -277,7 +277,17 @@ Record these observed baseline facts:
 - `refresh()` currently invokes `recordCompletedRoundIfNeeded()` before `recordCampaignResultIfNeeded()`.
 - `tests/e2e/*` save-key constants currently use v2.
 
-- [ ] **Step 6: Commit only if task evidence is written to a file**
+Baseline evidence recorded 2026-05-17:
+
+- Branch and dirty guard: `git branch --show-current` returned `ff2-m0-pixijs`; `git status --short --branch` returned `## ff2-m0-pixijs...origin/ff2-m0-pixijs`; recent history was headed by `a10866e docs: align m210 plan with standing approval` and included `7769003 docs: add m210 campaign round identity spec`.
+- Existing implementation guard: the requested `rg` found M2.10 v3/attempt terms only in docs plans. The `src/` and `tests/` matches are current baseline v2 references: `src/runtime/save.ts` has `SAVE_SCHEMA_VERSION = 2` and `SAVE_STORAGE_KEY = 'frogs-and-flies.save.v2'`, and `tests/unit/saveManager.test.ts` expects v2.
+- Focused unit baseline: `npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.test.ts tests/unit/readmeControls.test.ts` passed with 3 files and 30 tests.
+- Focused campaign E2E baseline: `npx playwright test tests/e2e/m27-campaign-flow.spec.ts tests/e2e/m29-encounter-profiles.spec.ts --project=chromium` passed with 10 Chromium tests.
+- Observed baseline facts: `src/runtime/save.ts` is v2 with primary key `frogs-and-flies.save.v2`; `src/runtime/campaignProgress.ts` has no campaign attempts ledger; campaign level launch in `src/runtime/app.ts` calls `beginRound()`, which persists `recordRoundStarted()` direct started-round stats; `refresh()` calls `recordCompletedRoundIfNeeded()` before `recordCampaignResultIfNeeded()`; focused M2.6/M2.7/M2.9 E2E save-key constants currently use v2.
+- Generated cleanup: Playwright produced `test-results/`, which was removed. `dist/` and `playwright-report/` were not present.
+- Scope guard: no source, test, README, asset, audio, package, Docker, or sibling repo edits were made for Task 1.
+
+- [x] **Step 6: Commit only if task evidence is written to a file**
 
 If Task 1 changes no files, do not commit. If evidence is written into this plan during execution, commit only the plan evidence:
 
@@ -286,7 +296,7 @@ git add docs/superpowers/plans/2026-05-17-frogs-and-flies-m210-campaign-round-id
 git commit -m "docs: record m210 baseline audit"
 ```
 
-- [ ] **Step 7: Mandatory consolidation**
+- [x] **Step 7: Mandatory consolidation**
 
 Run:
 
