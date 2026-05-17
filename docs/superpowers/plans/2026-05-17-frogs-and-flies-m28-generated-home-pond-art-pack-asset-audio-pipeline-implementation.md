@@ -1283,7 +1283,7 @@ Expected: commit created only if this plan file changed.
 - Modify: this plan file only if checking boxes.
 - No code changes expected.
 
-- [ ] **Step 1: Run production preview smoke**
+- [x] **Step 1: Run production preview smoke**
 
 Start preview:
 
@@ -1300,7 +1300,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m27-camp
 
 Expected: PASS. Stop preview afterward.
 
-- [ ] **Step 2: Docker build**
+- [x] **Step 2: Docker build**
 
 Run:
 
@@ -1310,7 +1310,7 @@ docker build -t frogs-and-flies-m28-art-pack .
 
 Expected: PASS.
 
-- [ ] **Step 3: Docker static smoke**
+- [x] **Step 3: Docker static smoke**
 
 Run container:
 
@@ -1345,7 +1345,7 @@ Expected:
 
 Stop container afterward.
 
-- [ ] **Step 4: Clean before push**
+- [x] **Step 4: Clean before push**
 
 Run:
 
@@ -1357,7 +1357,7 @@ git log --oneline --decorate -5
 
 Expected: clean branch ahead of origin by M2.8 commits.
 
-- [ ] **Step 5: Push**
+- [x] **Step 5: Push**
 
 Run:
 
@@ -1367,7 +1367,7 @@ git push origin ff2-m0-pixijs
 
 Expected: push succeeds and local branch matches origin.
 
-- [ ] **Step 6: Coolify production deploy**
+- [x] **Step 6: Coolify production deploy**
 
 Use the Coolify deployment workflow for app `frogs-and-flies-remake` on server `cx32-hell`, URL `https://frog.resline.net`.
 
@@ -1380,7 +1380,7 @@ Expected evidence to collect:
 - deployed commit equals pushed HEAD,
 - server is `cx32-hell`.
 
-- [ ] **Step 7: Production static smoke**
+- [x] **Step 7: Production static smoke**
 
 Run:
 
@@ -1404,7 +1404,7 @@ Expected:
 - `/service-worker.js` returns `200` with JavaScript content type,
 - representative image/audio assets return `200` with acceptable MIME.
 
-- [ ] **Step 8: Production Playwright smoke**
+- [x] **Step 8: Production Playwright smoke**
 
 Run:
 
@@ -1415,7 +1415,7 @@ PLAYWRIGHT_BASE_URL=https://frog.resline.net npx playwright test tests/e2e/m27-c
 
 Expected: PASS on production.
 
-- [ ] **Step 9: Final status**
+- [x] **Step 9: Final status**
 
 Run:
 
