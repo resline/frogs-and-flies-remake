@@ -1311,7 +1311,7 @@ Expected: commit created. Omit unchanged files from `git add`.
 - Modify: this plan file only if checking final boxes.
 - No code changes expected unless verification finds a bug. If a bug is found, use systematic-debugging before patching.
 
-- [ ] **Step 1: Run full unit tests**
+- [x] **Step 1: Run full unit tests**
 
 Run:
 
@@ -1321,7 +1321,7 @@ npm run test:unit
 
 Expected: PASS.
 
-- [ ] **Step 2: Run build**
+- [x] **Step 2: Run build**
 
 Run:
 
@@ -1331,7 +1331,7 @@ npm run build
 
 Expected: PASS and `dist/` generated.
 
-- [ ] **Step 3: Run full E2E**
+- [x] **Step 3: Run full E2E**
 
 Run:
 
@@ -1341,7 +1341,7 @@ npm run test:e2e
 
 Expected: PASS across Chromium, Firefox, WebKit; the known WebKit PWA offline reload skip may remain documented.
 
-- [ ] **Step 4: Run combined npm test**
+- [x] **Step 4: Run combined npm test**
 
 Run:
 
@@ -1351,7 +1351,7 @@ npm test
 
 Expected: unit and E2E pass. If this duplicates a just-completed full gate and time is constrained, consolidation may accept Step 1 plus Step 3 as the equivalent evidence, but record the decision.
 
-- [ ] **Step 5: Run production preview campaign smoke**
+- [x] **Step 5: Run production preview campaign smoke**
 
 Start preview:
 
@@ -1367,7 +1367,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m27-camp
 
 Expected: PASS. Stop preview afterward.
 
-- [ ] **Step 6: Docker build**
+- [x] **Step 6: Docker build**
 
 Run:
 
@@ -1377,7 +1377,7 @@ docker build -t frogs-and-flies-m27-campaign-prologue .
 
 Expected: PASS.
 
-- [ ] **Step 7: Docker static smoke**
+- [x] **Step 7: Docker static smoke**
 
 Run container:
 
@@ -1405,7 +1405,7 @@ Expected:
 
 Stop container afterward.
 
-- [ ] **Step 8: Scope audit**
+- [x] **Step 8: Scope audit**
 
 Run:
 
@@ -1422,7 +1422,7 @@ Expected:
 - No new assets under `public/assets/**` or `public/audio/**`.
 - `src/game/**` contains no campaign/prologue/content-registry imports.
 
-- [ ] **Step 9: Clean generated files**
+- [x] **Step 9: Clean generated files**
 
 Run:
 
@@ -1433,7 +1433,7 @@ git status --short --branch
 
 Expected: clean worktree except the final plan checkbox update if the worker is committing it.
 
-- [ ] **Step 10: Final commit if plan checkboxes changed**
+- [x] **Step 10: Final commit if plan checkboxes changed**
 
 If this plan file was updated to mark tasks complete, commit it:
 
@@ -1444,7 +1444,7 @@ git commit -m "feat: complete m27 campaign prologue"
 
 Expected: final local commit created. If no files changed, do not create an empty commit.
 
-- [ ] **Step 11: Push**
+- [x] **Step 11: Push**
 
 Run:
 
@@ -1455,7 +1455,7 @@ git push origin ff2-m0-pixijs
 
 Expected: push succeeds and local branch matches origin.
 
-- [ ] **Step 12: Coolify production deploy**
+- [x] **Step 12: Coolify production deploy**
 
 Use the Coolify deployment workflow for app `frogs-and-flies-remake` on server `cx32-hell`, URL `https://frog.resline.net`.
 
@@ -1468,7 +1468,7 @@ Expected evidence to collect:
 - Coolify deployed commit equals local HEAD.
 - Server is `cx32-hell`.
 
-- [ ] **Step 13: Production smoke**
+- [x] **Step 13: Production smoke**
 
 Run:
 
@@ -1486,7 +1486,7 @@ Expected:
 - `/service-worker.js` returns `200` with JavaScript content type.
 - M2.7 campaign Chromium smoke passes on production.
 
-- [ ] **Step 14: Final status**
+- [x] **Step 14: Final status**
 
 Run:
 
