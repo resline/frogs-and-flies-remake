@@ -15,6 +15,7 @@ const REPRESENTATIVE_IMAGE_PATHS = [
 ] as const
 
 const REPRESENTATIVE_AUDIO_PATHS = ['/audio/sfx/jump.mp3', '/audio/music/home-pond-loop.mp3'] as const
+const GAMEPLAY_ASSET_FALLBACK_TIMEOUT_MS = 10_000
 
 const RESPONSIVE_VIEWPORTS = [
   { width: 1366, height: 768 },
@@ -66,9 +67,13 @@ test.describe('M2.8 runtime asset pipeline', () => {
     })
     await page.goto('/?seed=2802&durationSeconds=10&theEndSeconds=0.1')
 
-    await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-assets-pack', /.+/)
+    await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-assets-pack', /.+/, {
+      timeout: GAMEPLAY_ASSET_FALLBACK_TIMEOUT_MS,
+    })
     expect(blockedM28Background).toBe(true)
-    await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-assets-pack', /legacy|procedural/)
+    await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-assets-pack', /legacy|procedural/, {
+      timeout: GAMEPLAY_ASSET_FALLBACK_TIMEOUT_MS,
+    })
     await expectCanvasNonblank(page)
   })
 

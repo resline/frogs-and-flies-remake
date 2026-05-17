@@ -1353,7 +1353,7 @@ Expected:
 - Service worker returns JavaScript-compatible content type.
 - MP3 returns audio-compatible MIME.
 
-- [ ] **Step 8: Production Playwright smoke**
+- [x] **Step 8: Production Playwright smoke**
 
 Run:
 
@@ -1395,6 +1395,15 @@ Task 10 evidence from 2026-05-17:
 - Production Playwright smoke passed for `tests/e2e/m29-encounter-profiles.spec.ts` (`4 passed`) and `tests/e2e/m27-campaign-flow.spec.ts` (`6 passed`).
 - Production Playwright smoke for `tests/e2e/m28-asset-pipeline.spec.ts` did not pass: required command returned `9 passed, 1 failed`. The failing test was `falls back when the M2.8 gameplay art pack is unavailable`, where `data-assets-pack` was still unset at the 5 second assertion timeout. A focused rerun reproduced the failure. Diagnostic evidence showed the route abort happened at about `1.3s`, fallback began, and `data-assets-pack` became `legacy` at about `6.3s`, after the assertion window. No source/test edits were made in this Task 10 scope.
 - Cleanup removed `test-results` and `playwright-report`; no `frogs-and-flies-m29` container remained.
+
+Task 10 blocker follow-up from 2026-05-17:
+
+- Systematic debugging reproduced the production fallback smoke flake with `PLAYWRIGHT_BASE_URL=https://frog.resline.net npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium --grep "falls back when the M2.8 gameplay art pack is unavailable" --repeat-each=5`: `4 failed, 1 passed`. The failures were still at the default 5 second `data-assets-pack` assertion.
+- Production timing probes showed the blocked M2.8 background route was hit, fallback completed correctly, and `data-assets-pack` became `legacy`; marker timing after `page.goto()` ranged from about `4.8s` to `5.8s`.
+- Minimal fix was test-only: the M2.8 fallback smoke now uses a named `10_000ms` bounded expect timeout for the fallback asset-pack marker. No app runtime/source change was needed.
+- Focused rerun after the fix passed: `PLAYWRIGHT_BASE_URL=https://frog.resline.net npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium --grep "falls back when the M2.8 gameplay art pack is unavailable" --repeat-each=5` returned `5 passed`.
+- Required production/local verification after the fix passed: production M2.8 asset pipeline `10 passed`; local M2.8 asset pipeline `10 passed`; production M2.9 encounter profiles `4 passed`; production M2.7 campaign flow rerun `6 passed`; focused unit gate `2 files / 24 tests passed`; `npm run build` passed; `git diff --check` passed.
+- Cleanup removed `dist`, `test-results`, and `playwright-report`. No source gameplay/content/save schema/assets/audio/package changes, push, or redeploy were performed in this follow-up.
 
 ## Final Completion Criteria
 
