@@ -863,7 +863,7 @@ Expected: commit created. Remove `dist/`, `test-results/`, and `playwright-repor
 - Modify: `tests/e2e/m26-accessibility.spec.ts` only if required by image semantics
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing DOM visual E2E**
+- [x] **Step 1: Write failing DOM visual E2E**
 
 Extend `tests/e2e/m28-asset-pipeline.spec.ts` to assert:
 
@@ -882,7 +882,7 @@ campaign-level-stars-<levelId>
 campaign-result-stars
 ```
 
-- [ ] **Step 2: Run DOM visual E2E red**
+- [x] **Step 2: Run DOM visual E2E red**
 
 Run:
 
@@ -892,7 +892,7 @@ npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium
 
 Expected: FAIL because DOM image/icon elements are absent.
 
-- [ ] **Step 3: Add prologue illustration DOM**
+- [x] **Step 3: Add prologue illustration DOM**
 
 In `src/runtime/dom.ts`:
 
@@ -901,7 +901,7 @@ In `src/runtime/dom.ts`:
 - set `data-testid="prologue-illustration"`, `alt=""`, `aria-hidden="true"`,
 - in `syncProloguePanel()`, set `src` from `M28_PROLOGUE_ASSET_PATH_BY_TONE[panel.visualTone]`, set `data-prologue-image-tone`, and keep all narrative text in `prologueText`.
 
-- [ ] **Step 4: Add campaign level icons/stars**
+- [x] **Step 4: Add campaign level icons/stars**
 
 In `createCampaignLevelRow()`:
 
@@ -910,7 +910,7 @@ In `createCampaignLevelRow()`:
 - add a star strip with test id `campaign-level-stars-${level.id}` containing three decorative star images,
 - keep `meta.textContent = "<Status> - <stars> stars - best <score>"` or equivalent visible text.
 
-- [ ] **Step 5: Add campaign result stars**
+- [x] **Step 5: Add campaign result stars**
 
 In `syncCampaignResultActions()`:
 
@@ -918,7 +918,7 @@ In `syncCampaignResultActions()`:
 - render three decorative star icons from `result.stars`,
 - keep `campaignResultStatus.textContent` as the accessible result source.
 
-- [ ] **Step 6: Add responsive/high-contrast CSS**
+- [x] **Step 6: Add responsive/high-contrast CSS**
 
 In `src/style.css`:
 
@@ -928,7 +928,7 @@ In `src/style.css`:
 - disable any image transition under `.is-reduced-motion`,
 - avoid nested UI cards and oversized hero-style text inside shell panels.
 
-- [ ] **Step 7: Run focused E2E and accessibility green**
+- [x] **Step 7: Run focused E2E and accessibility green**
 
 Run:
 
@@ -940,7 +940,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium
 
 Expected: PASS. Campaign/prologue text and controls remain accessible.
 
-- [ ] **Step 8: Run build**
+- [x] **Step 8: Run build**
 
 Run:
 
@@ -950,7 +950,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 Run:
 

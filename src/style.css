@@ -302,12 +302,62 @@ button[data-selected="true"] {
   border: 1px solid rgba(229, 255, 224, 0.2);
   border-radius: 8px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   padding: 8px;
 }
 
 .m27-level-row[data-unlocked="false"] {
   opacity: 0.72;
+}
+
+.m28-level-summary {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  min-width: 0;
+}
+
+.m28-level-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.m28-level-meta {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.m28-level-status-icon,
+.m28-star-icon {
+  display: block;
+  flex: 0 0 24px;
+  height: 24px;
+  object-fit: contain;
+  width: 24px;
+}
+
+.m28-star-strip,
+.m28-result-stars {
+  align-items: center;
+  display: flex;
+  gap: 3px;
+  min-height: 24px;
+}
+
+.m28-result-stars {
+  margin-top: 8px;
+}
+
+.m28-prologue-illustration {
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(229, 255, 224, 0.2);
+  border-radius: 8px;
+  display: block;
+  max-height: min(220px, 32dvh);
+  object-fit: cover;
+  width: 100%;
 }
 
 .m27-prologue-progress {
@@ -445,8 +495,14 @@ button[data-selected="true"] {
 
 .game-shell.is-high-contrast button,
 .game-shell.is-high-contrast .m25-control-group,
-.game-shell.is-high-contrast [data-testid="m25-hud"] > * {
+.game-shell.is-high-contrast [data-testid="m25-hud"] > *,
+.game-shell.is-high-contrast .m28-prologue-illustration {
   border-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.game-shell.is-high-contrast .m28-level-meta,
+.game-shell.is-high-contrast [data-testid="campaign-result-status"] {
+  color: #ffffff;
 }
 
 .game-shell.is-high-contrast button[data-selected="true"] {
@@ -490,6 +546,10 @@ button[data-selected="true"] {
   .m27-campaign-panel,
   .m27-prologue-panel {
     width: calc(100vw - 16px);
+  }
+
+  .m28-prologue-illustration {
+    max-height: min(160px, 26dvh);
   }
 
   .m27-campaign-actions button,

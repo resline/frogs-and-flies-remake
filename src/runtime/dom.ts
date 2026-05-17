@@ -1,10 +1,13 @@
 import { ARENA_HEIGHT, ARENA_WIDTH } from '../game/constants'
 import type { GameState, MatchMode, MatchPlayerState } from '../game/types'
 import type { CampaignDefinition, CampaignLevelDefinition, CampaignLevelId, PrologueDefinition } from '../content/types'
+import { M28_CAMPAIGN_UI_ASSET_PATHS, M28_PROLOGUE_ASSET_PATH_BY_TONE } from './assets'
 import type { AudioManagerState } from './audio'
 import type { RuntimeOptions } from './options'
 import type { SaveData, SaveLoadStatus, SaveWriteStatus } from './save'
 import type { ShellState } from './shell'
+
+const [M28_STAR_FILLED_ICON, M28_STAR_EMPTY_ICON, M28_LOCK_ICON, M28_CLEARED_ICON] = M28_CAMPAIGN_UI_ASSET_PATHS
 
 export type DomState = {
   shell: HTMLElement
@@ -47,6 +50,7 @@ export type DomState = {
   campaignLevelList: HTMLElement
   campaignStatus: HTMLElement
   prologueTitle: HTMLElement
+  prologueIllustration: HTMLImageElement
   prologueText: HTMLElement
   prologueProgress: HTMLElement
   prologueNextButton: HTMLElement
@@ -55,6 +59,7 @@ export type DomState = {
   prologueStartLevelButton: HTMLElement
   prologueMainMenuButton: HTMLElement
   campaignResultStatus: HTMLElement
+  campaignResultStars: HTMLElement
   campaignReplayLevelButton: HTMLElement
   campaignNextLevelButton: HTMLElement
   campaignResultsReturnButton: HTMLElement
@@ -209,6 +214,7 @@ export function createDomState(root: HTMLElement): DomState {
   campaignActions.classList.add('m27-campaign-actions')
   campaignLevelList.classList.add('m27-level-list')
   const prologueTitle = getOrCreate(root, 'h2', 'm27-prologue-title', prologuePanel)
+  const prologueIllustration = getOrCreateTestElement(root, 'prologue-illustration', 'img', prologuePanel) as HTMLImageElement
   const prologueText = getOrCreateTestElement(root, 'prologue-text', 'p', prologuePanel)
   const prologueProgress = getOrCreateTestElement(root, 'prologue-progress', 'p', prologuePanel)
   const prologueActions = getOrCreate(root, 'div', 'm27-prologue-actions', prologuePanel)
@@ -218,6 +224,11 @@ export function createDomState(root: HTMLElement): DomState {
   const prologueStartLevelButton = getOrCreateButton(root, 'prologue-start-level', 'Start 1-1 First Hunt', prologueActions)
   const prologueMainMenuButton = getOrCreateButton(root, 'prologue-main-menu', 'Main Menu', prologueActions)
   prologueActions.classList.add('m27-prologue-actions')
+  prologueIllustration.alt = ''
+  prologueIllustration.decoding = 'async'
+  prologueIllustration.draggable = false
+  prologueIllustration.setAttribute('aria-hidden', 'true')
+  prologueIllustration.classList.add('m28-prologue-illustration')
   prologueText.setAttribute('aria-live', 'polite')
   prologueProgress.classList.add('m27-prologue-progress')
   const classicSingleButton = getOrCreateButton(root, 'mode-classic-single', 'Classic Single', modeControls)
@@ -237,11 +248,14 @@ export function createDomState(root: HTMLElement): DomState {
   const changeModeButton = getOrCreateButton(root, 'change-mode', 'Change Mode', resultsActions)
   const mainMenuResultsButton = getOrCreateButton(root, 'results-main-menu', 'Main Menu', resultsActions)
   const campaignResultStatus = getOrCreateTestElement(root, 'campaign-result-status', 'div', results)
+  const campaignResultStars = getOrCreateTestElement(root, 'campaign-result-stars', 'div', results)
   const campaignReplayLevelButton = getOrCreateButton(root, 'campaign-replay-level', 'Replay Level', resultsActions)
   const campaignNextLevelButton = getOrCreateButton(root, 'campaign-next-level', 'Next Level', resultsActions)
   const campaignResultsReturnButton = getOrCreateButton(root, 'campaign-results-return', 'Campaign', resultsActions)
   const campaignClassicModesButton = getOrCreateButton(root, 'campaign-classic-modes', 'Classic Modes', resultsActions)
   campaignResultStatus.setAttribute('aria-live', 'polite')
+  campaignResultStars.setAttribute('aria-hidden', 'true')
+  campaignResultStars.classList.add('m28-result-stars')
   const resumeButton = getOrCreateButton(root, 'resume-game', 'Resume', pausePanel)
   const restartButton = getOrCreateButton(root, 'restart-game', 'Restart', pausePanel)
   const pauseSettingsButton = getOrCreateButton(root, 'pause-settings', 'Settings', pausePanel)
@@ -311,6 +325,7 @@ export function createDomState(root: HTMLElement): DomState {
     campaignLevelList,
     campaignStatus,
     prologueTitle,
+    prologueIllustration,
     prologueText,
     prologueProgress,
     prologueNextButton,
@@ -319,6 +334,7 @@ export function createDomState(root: HTMLElement): DomState {
     prologueStartLevelButton,
     prologueMainMenuButton,
     campaignResultStatus,
+    campaignResultStars,
     campaignReplayLevelButton,
     campaignNextLevelButton,
     campaignResultsReturnButton,
@@ -696,6 +712,7 @@ function createCampaignLevelRow(
   const status = progress?.passed ? 'Passed' : progress?.unlocked ? 'Unlocked' : 'Locked'
   const stars = progress?.stars ?? 0
   const bestScore = progress?.bestScore ?? 0
+  const unlocked = progress?.unlocked === true
 
   row.className = 'm27-level-row'
   row.setAttribute('role', 'listitem')
@@ -706,12 +723,31 @@ function createCampaignLevelRow(
   row.setAttribute('data-stars', String(stars))
   row.setAttribute('data-best-score', String(bestScore))
 
+  const summary = document.createElement('div')
+  summary.className = 'm28-level-summary'
+  const statusIcon = createDecorativeImage(
+    `campaign-level-status-icon-${level.id}`,
+    progress?.passed ? M28_CLEARED_ICON : unlocked ? M28_STAR_EMPTY_ICON : M28_LOCK_ICON,
+    'm28-level-status-icon',
+  )
+  statusIcon.setAttribute('data-icon-state', progress?.passed ? 'cleared' : unlocked ? 'unlocked' : 'locked')
+  const textGroup = document.createElement('div')
+  textGroup.className = 'm28-level-text'
   const heading = document.createElement('h3')
   heading.textContent = `${level.chapterLabel} ${level.title}`
   const meta = document.createElement('p')
   meta.textContent = `${status} - ${stars} stars - best ${bestScore}`
+  meta.className = 'm28-level-meta'
+  textGroup.append(heading, meta)
+  summary.append(statusIcon, textGroup)
+
+  const starStrip = document.createElement('div')
+  starStrip.className = 'm28-star-strip'
+  starStrip.setAttribute('data-testid', `campaign-level-stars-${level.id}`)
+  starStrip.setAttribute('aria-hidden', 'true')
+  renderStarStrip(starStrip, stars)
+
   const action = document.createElement('button')
-  const unlocked = progress?.unlocked === true
   action.type = 'button'
   action.textContent = unlocked ? `${progress?.passed ? 'Replay' : 'Start'} ${level.chapterLabel}` : `Locked ${level.chapterLabel}`
   action.setAttribute('data-testid', `campaign-level-action-${level.id}`)
@@ -719,7 +755,7 @@ function createCampaignLevelRow(
   action.disabled = !unlocked
   action.setAttribute('aria-disabled', String(!unlocked))
 
-  row.append(heading, meta, action)
+  row.append(summary, starStrip, action)
   return row
 }
 
@@ -740,6 +776,8 @@ function syncProloguePanel(dom: DomState, shellSync: ShellDomSyncState): void {
   dom.prologuePanel.setAttribute('data-prologue-panel-index', String(panelIndex))
   dom.prologuePanel.setAttribute('data-prologue-panel-count', String(prologue.panels.length))
   dom.prologuePanel.setAttribute('data-prologue-tone', panel.visualTone)
+  dom.prologueIllustration.setAttribute('src', M28_PROLOGUE_ASSET_PATH_BY_TONE[panel.visualTone])
+  dom.prologueIllustration.setAttribute('data-prologue-image-tone', panel.visualTone)
   dom.prologueTitle.textContent = prologue.title
   dom.prologueText.textContent = panel.text
   dom.prologueProgress.textContent = `Panel ${panelIndex + 1} of ${prologue.panels.length}`
@@ -755,6 +793,7 @@ function syncCampaignResultActions(dom: DomState, shellSync: ShellDomSyncState):
   const visible = shellSync.shell.screen === 'results' && result !== undefined
 
   dom.campaignResultStatus.hidden = !visible
+  dom.campaignResultStars.hidden = !visible
   dom.campaignReplayLevelButton.hidden = !visible
   dom.campaignResultsReturnButton.hidden = !visible
   dom.campaignClassicModesButton.hidden = !visible
@@ -767,6 +806,7 @@ function syncCampaignResultActions(dom: DomState, shellSync: ShellDomSyncState):
     dom.campaignResultStatus.removeAttribute('data-campaign-result-level')
     dom.campaignResultStatus.removeAttribute('data-campaign-result-passed')
     dom.campaignResultStatus.removeAttribute('data-campaign-result-stars')
+    dom.campaignResultStars.replaceChildren()
     return
   }
 
@@ -774,11 +814,45 @@ function syncCampaignResultActions(dom: DomState, shellSync: ShellDomSyncState):
   dom.campaignResultStatus.setAttribute('data-campaign-result-level', result.levelId)
   dom.campaignResultStatus.setAttribute('data-campaign-result-passed', String(result.passed))
   dom.campaignResultStatus.setAttribute('data-campaign-result-stars', String(result.stars))
+  renderStarStrip(dom.campaignResultStars, result.stars)
   if (result.nextLevelId) {
     dom.campaignNextLevelButton.setAttribute('data-next-campaign-level', result.nextLevelId)
   } else {
     dom.campaignNextLevelButton.removeAttribute('data-next-campaign-level')
   }
+}
+
+function renderStarStrip(container: HTMLElement, stars: number): void {
+  const normalizedStars = Math.max(0, Math.min(3, Math.trunc(stars)))
+  const starImages = [0, 1, 2].map((index) => {
+    const filled = index < normalizedStars
+    const image = createDecorativeImage(
+      undefined,
+      filled ? M28_STAR_FILLED_ICON : M28_STAR_EMPTY_ICON,
+      filled ? 'm28-star-icon m28-star-icon-filled' : 'm28-star-icon m28-star-icon-empty',
+    )
+    image.setAttribute('data-star-filled', String(filled))
+    return image
+  })
+
+  container.replaceChildren(...starImages)
+  container.setAttribute('data-stars', String(normalizedStars))
+}
+
+function createDecorativeImage(testId: string | undefined, src: string, className: string): HTMLImageElement {
+  const image = document.createElement('img')
+
+  if (testId) {
+    image.setAttribute('data-testid', testId)
+  }
+  image.src = src
+  image.alt = ''
+  image.decoding = 'async'
+  image.draggable = false
+  image.setAttribute('aria-hidden', 'true')
+  image.className = className
+
+  return image
 }
 
 function syncHighScores(element: HTMLElement, save: SaveData): void {
