@@ -65,4 +65,27 @@ test.describe('M2.6 PWA offline shell', () => {
     await expect(page.getByTestId('m26-shell')).toBeVisible()
     await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', /^(splash|main-menu)$/)
   })
+
+  test('reaches campaign and prologue while offline after online boot', async ({ page, browserName }) => {
+    test.setTimeout(60_000)
+    test.skip(browserName === 'webkit', 'documented WebKit offline service-worker reload issue')
+
+    await page.goto('/?seed=2706')
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute(
+      'data-pwa-registration',
+      /^(registered|unsupported|failed)$/,
+    )
+
+    const registrationState = await page.getByTestId('m26-shell').getAttribute('data-pwa-registration')
+    test.skip(registrationState !== 'registered', `service worker registration ${registrationState ?? 'missing'}`)
+
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-pwa-runtime-cache-ready', 'true')
+
+    await page.context().setOffline(true)
+    await page.reload()
+    await page.getByTestId('shell-campaign').click()
+    await expect(page.getByTestId('campaign-home-pond')).toBeVisible()
+    await page.getByTestId('campaign-start-prologue').click()
+    await expect(page.getByTestId('campaign-prologue')).toBeVisible()
+  })
 })

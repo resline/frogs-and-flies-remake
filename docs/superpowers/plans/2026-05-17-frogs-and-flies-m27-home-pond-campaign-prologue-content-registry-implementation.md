@@ -1083,7 +1083,7 @@ Expected: commit created. Omit unchanged files from `git add`.
 - Modify only if needed: `public/service-worker.js`
 - Modify only if needed: `tests/unit/pwaCache.test.ts`
 
-- [ ] **Step 1: Add failing accessibility coverage**
+- [x] **Step 1: Add failing accessibility coverage**
 
 Add tests that:
 
@@ -1102,7 +1102,7 @@ npx playwright test tests/e2e/m26-accessibility.spec.ts tests/e2e/m27-campaign-f
 
 Expected: FAIL until DOM/focus/styling is complete.
 
-- [ ] **Step 2: Add failing responsive/no-overlap coverage**
+- [x] **Step 2: Add failing responsive/no-overlap coverage**
 
 Extend the existing viewport loop or add M2.7-specific viewport checks for:
 
@@ -1121,7 +1121,7 @@ Use viewports:
 
 Expected: visible buttons/inputs/selects have positive size, fit viewport, and do not overlap.
 
-- [ ] **Step 3: Add failing PWA/offline campaign coverage**
+- [x] **Step 3: Add failing PWA/offline campaign coverage**
 
 Add an E2E test:
 
@@ -1141,7 +1141,7 @@ test('reaches campaign and prologue while offline after online boot', async ({ p
 
 If service worker cache version must change, update both `src/runtime/pwa.ts` and `public/service-worker.js` to a matching M2.7 cache name and update `tests/unit/pwaCache.test.ts`.
 
-- [ ] **Step 4: Add or update performance smoke**
+- [x] **Step 4: Add or update performance smoke**
 
 Ensure M2.7 does not regress M2.6 performance:
 
@@ -1151,7 +1151,7 @@ Ensure M2.7 does not regress M2.6 performance:
 
 If adding a M2.7 performance assertion, keep it coarse and stable.
 
-- [ ] **Step 5: Implement fixes to pass the tests**
+- [x] **Step 5: Implement fixes to pass the tests**
 
 Likely fixes:
 
@@ -1161,7 +1161,7 @@ Likely fixes:
 - Ensure hidden panels are `hidden` and not focusable.
 - Ensure campaign/prologue copy is bundled in JS and no fetch is used.
 
-- [ ] **Step 6: Run focused E2E green**
+- [x] **Step 6: Run focused E2E green**
 
 Run:
 
@@ -1171,7 +1171,7 @@ npx playwright test tests/e2e/m26-accessibility.spec.ts tests/e2e/m26-pwa-offlin
 
 Expected: PASS.
 
-- [ ] **Step 7: Run PWA unit tests**
+- [x] **Step 7: Run PWA unit tests**
 
 Run:
 
@@ -1181,7 +1181,7 @@ npm run test:unit -- tests/unit/pwaCache.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Run:
 

@@ -447,8 +447,9 @@ export function syncDom(
     dom.canvas.setAttribute('data-runtime-markers', 'm2')
     syncRuntimeOptionMarkers(dom.canvas, options, audioMarkers)
   }
-  syncRuntimeOptionMarkers(dom.shell, options, audioMarkers)
-  syncRuntimeOptionMarkers(dom.state, options, audioMarkers)
+  for (const element of [dom.shell, dom.state, dom.campaignPanel, dom.prologuePanel]) {
+    syncRuntimeOptionMarkers(element, options, audioMarkers)
+  }
   dom.shell.classList.toggle('is-reduced-motion', options.reducedMotion)
   dom.shell.classList.toggle('is-high-contrast', options.highContrast)
   dom.state.textContent = `State: ${game.phase}`

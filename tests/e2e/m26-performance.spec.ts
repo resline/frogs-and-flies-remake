@@ -38,6 +38,40 @@ test.describe('M2.6 performance smoke', () => {
     expect(consoleErrors, 'console errors').toEqual([])
     expect(pageErrors, 'page errors').toEqual([])
   })
+
+  test('opens campaign and prologue from bundled local data without heavy stalls', async ({ page }) => {
+    const consoleErrors: string[] = []
+    const pageErrors: string[] = []
+
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push(message.text())
+      }
+    })
+    page.on('pageerror', (error) => pageErrors.push(error.message))
+
+    await page.goto('/?seed=2721&durationSeconds=2&theEndSeconds=0.1&simulationSpeed=20', {
+      waitUntil: 'domcontentloaded',
+    })
+    await expect(page.getByTestId('m26-shell')).toBeVisible({ timeout: 3_000 })
+
+    await installLongTaskObserver(page)
+    const openedAt = Date.now()
+    await page.getByTestId('shell-campaign').click()
+    await expect(page.getByTestId('campaign-home-pond')).toBeVisible()
+    await page.getByTestId('campaign-start-prologue').click()
+    await expect(page.getByTestId('campaign-prologue')).toBeVisible()
+    expect(Date.now() - openedAt, 'campaign/prologue interaction time ms').toBeLessThanOrEqual(3_000)
+
+    const longTaskDurations = await readLongTaskDurations(page)
+    if (longTaskDurations) {
+      const longestTask = Math.max(0, ...longTaskDurations)
+      expect(longestTask, 'longest campaign interaction long task ms').toBeLessThanOrEqual(1_000)
+    }
+
+    expect(consoleErrors, 'console errors').toEqual([])
+    expect(pageErrors, 'page errors').toEqual([])
+  })
 })
 
 async function installLongTaskObserver(page: import('@playwright/test').Page): Promise<void> {

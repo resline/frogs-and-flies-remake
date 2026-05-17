@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { PNG } from 'pngjs'
 
+const LEVEL_11 = 'home-pond-1-1-first-hunt'
+
 const RESPONSIVE_VIEWPORTS = [
   { width: 390, height: 844 },
   { width: 800, height: 600 },
@@ -153,6 +155,24 @@ test.describe('M2.6 product shell flow', () => {
       await page.goto('/?seed=2619&smokeState=results')
       await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'results')
       await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} results`)
+
+      await page.goto('/?seed=2717&durationSeconds=0.25&theEndSeconds=0.1&simulationSpeed=120')
+      await page.getByTestId('shell-campaign').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'campaign')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} campaign`)
+
+      await page.getByTestId('campaign-start-prologue').click({ force: true })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'prologue')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} prologue`)
+
+      await page.goto(
+        '/?seed=2718&durationSeconds=0.25&theEndSeconds=0.1&simulationSpeed=120&campaignSmokeScore=900&campaignSmokeCatches=9',
+      )
+      await page.getByTestId('shell-campaign').click({ force: true })
+      await page.getByTestId(`campaign-level-action-${LEVEL_11}`).click({ force: true })
+      await expect(page.getByTestId('game-state')).toHaveAttribute('data-state', 'results', { timeout: 5_000 })
+      await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-shell-screen', 'results')
+      await expectShellScreenFits(page, viewport, `${viewport.width}x${viewport.height} campaign results`)
 
       await page.goto('/?seed=2620&durationSeconds=10&theEndSeconds=0.1')
       await page.getByTestId('shell-high-scores').click({ force: true })
