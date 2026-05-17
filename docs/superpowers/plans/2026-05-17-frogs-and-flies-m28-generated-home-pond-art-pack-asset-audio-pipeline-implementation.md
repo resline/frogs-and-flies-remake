@@ -771,7 +771,7 @@ Expected: commit created.
 - Create/modify: `tests/e2e/m28-asset-pipeline.spec.ts`
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing runtime asset E2E**
+- [x] **Step 1: Write failing runtime asset E2E**
 
 Create `tests/e2e/m28-asset-pipeline.spec.ts` with a test:
 
@@ -790,7 +790,7 @@ test('loads the M2.8 gameplay art pack into the Pixi canvas', async ({ page }) =
 
 Use or copy the existing nonblank canvas helper from `tests/e2e/m26-shell.spec.ts`.
 
-- [ ] **Step 2: Write failing fallback E2E**
+- [x] **Step 2: Write failing fallback E2E**
 
 Add a focused test that routes one representative M2.8 image to fail and verifies the app still renders with fallback:
 
@@ -801,7 +801,7 @@ await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-assets-pack'
 await expectCanvasNonblank(page)
 ```
 
-- [ ] **Step 3: Run runtime asset E2E red**
+- [x] **Step 3: Run runtime asset E2E red**
 
 Run:
 
@@ -811,7 +811,7 @@ npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium
 
 Expected: FAIL because runtime still loads legacy paths and does not set `data-assets-pack="m28-v1"`.
 
-- [ ] **Step 4: Implement two-tier asset loading**
+- [x] **Step 4: Implement two-tier asset loading**
 
 In `src/runtime/assets.ts`:
 
@@ -829,7 +829,7 @@ canvas.setAttribute('data-assets-loaded', M28_GAMEPLAY_ASSET_PATHS.join(' '))
 - if both fail, remove loaded markers or set `data-assets-pack="procedural"` and return `undefined`,
 - keep the returned logical texture fields unchanged so `src/render/**` needs little or no change.
 
-- [ ] **Step 5: Run focused E2E green**
+- [x] **Step 5: Run focused E2E green**
 
 Run:
 
@@ -841,7 +841,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 

@@ -97,40 +97,103 @@ export const M28_REQUIRED_VISUAL_ASSET_PATHS = [
   ...M28_CAMPAIGN_UI_ASSET_PATHS,
 ] as const
 
-export async function loadGeneratedGameplayAssets(canvas: HTMLCanvasElement): Promise<GeneratedGameplayAssets | undefined> {
-  try {
-    const textures = await Assets.load<Texture>([...GENERATED_GAMEPLAY_ASSET_PATHS])
+export const PRIMARY_GAMEPLAY_ASSET_PATHS = M28_GAMEPLAY_ASSET_PATHS
 
-    canvas.setAttribute('data-assets-loaded', GENERATED_GAMEPLAY_ASSET_PATHS.join(' '))
-    return {
-      loadedPaths: GENERATED_GAMEPLAY_ASSET_PATHS,
-      homePondBackground: textures['/assets/home-pond-background.png'],
-      lilyLeft: textures['/assets/lily-left.png'],
-      lilyRight: textures['/assets/lily-right.png'],
-      frogP1Idle: textures['/assets/frog-p1-idle.png'],
-      frogP1Crouch: textures['/assets/frog-p1-crouch.png'],
-      frogP1Airborne: textures['/assets/frog-p1-airborne.png'],
-      frogP1Tongue: textures['/assets/frog-p1-tongue.png'],
-      frogP1Splash: textures['/assets/frog-p1-splash.png'],
-      frogP2Idle: textures['/assets/frog-p2-idle.png'],
-      frogP2Crouch: textures['/assets/frog-p2-crouch.png'],
-      frogP2Airborne: textures['/assets/frog-p2-airborne.png'],
-      frogP2Tongue: textures['/assets/frog-p2-tongue.png'],
-      frogP2Splash: textures['/assets/frog-p2-splash.png'],
-      flyWingA: textures['/assets/fly-wing-a.png'],
-      flyWingB: textures['/assets/fly-wing-b.png'],
-      fireflyEnd: textures['/assets/firefly-end.png'],
-      splashRing: textures['/assets/splash-ring.png'],
-      catchPop: textures['/assets/catch-pop.png'],
-      tongueFlash: textures['/assets/tongue-flash.png'],
-      pond: textures['/assets/pond-arena.png'],
-      frog: textures['/assets/frog.png'],
-      fly: textures['/assets/fly.png'],
-      power: textures['/assets/power.png'],
-    }
+type GameplayAssetPack = 'm28-v1' | 'legacy'
+type GameplayAssetPaths = typeof M28_GAMEPLAY_ASSET_PATHS | typeof LEGACY_GAMEPLAY_ASSET_PATHS
+
+export async function loadGeneratedGameplayAssets(canvas: HTMLCanvasElement): Promise<GeneratedGameplayAssets | undefined> {
+  const m28Assets = await loadGameplayAssetPack(M28_GAMEPLAY_ASSET_PATHS)
+  if (m28Assets) {
+    canvas.setAttribute('data-assets-pack', 'm28-v1')
+    canvas.setAttribute('data-assets-loaded', [...M28_GAMEPLAY_ASSET_PATHS, ...LEGACY_GAMEPLAY_ASSET_PATHS].join(' '))
+    return m28Assets
+  }
+
+  const legacyAssets = await loadGameplayAssetPack(LEGACY_GAMEPLAY_ASSET_PATHS)
+  if (legacyAssets) {
+    canvas.setAttribute('data-assets-pack', 'legacy')
+    canvas.setAttribute('data-assets-loaded', LEGACY_GAMEPLAY_ASSET_PATHS.join(' '))
+    return legacyAssets
+  }
+
+  canvas.setAttribute('data-assets-pack', 'procedural')
+  canvas.removeAttribute('data-assets-loaded')
+  return undefined
+}
+
+async function loadGameplayAssetPack(paths: GameplayAssetPaths): Promise<GeneratedGameplayAssets | undefined> {
+  try {
+    const textures = await Assets.load<Texture>([...paths])
+
+    return buildGeneratedGameplayAssets(paths, textures)
   } catch (error) {
-    canvas.removeAttribute('data-assets-loaded')
-    console.warn('Generated gameplay assets failed to load; using procedural fallback.', error)
+    console.warn(`${assetPackLabel(paths)} gameplay assets failed to load; trying fallback.`, error)
     return undefined
   }
+}
+
+function buildGeneratedGameplayAssets(
+  paths: GameplayAssetPaths,
+  textures: Record<string, Texture>,
+): GeneratedGameplayAssets {
+  if (paths === M28_GAMEPLAY_ASSET_PATHS) {
+    return {
+      loadedPaths: M28_GAMEPLAY_ASSET_PATHS,
+      homePondBackground: textures['/assets/m28/m28-home-pond-background-v1.png'],
+      lilyLeft: textures['/assets/m28/m28-lily-left-v1.png'],
+      lilyRight: textures['/assets/m28/m28-lily-right-v1.png'],
+      frogP1Idle: textures['/assets/m28/m28-frog-p1-idle-v1.png'],
+      frogP1Crouch: textures['/assets/m28/m28-frog-p1-crouch-v1.png'],
+      frogP1Airborne: textures['/assets/m28/m28-frog-p1-airborne-v1.png'],
+      frogP1Tongue: textures['/assets/m28/m28-frog-p1-tongue-v1.png'],
+      frogP1Splash: textures['/assets/m28/m28-frog-p1-splash-v1.png'],
+      frogP2Idle: textures['/assets/m28/m28-frog-p2-idle-v1.png'],
+      frogP2Crouch: textures['/assets/m28/m28-frog-p2-crouch-v1.png'],
+      frogP2Airborne: textures['/assets/m28/m28-frog-p2-airborne-v1.png'],
+      frogP2Tongue: textures['/assets/m28/m28-frog-p2-tongue-v1.png'],
+      frogP2Splash: textures['/assets/m28/m28-frog-p2-splash-v1.png'],
+      flyWingA: textures['/assets/m28/m28-fly-wing-a-v1.png'],
+      flyWingB: textures['/assets/m28/m28-fly-wing-b-v1.png'],
+      fireflyEnd: textures['/assets/m28/m28-firefly-end-v1.png'],
+      splashRing: textures['/assets/m28/m28-splash-ring-v1.png'],
+      catchPop: textures['/assets/m28/m28-catch-pop-v1.png'],
+      tongueFlash: textures['/assets/m28/m28-tongue-flash-v1.png'],
+      pond: textures['/assets/m28/m28-home-pond-background-v1.png'],
+      frog: textures['/assets/m28/m28-frog-p1-idle-v1.png'],
+      fly: textures['/assets/m28/m28-fly-wing-a-v1.png'],
+      power: textures['/assets/m28/m28-rush-power-v1.png'],
+    }
+  }
+
+  return {
+    loadedPaths: LEGACY_GAMEPLAY_ASSET_PATHS,
+    homePondBackground: textures['/assets/home-pond-background.png'],
+    lilyLeft: textures['/assets/lily-left.png'],
+    lilyRight: textures['/assets/lily-right.png'],
+    frogP1Idle: textures['/assets/frog-p1-idle.png'],
+    frogP1Crouch: textures['/assets/frog-p1-crouch.png'],
+    frogP1Airborne: textures['/assets/frog-p1-airborne.png'],
+    frogP1Tongue: textures['/assets/frog-p1-tongue.png'],
+    frogP1Splash: textures['/assets/frog-p1-splash.png'],
+    frogP2Idle: textures['/assets/frog-p2-idle.png'],
+    frogP2Crouch: textures['/assets/frog-p2-crouch.png'],
+    frogP2Airborne: textures['/assets/frog-p2-airborne.png'],
+    frogP2Tongue: textures['/assets/frog-p2-tongue.png'],
+    frogP2Splash: textures['/assets/frog-p2-splash.png'],
+    flyWingA: textures['/assets/fly-wing-a.png'],
+    flyWingB: textures['/assets/fly-wing-b.png'],
+    fireflyEnd: textures['/assets/firefly-end.png'],
+    splashRing: textures['/assets/splash-ring.png'],
+    catchPop: textures['/assets/catch-pop.png'],
+    tongueFlash: textures['/assets/tongue-flash.png'],
+    pond: textures['/assets/pond-arena.png'],
+    frog: textures['/assets/frog.png'],
+    fly: textures['/assets/fly.png'],
+    power: textures['/assets/power.png'],
+  }
+}
+
+function assetPackLabel(paths: GameplayAssetPaths): GameplayAssetPack {
+  return paths === M28_GAMEPLAY_ASSET_PATHS ? 'm28-v1' : 'legacy'
 }
