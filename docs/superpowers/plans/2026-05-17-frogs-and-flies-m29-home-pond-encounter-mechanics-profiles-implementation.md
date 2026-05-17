@@ -560,7 +560,7 @@ Expected: commit contains resolver and option contract only. It should not alter
 - Modify: `tests/unit/difficultyOptions.test.ts`
 - Modify: `tests/unit/localVersus.test.ts`
 
-- [ ] **Step 1: Write failing default preservation tests**
+- [x] **Step 1: Write failing default preservation tests**
 
 In `tests/unit/difficultyOptions.test.ts`, capture current M2.8 defaults:
 
@@ -576,7 +576,7 @@ expect(versus.constants.flySpawnSeconds).toBe(classic.constants.flySpawnSeconds)
 expect(versus.options.flyVelocity).toEqual(classic.options.flyVelocity)
 ```
 
-- [ ] **Step 2: Write failing profile override spawn tests**
+- [x] **Step 2: Write failing profile override spawn tests**
 
 In `tests/unit/spawn.test.ts`, add:
 
@@ -605,7 +605,7 @@ expect(fly?.vy).toBeLessThanOrEqual(125)
 
 Also assert Rush remains kind `power` with `powerKind: 'rush'`.
 
-- [ ] **Step 3: Run spawn tests red**
+- [x] **Step 3: Run spawn tests red**
 
 Run:
 
@@ -615,7 +615,7 @@ npm run test:unit -- tests/unit/spawn.test.ts tests/unit/difficultyOptions.test.
 
 Expected: FAIL before spawn consumes velocity/rush overrides.
 
-- [ ] **Step 4: Implement minimal spawn integration**
+- [x] **Step 4: Implement minimal spawn integration**
 
 Update `src/game/difficulty.ts` to include default fly velocity for all Classic difficulties.
 
@@ -628,7 +628,7 @@ Update `src/game/systems/spawn.ts`:
 - Continue spawning only Rush powers as `kind: 'power'`, `powerKind: 'rush'`.
 - Keep existing PRNG call order stable for no-profile Classic/Versus if possible. If a call-order change is unavoidable, update deterministic fixtures only with explicit justification in the commit message.
 
-- [ ] **Step 5: Run spawn/default tests green**
+- [x] **Step 5: Run spawn/default tests green**
 
 Run:
 
@@ -640,7 +640,16 @@ git diff --check
 
 Expected: PASS; TypeScript build PASS; no whitespace errors.
 
-- [ ] **Step 6: Commit**
+Task 4 handoff evidence, 2026-05-17:
+
+- RED: `npm run test:unit -- tests/unit/spawn.test.ts tests/unit/difficultyOptions.test.ts tests/unit/localVersus.test.ts` failed with 1 expected spawn velocity assertion because fly `vx` still came from the legacy `-30..30` range instead of the encounter override.
+- GREEN: The same focused command passed with 3 files and 14 tests after `updateSpawn()` consumed `game.options.flyVelocity`; tests cover spawn band/velocity, movement from the configured velocity, Rush power cadence/entity contract, and Classic/Versus default preservation.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`.
+- Scope: changed only generic spawn option consumption, focused unit tests, and this Task 4 plan evidence; no campaign registry imports in `src/game/**`, no new entities/assets/save schema/runtime DOM handoff.
+
+- [x] **Step 6: Commit**
 
 Run:
 

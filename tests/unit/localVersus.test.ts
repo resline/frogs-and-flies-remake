@@ -30,6 +30,16 @@ describe('local versus simulation contract', () => {
     expect(p2.state.phase).toBe('staged')
   })
 
+  it('preserves Classic spawn and velocity defaults in Local Versus', () => {
+    const classic = createGame({ seed: 5, mode: 'classic-single', difficulty: 'classic-standard' })
+    const versus = createGame({ seed: 5, mode: 'local-versus', difficulty: 'classic-standard' })
+
+    expect(versus.constants.flySpawnSeconds).toBe(classic.constants.flySpawnSeconds)
+    expect(versus.constants.powerSpawnSeconds).toBe(classic.constants.powerSpawnSeconds)
+    expect(versus.options.flyBand).toEqual(classic.options.flyBand)
+    expect(versus.options.flyVelocity).toEqual(classic.options.flyVelocity)
+  })
+
   it('keeps P1 and P2 command bags independent across command clearing', () => {
     const game = startLocalVersus()
     const [p1, p2] = game.players

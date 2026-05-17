@@ -16,6 +16,9 @@ describe('classic difficulty options', () => {
     expect(standard.autoTongue).toBe(false)
     expect(assist.jumpForgiveness).toBeGreaterThan(standard.jumpForgiveness)
     expect(expert.jumpForgiveness).toBeLessThan(standard.jumpForgiveness)
+    expect(assist.flyVelocity).toEqual({ minVx: -30, maxVx: 30, minVy: 55, maxVy: 95 })
+    expect(standard.flyVelocity).toEqual(assist.flyVelocity)
+    expect(expert.flyVelocity).toEqual(standard.flyVelocity)
   })
 
   it('applies difficulty fly bands and spawn cadence to deterministic spawns', () => {

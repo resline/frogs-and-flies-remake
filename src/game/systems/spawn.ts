@@ -7,13 +7,14 @@ export function updateSpawn(game: GameState, deltaSeconds: number): void {
 
   while (game.spawn.flySeconds >= game.constants.flySpawnSeconds) {
     game.spawn.flySeconds -= game.constants.flySpawnSeconds
+    const flyVelocity = game.options.flyVelocity
     insertEntity(game, {
       id: game.nextEntityId,
       kind: 'fly',
       x: game.prng.int(48, game.constants.arenaWidth - 48),
       y: game.prng.int(game.options.flyBand.minY, game.options.flyBand.maxY),
-      vx: game.prng.int(-30, 30),
-      vy: game.prng.int(55, 95),
+      vx: game.prng.int(flyVelocity.minVx, flyVelocity.maxVx),
+      vy: game.prng.int(flyVelocity.minVy, flyVelocity.maxVy),
       radius: 14,
     })
   }
