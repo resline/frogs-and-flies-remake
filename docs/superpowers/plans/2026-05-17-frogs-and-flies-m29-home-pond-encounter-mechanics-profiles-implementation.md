@@ -818,7 +818,7 @@ Expected: commit contains runtime handoff and marker coverage only.
 - Modify: `tests/unit/spawn.test.ts`
 - Modify: `src/game/replay.ts` only if a small generic metrics helper is needed.
 
-- [ ] **Step 1: Write failing deterministic metrics tests**
+- [x] **Step 1: Write failing deterministic metrics tests**
 
 Add a helper in tests, not production, unless a reusable replay metrics helper clearly belongs in `src/game/replay.ts`:
 
@@ -862,7 +862,7 @@ Assertions:
 - Band and/or velocity metrics differ between all three profiles.
 - Entity kinds stay within `fly` and `power`.
 
-- [ ] **Step 2: Run metrics tests red if behavior is incomplete**
+- [x] **Step 2: Run metrics tests red if behavior is incomplete**
 
 Run:
 
@@ -872,7 +872,7 @@ npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/determinist
 
 Expected: FAIL if tuning is not actually consumed or metrics are not distinct.
 
-- [ ] **Step 3: Tune conservatively through profile constants only**
+- [x] **Step 3: Tune conservatively through profile constants only**
 
 Adjust values only in `HOME_POND_ENCOUNTER_PROFILES`:
 
@@ -883,7 +883,7 @@ Adjust values only in `HOME_POND_ENCOUNTER_PROFILES`:
 
 Do not tune by adding `if levelId` branches in runtime or spawn.
 
-- [ ] **Step 4: Add max live entity/performance unit guard**
+- [x] **Step 4: Add max live entity/performance unit guard**
 
 Add a short fixed-step guard:
 
@@ -893,7 +893,7 @@ expect(collectEncounterMetrics('home-pond-1-3-nightfall-feast').flyCount).toBeLe
 
 Choose the exact threshold from observed green output plus margin. The threshold should catch runaway spawns, not overfit a single PRNG position.
 
-- [ ] **Step 5: Run deterministic suite green**
+- [x] **Step 5: Run deterministic suite green**
 
 Run:
 
@@ -905,7 +905,7 @@ git diff --check
 
 Expected: PASS; same profile/seed deterministic; same seed across the three campaign levels differs measurably; Classic/Versus defaults unchanged.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -915,6 +915,15 @@ git commit -m "test: prove m29 encounter profile determinism"
 ```
 
 Expected: commit contains balancing constants and deterministic proof only. Omit files not changed.
+
+Task 6 evidence, 2026-05-17:
+
+- RED: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/deterministicReplay.test.ts tests/unit/spawn.test.ts` passed immediately after adding Step 1 metrics tests with 3 files and 11 tests; existing profile tuning was already consumed and distinct, so no production tuning was made.
+- GREEN: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/deterministicReplay.test.ts tests/unit/spawn.test.ts tests/unit/difficultyOptions.test.ts tests/unit/localVersus.test.ts` passed with 5 files and 22 tests.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`; verified they are absent.
+- Scope: changed deterministic replay metrics coverage, the nightfall live entity budget guard, and this Task 6 evidence only; no `src/game/**`, content constants, registry data, runtime campaign handoff, DOM markers, assets, audio, save schema, backend, localization, monetization, or Task 7+ work.
 
 ## Task 7: Campaign Flow, Save Schema, And Regression Gates
 

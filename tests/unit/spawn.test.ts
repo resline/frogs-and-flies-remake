@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { resolveCampaignEncounterProfile } from '../../src/content/registry'
 import { createGame } from '../../src/game/createGame'
+import { getClassicDifficulty } from '../../src/game/difficulty'
 import { insertEntity } from '../../src/game/entities'
 import { updateMovement } from '../../src/game/systems/movement'
 import { updateSpawn } from '../../src/game/systems/spawn'
 import type { Entity } from '../../src/game/types'
 import { updateGame } from '../../src/game/update'
+import { resolveEncounterProfileGameOptions } from '../../src/runtime/encounterOptions'
 
 describe('M0 spawning', () => {
   it('spawns the same entities for the same seed', () => {
@@ -91,5 +94,30 @@ describe('M0 spawning', () => {
 
     expect(powers).toHaveLength(1)
     expect(powers[0]).toMatchObject({ kind: 'power', powerKind: 'rush' })
+  })
+
+  it('keeps nightfall encounter pressure within the live entity budget', () => {
+    const profile = resolveCampaignEncounterProfile('home-pond-1-3-nightfall-feast')
+    if (!profile) {
+      throw new Error('missing nightfall encounter profile')
+    }
+
+    const tuning = resolveEncounterProfileGameOptions(profile, getClassicDifficulty('classic-standard'))
+    const game = createGame({
+      seed: 2909,
+      mode: 'classic-single',
+      difficulty: 'classic-standard',
+      ...tuning,
+    })
+    let maxLiveEntityCount = 0
+
+    game.commands.start = true
+    updateGame(game, 1 / 60)
+    for (let step = 0; step < 12 * 60; step += 1) {
+      updateGame(game, 1 / 60)
+      maxLiveEntityCount = Math.max(maxLiveEntityCount, game.entityIds.length)
+    }
+
+    expect(maxLiveEntityCount).toBeLessThanOrEqual(24)
   })
 })
