@@ -14,7 +14,7 @@ import { getClassicDifficulty } from './difficulty'
 import { createPlayers } from './match'
 import { createActivePower, createWaterState } from './player'
 import { createPrng } from './prng'
-import type { ClassicOptions, DifficultyMode, GameState, MatchMode } from './types'
+import type { ClassicEncounterTuning, ClassicOptions, DifficultyMode, GameState, MatchMode } from './types'
 
 export interface CreateGameOptions {
   seed?: number
@@ -23,14 +23,21 @@ export interface CreateGameOptions {
   theEndSeconds?: number
   difficulty?: DifficultyMode
   options?: Pick<ClassicOptions, 'difficulty'>
+  encounter?: ClassicEncounterTuning
 }
 
 export function createGame(options: CreateGameOptions): GameState {
   const seed = options.seed ?? 0
   const mode = options.mode ?? 'classic-single'
-  const durationSeconds = options.durationSeconds ?? ROUND_DURATION_SECONDS
+  const durationSeconds = options.durationSeconds ?? options.encounter?.roundDurationSeconds ?? ROUND_DURATION_SECONDS
   const theEndSeconds = options.theEndSeconds ?? THE_END_SECONDS
   const classicOptions = getClassicDifficulty(options.options?.difficulty ?? options.difficulty)
+  const resolvedOptions: ClassicOptions = {
+    ...classicOptions,
+    flyBand: options.encounter?.flyBand ? { ...options.encounter.flyBand } : classicOptions.flyBand,
+    flyVelocity: options.encounter?.flyVelocity ? { ...options.encounter.flyVelocity } : classicOptions.flyVelocity,
+    flySpawnSeconds: options.encounter?.flySpawnSeconds ?? classicOptions.flySpawnSeconds,
+  }
   const players = createPlayers(mode)
   const primaryPlayer = players[0]
 
@@ -47,10 +54,10 @@ export function createGame(options: CreateGameOptions): GameState {
       rushSeconds: RUSH_SECONDS,
       baseFlyScore: BASE_FLY_SCORE,
       comboBonusScore: COMBO_BONUS_SCORE,
-      flySpawnSeconds: classicOptions.flySpawnSeconds,
-      powerSpawnSeconds: POWER_SPAWN_SECONDS,
+      flySpawnSeconds: resolvedOptions.flySpawnSeconds,
+      powerSpawnSeconds: options.encounter?.powerSpawnSeconds ?? POWER_SPAWN_SECONDS,
     },
-    options: classicOptions,
+    options: resolvedOptions,
     mode,
     phase: 'start',
     timeOfDay: 'day',

@@ -19,9 +19,25 @@ export interface FlyBand {
   maxY: number
 }
 
+export interface FlyVelocityRange {
+  minVx: number
+  maxVx: number
+  minVy: number
+  maxVy: number
+}
+
+export interface ClassicEncounterTuning {
+  roundDurationSeconds?: number
+  flySpawnSeconds?: number
+  flyBand?: FlyBand
+  flyVelocity?: FlyVelocityRange
+  powerSpawnSeconds?: number
+}
+
 export interface ClassicOptions {
   difficulty: DifficultyMode
   flyBand: FlyBand
+  flyVelocity: FlyVelocityRange
   autoTongue: boolean
   jumpForgiveness: number
   flySpawnSeconds: number

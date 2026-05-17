@@ -423,7 +423,7 @@ Expected: commit contains content model, static profile definitions, validation,
 - Modify: `tests/unit/encounterProfiles.test.ts`
 - Modify: `tests/unit/difficultyOptions.test.ts`
 
-- [ ] **Step 1: Write failing resolver tests**
+- [x] **Step 1: Write failing resolver tests**
 
 Add tests for a resolver that converts profile definitions into numeric `createGame()` options without exposing campaign ids to the game layer:
 
@@ -449,7 +449,7 @@ expect(new Set([baseline.encounter.flyBand.minY, quick.encounter.flyBand.minY, n
 
 Also assert Classic/Versus helpers return no profile override unless a campaign level is explicitly supplied.
 
-- [ ] **Step 2: Run resolver tests red**
+- [x] **Step 2: Run resolver tests red**
 
 Run:
 
@@ -459,7 +459,7 @@ npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/difficultyO
 
 Expected: FAIL because resolver/game option types are not implemented.
 
-- [ ] **Step 3: Add game tuning types**
+- [x] **Step 3: Add game tuning types**
 
 In `src/game/types.ts`, add small generic types:
 
@@ -482,7 +482,7 @@ export interface ClassicEncounterTuning {
 
 Add `flyVelocity: FlyVelocityRange` to `ClassicOptions` or `GameConstants`. Prefer `ClassicOptions` if spawn should treat it as a gameplay option next to `flyBand`; mirror any resolved values into constants only if tests need stable runtime metadata.
 
-- [ ] **Step 4: Add resolver**
+- [x] **Step 4: Add resolver**
 
 Create `src/runtime/encounterOptions.ts` with:
 
@@ -505,7 +505,7 @@ The return shape should be directly spreadable into `createGame()`:
 }
 ```
 
-- [ ] **Step 5: Extend `CreateGameOptions` without changing defaults**
+- [x] **Step 5: Extend `CreateGameOptions` without changing defaults**
 
 In `src/game/createGame.ts`, add optional `encounter?: ClassicEncounterTuning`.
 
@@ -518,7 +518,7 @@ Merge behavior:
 - `encounter.flyVelocity`: sets `game.options.flyVelocity` or the chosen constants field.
 - `encounter.roundDurationSeconds`: use only if no explicit `durationSeconds` query/runtime value exists, or document the chosen precedence and test it.
 
-- [ ] **Step 6: Run resolver/default tests green**
+- [x] **Step 6: Run resolver/default tests green**
 
 Run:
 
@@ -530,7 +530,16 @@ git diff --check
 
 Expected: PASS; TypeScript build PASS; no whitespace errors.
 
-- [ ] **Step 7: Commit**
+Task 3 handoff evidence, 2026-05-17:
+
+- RED: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/difficultyOptions.test.ts` failed because `src/runtime/encounterOptions.ts` did not exist yet.
+- GREEN: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/difficultyOptions.test.ts` passed with 2 files and 8 tests after implementation.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report/`.
+- Scope: changed only the profile-to-game-option contract, generic game tuning option types, `createGame()` option merging, focused unit tests, and this Task 3 plan evidence; no campaign launch/runtime DOM/spawn integration/assets/save schema work.
+
+- [x] **Step 7: Commit**
 
 Run:
 
