@@ -14,6 +14,7 @@ const REQUIRED_M25_ASSETS = [
 const CONTROL_CLICK_OPTIONS = { force: true } as const
 
 const TAB_SEQUENCE = [
+  'shell-campaign',
   'shell-play',
   'shell-settings',
   'shell-high-scores',
