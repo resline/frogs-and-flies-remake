@@ -231,7 +231,7 @@ git status --short
 rg -n "home-pond-baseline-gentle|EncounterProfile|encounter profile|data-campaign-encounter" src tests docs README.md
 ```
 
-Expected: only the M2.9 spec mentions encounter profiles before implementation. If code already contains M2.9 work, stop and inspect it rather than overwriting.
+Expected: only the M2.9 spec and this implementation plan mention encounter profiles before implementation. If code already contains M2.9 work, stop and inspect it rather than overwriting.
 
 - [ ] **Step 3: Run focused baseline unit tests**
 
