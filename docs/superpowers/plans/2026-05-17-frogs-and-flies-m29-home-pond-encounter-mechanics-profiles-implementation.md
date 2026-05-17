@@ -210,7 +210,7 @@ Multiplier semantics:
 - Read: `tests/e2e/m27-campaign-flow.spec.ts`
 - Read: `package.json`
 
-- [ ] **Step 1: Confirm branch, sync, and worktree**
+- [x] **Step 1: Confirm branch, sync, and worktree**
 
 Run:
 
@@ -222,7 +222,7 @@ git log --oneline --decorate -5
 
 Expected: branch is `ff2-m0-pixijs`; worktree is clean except changes by the current worker; recent history includes `500a6ef docs: clarify m29 baseline deployment wording`.
 
-- [ ] **Step 2: Confirm no existing M2.9 plan/code work needs preservation**
+- [x] **Step 2: Confirm no existing M2.9 plan/code work needs preservation**
 
 Run:
 
@@ -233,7 +233,7 @@ rg -n "home-pond-baseline-gentle|EncounterProfile|encounter profile|data-campaig
 
 Expected: only the M2.9 spec and this implementation plan mention encounter profiles before implementation. If code already contains M2.9 work, stop and inspect it rather than overwriting.
 
-- [ ] **Step 3: Run focused baseline unit tests**
+- [x] **Step 3: Run focused baseline unit tests**
 
 Run:
 
@@ -243,7 +243,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts tests/unit/difficultyOp
 
 Expected: PASS on the M2.8 baseline.
 
-- [ ] **Step 4: Run focused campaign baseline E2E**
+- [x] **Step 4: Run focused campaign baseline E2E**
 
 Run:
 
@@ -253,7 +253,7 @@ npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium
 
 Expected: PASS for existing campaign launch, pass/fail/unlock, replay, and persistence flow.
 
-- [ ] **Step 5: Record baseline findings in the task handoff**
+- [x] **Step 5: Record baseline findings in the task handoff**
 
 Document the current default values observed from source:
 
@@ -263,7 +263,16 @@ Document the current default values observed from source:
 - Default fly velocity is currently sampled from `vx -30..30` and `vy 55..95`.
 - Classic Single and Local Versus currently call `createGame()` without encounter tuning.
 
-- [ ] **Step 6: Commit**
+Task 1 handoff evidence, 2026-05-17:
+
+- Branch/sync: `git branch --show-current` returned `ff2-m0-pixijs`; `git status --short --branch` returned `## ff2-m0-pixijs...origin/ff2-m0-pixijs`; `git log --oneline --decorate -5` showed `f24655f`, `af13cf9`, `500a6ef`, `c5dd62b`, and `66bce80`.
+- Dirty/code guard: `git status --short` returned no files. `rg -n "home-pond-baseline-gentle|EncounterProfile|encounter profile|data-campaign-encounter" src tests docs README.md` returned only this M2.9 plan and the M2.9 spec; no `src/`, `tests/`, or `README.md` M2.9 code/docs work existed before implementation.
+- Focused unit baseline: `npm run test:unit -- tests/unit/campaignRegistry.test.ts tests/unit/difficultyOptions.test.ts tests/unit/spawn.test.ts tests/unit/deterministicReplay.test.ts tests/unit/localVersus.test.ts tests/unit/saveManager.test.ts` passed with 6 files and 31 tests.
+- Focused campaign E2E baseline: `npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium` passed with 6 Chromium tests.
+- Source-observed defaults: Standard `flySpawnSeconds` is `0.75`; Standard fly band is `64..250`; default Rush cadence is `8`; default fly velocity is sampled as `vx -30..30` and `vy 55..95`; Classic Single and Local Versus currently flow through `createGame()` without encounter tuning.
+- TDD note: Task 1 was verification-only and changed no production code or tests, so no red/green cycle was applicable.
+
+- [x] **Step 6: Commit**
 
 No commit is required if Task 1 changed no files. If the plan checkbox evidence is updated in this file during execution, commit only that plan update:
 
