@@ -146,3 +146,26 @@ Post-processing: no chroma-key cleanup was required. Transparent files were rend
 | `public/assets/m28/m28-ui-star-empty-v1.png` | `public/assets/source/m28/m28-ui-star-empty-v1.svg` | Local authored fallback stand-in using the M2.8 shared style prefix. | `96x96` | transparent | Rendered from SVG with Playwright Chromium; no chroma-key cleanup. | 16,757 bytes | Validator covers dimensions, alpha policy, and manifest provenance. |
 | `public/assets/m28/m28-ui-lock-v1.png` | `public/assets/source/m28/m28-ui-lock-v1.svg` | Local authored fallback stand-in using the M2.8 shared style prefix. | `96x96` | transparent | Rendered from SVG with Playwright Chromium; no chroma-key cleanup. | 14,287 bytes | Validator covers dimensions, alpha policy, and manifest provenance. |
 | `public/assets/m28/m28-ui-cleared-v1.png` | `public/assets/source/m28/m28-ui-cleared-v1.svg` | Local authored fallback stand-in using the M2.8 shared style prefix. | `96x96` | transparent | Rendered from SVG with Playwright Chromium; no chroma-key cleanup. | 15,212 bytes | Validator covers dimensions, alpha policy, and manifest provenance. |
+
+## M2.8 Minimal Local Audio Fulfillment
+
+Status: complete minimal local MP3 fulfillment for the existing `LOCAL_AUDIO_ASSET_REGISTRY` paths only. This is not a final audio production pass; it does not add Howler, audio sprites, adaptive music, new registry keys, `resume`, or `the-end` files.
+
+Generation path: local deterministic `ffmpeg` synthesis from `lavfi` sine sources using the exact Task 4 frequency, duration, fade, and volume settings. No live OpenAI, ChatGPT, external audio API, sampled source, or third-party music library was used.
+
+MIME expectation: `audio/mpeg` or another MP3-compatible server MIME. Runtime fallback behavior remains unchanged: if a local file fails to load or decode, the existing procedural Web Audio fallback continues without blocking gameplay.
+
+Normalization/compression notes: short mono MP3 SFX are low-volume sine cues with fade-outs to avoid clicks. The Home Pond loop is a quiet two-tone mono bed with 1s fade-in and 1s fade-out. QA is enforced by `node scripts/check-m28-assets.mjs --audio`, which verifies required paths, file size, MP3 signature, manifest provenance, and optional `ffprobe` duration.
+
+| Output | Source method | Duration | MIME expectation | File size | Normalization/compression | Fallback notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `public/audio/sfx/jump.mp3` | `ffmpeg` sine 420 Hz, 0.14s, fade out, volume 0.22. | 0.182857s | `audio/mpeg` | 1,689 bytes | Mono MP3, low-volume cue. | Procedural `jump` SFX remains available if the file fails. |
+| `public/audio/sfx/tongue.mp3` | `ffmpeg` sine 620 Hz, 0.10s, fade out, volume 0.18. | 0.130612s | `audio/mpeg` | 1,271 bytes | Mono MP3, low-volume cue. | Procedural `tongue` SFX remains available if the file fails. |
+| `public/audio/sfx/catch.mp3` | `ffmpeg` sine 860 Hz, 0.18s, fade out, volume 0.20. | 0.208980s | `audio/mpeg` | 1,898 bytes | Mono MP3, low-volume cue. | Procedural `catch` SFX remains available if the file fails. |
+| `public/audio/sfx/miss.mp3` | `ffmpeg` sine 170 Hz, 0.18s, fade out, volume 0.18. | 0.208980s | `audio/mpeg` | 1,898 bytes | Mono MP3, low-volume cue. | Procedural `miss` SFX remains available if the file fails. |
+| `public/audio/sfx/splash.mp3` | `ffmpeg` sine 120 Hz, 0.24s, fade out, volume 0.20. | 0.287347s | `audio/mpeg` | 2,525 bytes | Mono MP3, low-volume cue. | Procedural `splash` SFX remains available if the file fails. |
+| `public/audio/sfx/power.mp3` | `ffmpeg` sine 980 Hz, 0.24s, fade out, volume 0.18. | 0.287347s | `audio/mpeg` | 2,525 bytes | Mono MP3, low-volume cue. | Procedural `power` SFX remains available if the file fails. |
+| `public/audio/sfx/start.mp3` | `ffmpeg` sine 520 Hz, 0.16s, fade out, volume 0.18. | 0.208980s | `audio/mpeg` | 1,898 bytes | Mono MP3, low-volume cue. | Procedural `start` SFX remains available if the file fails. |
+| `public/audio/sfx/pause.mp3` | `ffmpeg` sine 260 Hz, 0.12s, fade out, volume 0.16. | 0.156735s | `audio/mpeg` | 1,480 bytes | Mono MP3, low-volume cue. | Procedural `pause` SFX remains available if the file fails. |
+| `public/audio/sfx/results.mp3` | `ffmpeg` sine 700 Hz, 0.45s, fade out, volume 0.18. | 0.496327s | `audio/mpeg` | 4,197 bytes | Mono MP3, low-volume cue. | Procedural `results` SFX remains available if the file fails. |
+| `public/audio/music/home-pond-loop.mp3` | `ffmpeg` mixed sine 196 Hz + 294 Hz, 24s, 1s fade in/out, volume 0.12. | 24.032653s | `audio/mpeg` | 192,488 bytes | Mono MP3, quiet ambient loop placeholder. | Procedural/no-music fallback remains safe if the file fails. |

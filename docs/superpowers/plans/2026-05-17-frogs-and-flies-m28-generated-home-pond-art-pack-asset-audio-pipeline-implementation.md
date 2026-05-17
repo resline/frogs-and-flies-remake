@@ -542,7 +542,7 @@ Expected: commit created. Only add fallback/source files if they exist and are i
 - Modify: `scripts/check-m28-assets.mjs`
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing audio filesystem tests**
+- [x] **Step 1: Write failing audio filesystem tests**
 
 In `tests/unit/audioManager.test.ts`, add a test that flattens `LOCAL_AUDIO_ASSET_REGISTRY` and asserts:
 
@@ -573,7 +573,7 @@ for (const path of paths) {
 
 Add `isLikelyMp3` helper accepting `ID3` or MPEG frame sync headers. Do not add registry paths for `resume` or `the-end`.
 
-- [ ] **Step 2: Extend validation script for audio**
+- [x] **Step 2: Extend validation script for audio**
 
 In `scripts/check-m28-assets.mjs`, add `--audio` mode that:
 
@@ -584,7 +584,7 @@ In `scripts/check-m28-assets.mjs`, add `--audio` mode that:
 - checks every audio output path appears in `ASSET_MANIFEST.md`,
 - optionally records `ffprobe` duration if available but does not require `ffprobe` in unit tests.
 
-- [ ] **Step 3: Run audio tests red**
+- [x] **Step 3: Run audio tests red**
 
 Run:
 
@@ -595,7 +595,7 @@ node scripts/check-m28-assets.mjs --audio
 
 Expected: FAIL because `public/audio/**` does not exist.
 
-- [ ] **Step 4: Create minimal MP3 files**
+- [x] **Step 4: Create minimal MP3 files**
 
 Create only the registered paths. Preferred if `ffmpeg` is available:
 
@@ -615,11 +615,11 @@ ffmpeg -y -f lavfi -i "sine=frequency=196:duration=24" -f lavfi -i "sine=frequen
 
 If `ffmpeg` is unavailable, use an approved local/exported audio tool, but still create the same MP3 paths and document source/provenance.
 
-- [ ] **Step 5: Update `ASSET_MANIFEST.md` audio section**
+- [x] **Step 5: Update `ASSET_MANIFEST.md` audio section**
 
 For every audio file, document output, provenance/source method, duration if known, MIME expectation, file size, normalization/compression notes, and fallback behavior. Explicitly state this is minimal local path fulfillment, not a final audio production pass.
 
-- [ ] **Step 6: Run audio validator green**
+- [x] **Step 6: Run audio validator green**
 
 Run:
 
@@ -630,7 +630,7 @@ npm run test:unit -- tests/unit/audioManager.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Check size target**
+- [x] **Step 7: Check size target**
 
 Run:
 
@@ -640,7 +640,7 @@ du -ch public/audio/sfx/*.mp3 public/audio/music/home-pond-loop.mp3 | tail -n 1
 
 Expected: total is under `2 MB` when practical. If larger, record the reason and verify performance/offline gates.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Run:
 

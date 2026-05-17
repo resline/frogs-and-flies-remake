@@ -1,8 +1,9 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { createGame } from '../../src/game/createGame'
 import { insertEntity } from '../../src/game/entities'
 import { drainGameplayAudioEvents, updateGame } from '../../src/game/update'
-import { createAudioManager } from '../../src/runtime/audio'
+import { LOCAL_AUDIO_ASSET_REGISTRY, createAudioManager } from '../../src/runtime/audio'
 
 const STEP_SECONDS = 1 / 60
 
@@ -67,6 +68,12 @@ function asAudioManagerV1(audio: ReturnType<typeof createAudioManager>): AudioMa
   return audio as AudioManagerV1
 }
 
+function isLikelyMp3(bytes: Uint8Array): boolean {
+  const hasId3Header = bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33
+  const hasMpegFrameSync = bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0
+  return hasId3Header || hasMpegFrameSync
+}
+
 function startGame(seed = 1) {
   const game = createGame({ seed })
   game.commands.start = true
@@ -83,6 +90,34 @@ function advanceFrames(game: ReturnType<typeof createGame>, frames: number, fram
 }
 
 describe('audio manager', () => {
+  it('fulfills every registered local audio asset path with MP3 files', () => {
+    const paths = [
+      ...Object.values(LOCAL_AUDIO_ASSET_REGISTRY.sfx).flatMap((entry) => entry ?? []),
+      ...Object.values(LOCAL_AUDIO_ASSET_REGISTRY.music).flatMap((entry) => entry ?? []),
+    ]
+
+    expect(paths).toEqual([
+      '/audio/sfx/jump.mp3',
+      '/audio/sfx/tongue.mp3',
+      '/audio/sfx/catch.mp3',
+      '/audio/sfx/miss.mp3',
+      '/audio/sfx/splash.mp3',
+      '/audio/sfx/power.mp3',
+      '/audio/sfx/start.mp3',
+      '/audio/sfx/pause.mp3',
+      '/audio/sfx/results.mp3',
+      '/audio/music/home-pond-loop.mp3',
+    ])
+
+    for (const path of paths) {
+      const absolutePath = new URL(`../../public${path}`, import.meta.url)
+      expect(existsSync(absolutePath), `${path} exists`).toBe(true)
+      const bytes = readFileSync(absolutePath)
+      expect(bytes.length, `${path} file size`).toBeGreaterThan(256)
+      expect(isLikelyMp3(bytes), `${path} MP3 signature`).toBe(true)
+    }
+  })
+
   it('starts locked, unlocks from an explicit gesture, and flushes queued SFX', async () => {
     const context = new FakeAudioContext()
     const audio = createAudioManager({ contextFactory: () => context as unknown as AudioContext })
