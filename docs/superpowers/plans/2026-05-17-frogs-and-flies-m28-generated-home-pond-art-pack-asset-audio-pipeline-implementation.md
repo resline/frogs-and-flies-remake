@@ -297,7 +297,7 @@ No source commit is expected for Task 1 unless the executing worker is updating 
 - Create: `tests/unit/m28AssetPipeline.test.ts`
 - Modify: `docs/superpowers/plans/2026-05-17-frogs-and-flies-m28-generated-home-pond-art-pack-asset-audio-pipeline-implementation.md`
 
-- [ ] **Step 1: Write failing path-contract tests**
+- [x] **Step 1: Write failing path-contract tests**
 
 In `tests/unit/m28AssetPipeline.test.ts`, add tests that import constants from `src/runtime/assets.ts` and assert:
 
@@ -340,7 +340,7 @@ expect(LEGACY_GAMEPLAY_ASSET_PATHS).toEqual(expect.arrayContaining(['/assets/hom
 
 Do not assert filesystem existence yet; Task 3 owns final PNG creation.
 
-- [ ] **Step 2: Run path-contract tests red**
+- [x] **Step 2: Run path-contract tests red**
 
 Run:
 
@@ -350,7 +350,7 @@ npm run test:unit -- tests/unit/m28AssetPipeline.test.ts
 
 Expected: FAIL because M2.8 constants do not exist yet.
 
-- [ ] **Step 3: Add exported constants without switching runtime loading**
+- [x] **Step 3: Add exported constants without switching runtime loading**
 
 In `src/runtime/assets.ts`, add:
 
@@ -372,7 +372,7 @@ export const M28_REQUIRED_VISUAL_ASSET_PATHS = [
 
 Keep `GENERATED_GAMEPLAY_ASSET_PATHS` pointing at legacy paths for now so the app remains green before files exist.
 
-- [ ] **Step 4: Run focused tests green**
+- [x] **Step 4: Run focused tests green**
 
 Run:
 
@@ -383,7 +383,7 @@ npm run test:unit -- tests/unit/pwaCache.test.ts tests/unit/audioManager.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Run build**
+- [x] **Step 5: Run build**
 
 Run:
 
@@ -393,7 +393,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
