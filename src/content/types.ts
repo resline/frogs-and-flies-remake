@@ -8,6 +8,11 @@ export type LevelContentProfileId =
   | 'home-pond-intro-classic'
   | 'home-pond-quick-classic'
   | 'home-pond-night-classic'
+export type EncounterProfileId =
+  | 'home-pond-baseline-gentle'
+  | 'home-pond-quick-tongue'
+  | 'home-pond-nightfall-pressure'
+export type EncounterEntityKind = 'fly' | 'power'
 export type ArenaId = 'home-pond'
 export type RulesetId = 'classic-home-pond'
 
@@ -50,11 +55,35 @@ export interface LevelContentProfileDefinition {
   arenaId: ArenaId
   rulesetId: RulesetId
   matchMode: 'classic-single'
+  encounterProfileId: EncounterProfileId
   difficultySource: 'runtime-settings'
   durationSource: 'runtime-defaults'
   homePondContent: 'existing-classic-only'
   visualTone: 'dawn' | 'day' | 'night'
   completion: 'on-results'
+}
+
+export interface EncounterTuningDefinition {
+  roundDurationSeconds?: number
+  flySpawnSecondsMultiplier: number
+  flyBandOffset: {
+    minY: number
+    maxY: number
+  }
+  flyVelocity: {
+    minVx: number
+    maxVx: number
+    minVy: number
+    maxVy: number
+  }
+  powerSpawnSecondsMultiplier: number
+}
+
+export interface EncounterMechanicsProfileDefinition extends EncounterTuningDefinition {
+  id: EncounterProfileId
+  label: string
+  implementedEntityKinds: readonly EncounterEntityKind[]
+  tuningNotes: string
 }
 
 export interface CampaignObjectiveDefinition {
@@ -74,6 +103,7 @@ export interface CampaignRegistry {
   prologues: readonly PrologueDefinition[]
   levels: readonly CampaignLevelDefinition[]
   contentProfiles: readonly LevelContentProfileDefinition[]
+  encounterProfiles: readonly EncounterMechanicsProfileDefinition[]
 }
 
 export type CampaignRegistryValidationCode =
@@ -81,6 +111,7 @@ export type CampaignRegistryValidationCode =
   | 'duplicate-prologue-id'
   | 'duplicate-level-id'
   | 'duplicate-content-profile-id'
+  | 'duplicate-encounter-profile-id'
   | 'missing-prologue'
   | 'missing-initial-level'
   | 'duplicate-campaign-level-id'
@@ -89,12 +120,16 @@ export type CampaignRegistryValidationCode =
   | 'missing-campaign'
   | 'missing-start-level'
   | 'missing-content-profile'
+  | 'missing-encounter-profile'
   | 'unsupported-arena'
   | 'unsupported-ruleset'
   | 'unsupported-match-mode'
+  | 'unsupported-encounter-entity-kind'
+  | 'invalid-encounter-profile-tuning'
   | 'invalid-star-thresholds'
   | 'invalid-unlock-order'
   | 'invalid-m27-scope'
+  | 'invalid-m29-scope'
 
 export interface CampaignRegistryValidationError {
   code: CampaignRegistryValidationCode

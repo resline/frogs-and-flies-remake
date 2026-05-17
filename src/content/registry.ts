@@ -7,6 +7,9 @@ import type {
   CampaignRegistry,
   CampaignRegistryValidationCode,
   CampaignRegistryValidationError,
+  EncounterEntityKind,
+  EncounterMechanicsProfileDefinition,
+  EncounterProfileId,
   LevelContentProfileDefinition,
   LevelContentProfileId,
   PrologueDefinition,
@@ -17,6 +20,12 @@ import type {
 const IMPLEMENTED_ARENA_IDS: readonly ArenaId[] = ['home-pond']
 const IMPLEMENTED_RULESET_IDS: readonly RulesetId[] = ['classic-home-pond']
 const IMPLEMENTED_MATCH_MODES = ['classic-single'] as const
+const IMPLEMENTED_ENCOUNTER_ENTITY_KINDS: readonly EncounterEntityKind[] = ['fly', 'power']
+const EXPECTED_ENCOUNTER_PROFILE_IDS: readonly EncounterProfileId[] = [
+  'home-pond-baseline-gentle',
+  'home-pond-quick-tongue',
+  'home-pond-nightfall-pressure',
+]
 
 export const HOME_POND_CAMPAIGN: CampaignDefinition = {
   id: 'home-pond',
@@ -93,6 +102,7 @@ export const HOME_POND_CONTENT_PROFILES: readonly LevelContentProfileDefinition[
     arenaId: 'home-pond',
     rulesetId: 'classic-home-pond',
     matchMode: 'classic-single',
+    encounterProfileId: 'home-pond-baseline-gentle',
     difficultySource: 'runtime-settings',
     durationSource: 'runtime-defaults',
     homePondContent: 'existing-classic-only',
@@ -104,6 +114,7 @@ export const HOME_POND_CONTENT_PROFILES: readonly LevelContentProfileDefinition[
     arenaId: 'home-pond',
     rulesetId: 'classic-home-pond',
     matchMode: 'classic-single',
+    encounterProfileId: 'home-pond-quick-tongue',
     difficultySource: 'runtime-settings',
     durationSource: 'runtime-defaults',
     homePondContent: 'existing-classic-only',
@@ -115,6 +126,7 @@ export const HOME_POND_CONTENT_PROFILES: readonly LevelContentProfileDefinition[
     arenaId: 'home-pond',
     rulesetId: 'classic-home-pond',
     matchMode: 'classic-single',
+    encounterProfileId: 'home-pond-nightfall-pressure',
     difficultySource: 'runtime-settings',
     durationSource: 'runtime-defaults',
     homePondContent: 'existing-classic-only',
@@ -123,11 +135,45 @@ export const HOME_POND_CONTENT_PROFILES: readonly LevelContentProfileDefinition[
   },
 ]
 
+export const HOME_POND_ENCOUNTER_PROFILES: readonly EncounterMechanicsProfileDefinition[] = [
+  {
+    id: 'home-pond-baseline-gentle',
+    label: 'Baseline Gentle',
+    implementedEntityKinds: ['fly', 'power'],
+    flySpawnSecondsMultiplier: 1,
+    flyBandOffset: { minY: 0, maxY: 0 },
+    flyVelocity: { minVx: -30, maxVx: 30, minVy: 55, maxVy: 95 },
+    powerSpawnSecondsMultiplier: 1,
+    tuningNotes: 'Keeps the M2.8 Classic Standard fly cadence, lane, velocity, and Rush pressure.',
+  },
+  {
+    id: 'home-pond-quick-tongue',
+    label: 'Quick Tongue',
+    implementedEntityKinds: ['fly', 'power'],
+    flySpawnSecondsMultiplier: 0.84,
+    flyBandOffset: { minY: 12, maxY: -18 },
+    flyVelocity: { minVx: -36, maxVx: 36, minVy: 65, maxVy: 110 },
+    powerSpawnSecondsMultiplier: 1.15,
+    tuningNotes: 'Increases common-fly pressure while keeping the encounter limited to existing fly and Rush entities.',
+  },
+  {
+    id: 'home-pond-nightfall-pressure',
+    label: 'Nightfall Pressure',
+    implementedEntityKinds: ['fly', 'power'],
+    flySpawnSecondsMultiplier: 0.72,
+    flyBandOffset: { minY: -20, maxY: -44 },
+    flyVelocity: { minVx: -44, maxVx: 44, minVy: 75, maxVy: 125 },
+    powerSpawnSecondsMultiplier: 1.45,
+    tuningNotes: 'Adds the strongest M2.9 common-fly pressure and rarer Rush cadence for the night finale.',
+  },
+]
+
 export const M27_CAMPAIGN_REGISTRY: CampaignRegistry = {
   campaigns: [HOME_POND_CAMPAIGN],
   prologues: [HOME_POND_PROLOGUE],
   levels: HOME_POND_LEVELS,
   contentProfiles: HOME_POND_CONTENT_PROFILES,
+  encounterProfiles: HOME_POND_ENCOUNTER_PROFILES,
 }
 
 export function getCampaign(id: CampaignId): CampaignDefinition | undefined {
@@ -146,6 +192,24 @@ export function getLevelContentProfile(id: LevelContentProfileId): LevelContentP
   return M27_CAMPAIGN_REGISTRY.contentProfiles.find((profile) => profile.id === id)
 }
 
+export function getEncounterProfile(id: EncounterProfileId): EncounterMechanicsProfileDefinition | undefined {
+  return M27_CAMPAIGN_REGISTRY.encounterProfiles.find((profile) => profile.id === id)
+}
+
+export function getEncounterProfileForContentProfile(
+  id: LevelContentProfileId,
+): EncounterMechanicsProfileDefinition | undefined {
+  const contentProfile = getLevelContentProfile(id)
+  return contentProfile ? getEncounterProfile(contentProfile.encounterProfileId) : undefined
+}
+
+export function resolveCampaignEncounterProfile(
+  levelId: CampaignLevelId,
+): EncounterMechanicsProfileDefinition | undefined {
+  const level = getCampaignLevel(levelId)
+  return level ? getEncounterProfileForContentProfile(level.contentProfileId) : undefined
+}
+
 export function getNextCampaignLevel(levelId: CampaignLevelId): CampaignLevelDefinition | undefined {
   const level = getCampaignLevel(levelId)
   return level?.unlocksLevelId ? getCampaignLevel(level.unlocksLevelId) : undefined
@@ -159,6 +223,7 @@ export function validateCampaignRegistry(
   const prologueIds = new Set(registry.prologues.map((prologue) => prologue.id))
   const levelIds = new Set(registry.levels.map((level) => level.id))
   const contentProfileIds = new Set(registry.contentProfiles.map((profile) => profile.id))
+  const encounterProfileIds = new Set(registry.encounterProfiles.map((profile) => profile.id))
 
   addDuplicateErrors(errors, 'duplicate-campaign-id', registry.campaigns.map((campaign) => campaign.id))
   addDuplicateErrors(errors, 'duplicate-prologue-id', registry.prologues.map((prologue) => prologue.id))
@@ -167,6 +232,11 @@ export function validateCampaignRegistry(
     errors,
     'duplicate-content-profile-id',
     registry.contentProfiles.map((profile) => profile.id),
+  )
+  addDuplicateErrors(
+    errors,
+    'duplicate-encounter-profile-id',
+    registry.encounterProfiles.map((profile) => profile.id),
   )
 
   for (const campaign of registry.campaigns) {
@@ -220,15 +290,51 @@ export function validateCampaignRegistry(
     if (!IMPLEMENTED_MATCH_MODES.includes(profile.matchMode)) {
       addError(errors, 'unsupported-match-mode', profile.id, `Content profile ${profile.id} uses an unsupported mode.`)
     }
+    if (!encounterProfileIds.has(profile.encounterProfileId)) {
+      addError(
+        errors,
+        'missing-encounter-profile',
+        profile.id,
+        `Content profile ${profile.id} references a missing encounter profile.`,
+      )
+    }
+  }
+
+  for (const profile of registry.encounterProfiles) {
+    for (const entityKind of profile.implementedEntityKinds) {
+      if (!isSupportedEncounterEntityKind(entityKind)) {
+        addError(
+          errors,
+          'unsupported-encounter-entity-kind',
+          profile.id,
+          `Encounter profile ${profile.id} uses unsupported entity kind ${entityKind}.`,
+        )
+      }
+    }
+    if (!hasValidEncounterTuning(profile)) {
+      addError(
+        errors,
+        'invalid-encounter-profile-tuning',
+        profile.id,
+        `Encounter profile ${profile.id} has invalid tuning values.`,
+      )
+    }
   }
 
   if (
     registry.campaigns.length !== 1 ||
     registry.prologues.length !== 1 ||
     registry.levels.length !== 3 ||
-    registry.contentProfiles.length !== 3
+    registry.contentProfiles.length !== 3 ||
+    registry.encounterProfiles.length !== 3 ||
+    !hasExpectedEncounterProfileIds(registry.encounterProfiles)
   ) {
-    addError(errors, 'invalid-m27-scope', 'm27', 'M2.7 registry must stay to one campaign, one prologue, three levels, and three profiles.')
+    addError(
+      errors,
+      'invalid-m29-scope',
+      'm29',
+      'M2.9 registry must stay to one campaign, one prologue, three levels, three content profiles, and three encounter profiles.',
+    )
   }
 
   return errors
@@ -260,6 +366,46 @@ function addError(
 function hasAscendingStarThresholds(level: CampaignLevelDefinition): boolean {
   const thresholds = level.starThresholds
   return thresholds.oneStarScore <= thresholds.twoStarScore && thresholds.twoStarScore <= thresholds.threeStarScore
+}
+
+function isSupportedEncounterEntityKind(entityKind: string): entityKind is EncounterEntityKind {
+  return IMPLEMENTED_ENCOUNTER_ENTITY_KINDS.includes(entityKind as EncounterEntityKind)
+}
+
+function hasValidEncounterTuning(profile: EncounterMechanicsProfileDefinition): boolean {
+  return (
+    isPositiveFinite(profile.flySpawnSecondsMultiplier) &&
+    isPositiveFinite(profile.powerSpawnSecondsMultiplier) &&
+    isOptionalPositiveFinite(profile.roundDurationSeconds) &&
+    isFiniteNumber(profile.flyBandOffset.minY) &&
+    isFiniteNumber(profile.flyBandOffset.maxY) &&
+    isFiniteNumber(profile.flyVelocity.minVx) &&
+    isFiniteNumber(profile.flyVelocity.maxVx) &&
+    isFiniteNumber(profile.flyVelocity.minVy) &&
+    isFiniteNumber(profile.flyVelocity.maxVy) &&
+    profile.flyVelocity.minVx <= profile.flyVelocity.maxVx &&
+    profile.flyVelocity.minVy <= profile.flyVelocity.maxVy
+  )
+}
+
+function hasExpectedEncounterProfileIds(profiles: readonly EncounterMechanicsProfileDefinition[]): boolean {
+  const profileIds = profiles.map((profile) => profile.id)
+  return (
+    profileIds.length === EXPECTED_ENCOUNTER_PROFILE_IDS.length &&
+    EXPECTED_ENCOUNTER_PROFILE_IDS.every((id) => profileIds.includes(id))
+  )
+}
+
+function isOptionalPositiveFinite(value: number | undefined): boolean {
+  return value === undefined || isPositiveFinite(value)
+}
+
+function isPositiveFinite(value: number): boolean {
+  return isFiniteNumber(value) && value > 0
+}
+
+function isFiniteNumber(value: number): boolean {
+  return Number.isFinite(value)
 }
 
 function validateUnlockOrder(

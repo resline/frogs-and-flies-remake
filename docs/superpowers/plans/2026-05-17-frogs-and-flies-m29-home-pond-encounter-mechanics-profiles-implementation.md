@@ -290,7 +290,7 @@ git commit -m "docs: record m29 baseline audit"
 - Optional Create: `src/content/encounterProfiles.ts` if keeping definitions out of `registry.ts` is cleaner.
 - Optional Create: `tests/unit/encounterProfiles.test.ts` if focused profile tests should not enlarge `campaignRegistry.test.ts`.
 
-- [ ] **Step 1: Write failing registry tests for typed profiles**
+- [x] **Step 1: Write failing registry tests for typed profiles**
 
 Add tests proving:
 
@@ -325,7 +325,7 @@ expect(validateCampaignRegistry(brokenRegistry)).toContainEqual(
 )
 ```
 
-- [ ] **Step 2: Run registry tests red**
+- [x] **Step 2: Run registry tests red**
 
 Run:
 
@@ -335,7 +335,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts
 
 Expected: FAIL because types/definitions/validation do not exist yet.
 
-- [ ] **Step 3: Add content types**
+- [x] **Step 3: Add content types**
 
 In `src/content/types.ts`, add:
 
@@ -352,7 +352,7 @@ In `src/content/types.ts`, add:
 
 Keep the existing campaign level/content profile ids unchanged.
 
-- [ ] **Step 4: Add profile definitions and profile references**
+- [x] **Step 4: Add profile definitions and profile references**
 
 In `src/content/registry.ts` or new `src/content/encounterProfiles.ts`, add:
 
@@ -363,7 +363,7 @@ In `src/content/registry.ts` or new `src/content/encounterProfiles.ts`, add:
 
 Wire each `HOME_POND_CONTENT_PROFILES` entry to exactly one `encounterProfileId`.
 
-- [ ] **Step 5: Extend validation**
+- [x] **Step 5: Extend validation**
 
 Update `validateCampaignRegistry()` to:
 
@@ -373,7 +373,7 @@ Update `validateCampaignRegistry()` to:
 - Reject non-positive multipliers and invalid velocity ranges.
 - Keep M2.9 scope to one campaign, one prologue, three levels, three content profiles, and three encounter profiles.
 
-- [ ] **Step 6: Run registry tests green**
+- [x] **Step 6: Run registry tests green**
 
 Run:
 
@@ -383,7 +383,7 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Typecheck and whitespace guard**
+- [x] **Step 7: Typecheck and whitespace guard**
 
 Run:
 
@@ -394,7 +394,16 @@ git diff --check
 
 Expected: TypeScript build PASS; no whitespace errors.
 
-- [ ] **Step 8: Commit**
+Task 2 handoff evidence, 2026-05-17:
+
+- RED: `npm run test:unit -- tests/unit/campaignRegistry.test.ts` failed with 7 expected M2.9 registry/profile failures before implementation.
+- GREEN: `npm run test:unit -- tests/unit/campaignRegistry.test.ts` passed with 1 file and 10 tests after implementation.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report/` if present.
+- Scope: changed only content types, content registry/profile validation, focused registry tests, and this Task 2 plan evidence; no runtime/gameplay/assets/save schema work.
+
+- [x] **Step 8: Commit**
 
 Run:
 
