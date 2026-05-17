@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
-import { GENERATED_GAMEPLAY_ASSET_PATHS } from '../../src/runtime/assets'
+import {
+  M28_CAMPAIGN_UI_ASSET_PATHS,
+  M28_GAMEPLAY_ASSET_PATHS,
+  M28_PROLOGUE_ASSET_PATH_BY_TONE,
+} from '../../src/runtime/assets'
 import { LOCAL_AUDIO_ASSET_REGISTRY } from '../../src/runtime/audio'
 import {
   PWA_CACHE_NAME,
@@ -21,6 +25,8 @@ interface ServiceWorkerPolicyContext {
     addEventListener: () => void
     location: { origin: string }
   }
+  __TEST_APP_SHELL_CACHE_URLS?: string[]
+  __TEST_PWA_CACHE_NAME?: string
   isRuntimeCacheableRequest?: (request: Request, url: URL) => boolean
 }
 
@@ -35,7 +41,13 @@ function loadServiceWorkerPolicy(overrides: Partial<ServiceWorkerPolicyContext> 
   }
 
   vm.createContext(context)
-  vm.runInContext(source, context)
+  vm.runInContext(
+    `${source}
+globalThis.__TEST_PWA_CACHE_NAME = PWA_CACHE_NAME
+globalThis.__TEST_APP_SHELL_CACHE_URLS = APP_SHELL_CACHE_URLS
+`,
+    context,
+  )
   return context
 }
 
@@ -43,27 +55,32 @@ function requestWithDestination(destination: RequestDestination): Request {
   return { destination } as Request
 }
 
+function flattenLocalAudioPaths(): string[] {
+  return [
+    ...Object.values(LOCAL_AUDIO_ASSET_REGISTRY.sfx).flatMap((paths) => paths ?? []),
+    ...Object.values(LOCAL_AUDIO_ASSET_REGISTRY.music).flatMap((paths) => paths ?? []),
+  ]
+}
+
 describe('PWA cache contract', () => {
-  it('uses an M2.6 cache version', () => {
-    expect(PWA_CACHE_NAME).toContain('m26')
+  it('uses an M2.8 cache version', () => {
+    expect(PWA_CACHE_NAME).toContain('m28')
   })
 
-  it('includes the shell, manifest, and required Home Pond assets', () => {
+  it('includes the shell, manifest, required M2.8 visuals, and local audio paths', () => {
     const urls = buildPwaCacheUrls()
 
-    expect(urls).toEqual(expect.arrayContaining(['/', '/manifest.webmanifest', ...GENERATED_GAMEPLAY_ASSET_PATHS]))
-  })
-
-  it('includes optional audio paths only when the files are present', () => {
-    const jumpPath = LOCAL_AUDIO_ASSET_REGISTRY.sfx.jump?.[0]
-    const loopPath = LOCAL_AUDIO_ASSET_REGISTRY.music.homePondLoop?.[0]
-
-    expect(jumpPath).toBeDefined()
-    expect(loopPath).toBeDefined()
-
-    expect(buildPwaCacheUrls({ availablePaths: new Set(['/']) })).not.toEqual(expect.arrayContaining([jumpPath, loopPath]))
-    expect(buildPwaCacheUrls({ availablePaths: new Set([jumpPath as string]) })).toEqual(expect.arrayContaining([jumpPath]))
-    expect(buildPwaCacheUrls({ availablePaths: new Set([loopPath as string]) })).toEqual(expect.arrayContaining([loopPath]))
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        '/',
+        '/manifest.webmanifest',
+        '/favicon.png',
+        ...M28_GAMEPLAY_ASSET_PATHS,
+        ...Object.values(M28_PROLOGUE_ASSET_PATH_BY_TONE),
+        ...M28_CAMPAIGN_UI_ASSET_PATHS,
+        ...flattenLocalAudioPaths(),
+      ]),
+    )
   })
 
   it('rejects cross-origin cache URLs', () => {
@@ -123,6 +140,41 @@ describe('PWA cache contract', () => {
       isRuntimeCacheableRequest?.(
         requestWithDestination('script'),
         new URL('https://cdn.example/assets/index-abc123.js'),
+      ),
+    ).toBe(false)
+  })
+
+  it('exposes the M2.8 service worker app shell and static asset cache policy', () => {
+    const { __TEST_APP_SHELL_CACHE_URLS, __TEST_PWA_CACHE_NAME, isRuntimeCacheableRequest } = loadServiceWorkerPolicy()
+
+    expect(__TEST_PWA_CACHE_NAME).toContain('m28')
+    expect(__TEST_APP_SHELL_CACHE_URLS).toEqual(
+      expect.arrayContaining([
+        '/',
+        '/manifest.webmanifest',
+        '/favicon.png',
+        '/assets/m28/m28-home-pond-background-v1.png',
+        '/assets/m28/m28-ui-star-filled-v1.png',
+        '/audio/sfx/jump.mp3',
+        '/audio/music/home-pond-loop.mp3',
+      ]),
+    )
+    expect(
+      isRuntimeCacheableRequest?.(
+        requestWithDestination('image'),
+        new URL('https://game.example/assets/m28/m28-ui-star-filled-v1.png'),
+      ),
+    ).toBe(true)
+    expect(
+      isRuntimeCacheableRequest?.(
+        requestWithDestination('audio'),
+        new URL('https://game.example/audio/sfx/jump.mp3'),
+      ),
+    ).toBe(true)
+    expect(
+      isRuntimeCacheableRequest?.(
+        requestWithDestination('audio'),
+        new URL('https://cdn.example/audio/sfx/jump.mp3'),
       ),
     ).toBe(false)
   })

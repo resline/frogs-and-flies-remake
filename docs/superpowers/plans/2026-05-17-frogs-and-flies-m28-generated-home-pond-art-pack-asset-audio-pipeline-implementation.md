@@ -662,7 +662,7 @@ Expected: commit created.
 - Modify: `scripts/check-m28-assets.mjs`
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing cache parity tests**
+- [x] **Step 1: Write failing cache parity tests**
 
 Update `tests/unit/pwaCache.test.ts` to assert:
 
@@ -686,7 +686,7 @@ Extend the VM service-worker loader assertions to verify:
 - `isRuntimeCacheableRequest()` returns true for same-origin `/assets/m28/...png` and `/audio/sfx/jump.mp3`,
 - cross-origin requests remain false.
 
-- [ ] **Step 2: Write failing manifest/cache/file parity test**
+- [x] **Step 2: Write failing manifest/cache/file parity test**
 
 In `tests/unit/m28AssetPipeline.test.ts`, add:
 
@@ -698,7 +698,7 @@ it('keeps M2.8 manifest, runtime paths, PWA cache, and filesystem in parity', ()
 
 `--parity` should fail if a required M2.8 asset/audio file exists but is missing from the manifest/cache lists, if runtime/PWA paths point to missing files, or if TS/service-worker cache names disagree.
 
-- [ ] **Step 3: Run parity tests red**
+- [x] **Step 3: Run parity tests red**
 
 Run:
 
@@ -708,7 +708,7 @@ npm run test:unit -- tests/unit/pwaCache.test.ts tests/unit/m28AssetPipeline.tes
 
 Expected: FAIL because cache names/lists still reference M2.6/legacy paths.
 
-- [ ] **Step 4: Update TypeScript PWA cache**
+- [x] **Step 4: Update TypeScript PWA cache**
 
 In `src/runtime/pwa.ts`:
 
@@ -718,7 +718,7 @@ In `src/runtime/pwa.ts`:
 - include all `LOCAL_AUDIO_ASSET_REGISTRY` paths by default now that files exist,
 - preserve same-origin runtime JS/CSS warming behavior.
 
-- [ ] **Step 5: Update service worker cache**
+- [x] **Step 5: Update service worker cache**
 
 In `public/service-worker.js`:
 
@@ -729,7 +729,7 @@ In `public/service-worker.js`:
 - update immutable cache policy so same-origin `/assets/` and `/audio/` static files can be cache-first,
 - keep cross-origin fetches ignored.
 
-- [ ] **Step 6: Run parity tests green**
+- [x] **Step 6: Run parity tests green**
 
 Run:
 
@@ -741,7 +741,7 @@ npm run test:unit -- tests/unit/audioManager.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Run build**
+- [x] **Step 7: Run build**
 
 Run:
 
@@ -751,7 +751,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Run:
 

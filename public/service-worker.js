@@ -1,9 +1,46 @@
-const PWA_CACHE_NAME = 'frogs-and-flies-m26-v2'
+const PWA_CACHE_NAME = 'frogs-and-flies-m28-v1'
 
 const APP_SHELL_CACHE_URLS = [
   '/',
   '/manifest.webmanifest',
   '/favicon.png',
+  '/assets/m28/m28-home-pond-background-v1.png',
+  '/assets/m28/m28-lily-left-v1.png',
+  '/assets/m28/m28-lily-right-v1.png',
+  '/assets/m28/m28-frog-p1-idle-v1.png',
+  '/assets/m28/m28-frog-p1-crouch-v1.png',
+  '/assets/m28/m28-frog-p1-airborne-v1.png',
+  '/assets/m28/m28-frog-p1-tongue-v1.png',
+  '/assets/m28/m28-frog-p1-splash-v1.png',
+  '/assets/m28/m28-frog-p2-idle-v1.png',
+  '/assets/m28/m28-frog-p2-crouch-v1.png',
+  '/assets/m28/m28-frog-p2-airborne-v1.png',
+  '/assets/m28/m28-frog-p2-tongue-v1.png',
+  '/assets/m28/m28-frog-p2-splash-v1.png',
+  '/assets/m28/m28-fly-wing-a-v1.png',
+  '/assets/m28/m28-fly-wing-b-v1.png',
+  '/assets/m28/m28-firefly-end-v1.png',
+  '/assets/m28/m28-splash-ring-v1.png',
+  '/assets/m28/m28-catch-pop-v1.png',
+  '/assets/m28/m28-tongue-flash-v1.png',
+  '/assets/m28/m28-rush-power-v1.png',
+  '/assets/m28/m28-prologue-dawn-v1.png',
+  '/assets/m28/m28-prologue-day-v1.png',
+  '/assets/m28/m28-prologue-dusk-v1.png',
+  '/assets/m28/m28-ui-star-filled-v1.png',
+  '/assets/m28/m28-ui-star-empty-v1.png',
+  '/assets/m28/m28-ui-lock-v1.png',
+  '/assets/m28/m28-ui-cleared-v1.png',
+  '/audio/sfx/jump.mp3',
+  '/audio/sfx/tongue.mp3',
+  '/audio/sfx/catch.mp3',
+  '/audio/sfx/miss.mp3',
+  '/audio/sfx/splash.mp3',
+  '/audio/sfx/power.mp3',
+  '/audio/sfx/start.mp3',
+  '/audio/sfx/pause.mp3',
+  '/audio/sfx/results.mp3',
+  '/audio/music/home-pond-loop.mp3',
   '/assets/home-pond-background.png',
   '/assets/lily-left.png',
   '/assets/lily-right.png',
@@ -88,7 +125,7 @@ function cacheFirst(request) {
 }
 
 function isImmutableAssetPath(pathname) {
-  return pathname.startsWith('/assets/') || pathname === '/favicon.png'
+  return pathname.startsWith('/assets/') || pathname.startsWith('/audio/') || pathname === '/favicon.png'
 }
 
 function isRuntimeCacheableRequest(request, url) {

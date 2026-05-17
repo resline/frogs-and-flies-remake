@@ -60,4 +60,8 @@ describe('M2.8 asset path contract', () => {
   it('validates the M2.8 visual asset files and manifest provenance', () => {
     expect(() => execFileSync('node', ['scripts/check-m28-assets.mjs', '--images'], { stdio: 'pipe' })).not.toThrow()
   })
+
+  it('keeps M2.8 manifest, runtime paths, PWA cache, and filesystem in parity', () => {
+    expect(() => execFileSync('node', ['scripts/check-m28-assets.mjs', '--parity'], { stdio: 'pipe' })).not.toThrow()
+  })
 })

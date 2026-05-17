@@ -61,13 +61,15 @@ if (isCli) {
     checkImages()
   } else if (process.argv.includes('--audio')) {
     checkAudio()
+  } else if (process.argv.includes('--parity')) {
+    checkParity()
   } else {
-    console.error('Usage: node scripts/check-m28-assets.mjs --images | --audio')
+    console.error('Usage: node scripts/check-m28-assets.mjs --images | --audio | --parity')
     process.exitCode = 1
   }
 }
 
-function checkImages() {
+function checkImages(options = {}) {
   const manifestPath = path.join(repoRoot, 'ASSET_MANIFEST.md')
   const manifest = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, 'utf8') : ''
 
@@ -101,11 +103,13 @@ function checkImages() {
       throw new Error(`${asset.output} missing ASSET_MANIFEST.md provenance`)
     }
 
-    console.log(`verified ${asset.output} ${asset.width}x${asset.height} ${asset.transparency}`)
+    if (!options.silent) {
+      console.log(`verified ${asset.output} ${asset.width}x${asset.height} ${asset.transparency}`)
+    }
   }
 }
 
-function checkAudio() {
+function checkAudio(options = {}) {
   const manifestPath = path.join(repoRoot, 'ASSET_MANIFEST.md')
   const manifest = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, 'utf8') : ''
 
@@ -130,8 +134,55 @@ function checkAudio() {
 
     const duration = getAudioDurationSeconds(outputPath)
     const durationLabel = duration === undefined ? 'duration unavailable' : `${duration.toFixed(2)}s`
-    console.log(`verified ${output} ${bytes.length} bytes ${durationLabel}`)
+    if (!options.silent) {
+      console.log(`verified ${output} ${bytes.length} bytes ${durationLabel}`)
+    }
   }
+}
+
+function checkParity() {
+  checkImages({ silent: true })
+  checkAudio({ silent: true })
+
+  const requiredImageUrls = M28_IMAGE_ASSETS.map((asset) => publicOutputToUrl(asset.output))
+  const requiredAudioUrls = M28_AUDIO_ASSETS.map(publicOutputToUrl)
+  const requiredUrls = [...requiredImageUrls, ...requiredAudioUrls]
+  const assetsSource = readRepoFile('src/runtime/assets.ts')
+  const audioSource = readRepoFile('src/runtime/audio.ts')
+  const pwaSource = readRepoFile('src/runtime/pwa.ts')
+  const serviceWorkerSource = readRepoFile('public/service-worker.js')
+
+  assertSameSet(
+    'runtime M2.8 visual asset paths',
+    extractQuotedPaths(assetsSource, /^\/assets\/m28\/.+\.png$/),
+    requiredImageUrls,
+  )
+  assertSameSet('runtime local audio asset paths', extractQuotedPaths(audioSource, /^\/audio\/.+\.mp3$/), requiredAudioUrls)
+
+  for (const path of requiredUrls) {
+    if (!pwaSourceIncludesM28Registry(pwaSource, path)) {
+      throw new Error(`${path} missing from TypeScript PWA cache contract`)
+    }
+  }
+
+  const pwaCacheName = extractCacheName(pwaSource, /export const PWA_CACHE_NAME = '([^']+)'/)
+  const serviceWorkerCacheName = extractCacheName(serviceWorkerSource, /const PWA_CACHE_NAME = '([^']+)'/)
+  if (pwaCacheName !== serviceWorkerCacheName) {
+    throw new Error(`PWA cache name mismatch: TypeScript ${pwaCacheName}, service worker ${serviceWorkerCacheName}`)
+  }
+
+  const serviceWorkerCacheUrls = extractServiceWorkerCacheUrls(serviceWorkerSource)
+  for (const path of requiredUrls) {
+    if (!serviceWorkerCacheUrls.includes(path)) {
+      throw new Error(`${path} missing from service worker APP_SHELL_CACHE_URLS`)
+    }
+  }
+
+  for (const path of serviceWorkerCacheUrls) {
+    assertCacheUrlExists(path)
+  }
+
+  console.log(`verified parity for ${requiredImageUrls.length} images, ${requiredAudioUrls.length} audio files`)
 }
 
 function isLikelyMp3(bytes) {
@@ -153,4 +204,75 @@ function getAudioDurationSeconds(outputPath) {
 
   const duration = Number.parseFloat(probe.stdout.trim())
   return Number.isFinite(duration) ? duration : undefined
+}
+
+function publicOutputToUrl(output) {
+  if (!output.startsWith('public/')) {
+    throw new Error(`${output} expected public/ prefix`)
+  }
+  return `/${output.slice('public/'.length)}`
+}
+
+function readRepoFile(relativePath) {
+  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')
+}
+
+function extractQuotedPaths(source, matcher) {
+  return [...source.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]).filter((value) => matcher.test(value))
+}
+
+function assertSameSet(label, actual, expected) {
+  const actualSet = new Set(actual)
+  const expectedSet = new Set(expected)
+
+  for (const value of expectedSet) {
+    if (!actualSet.has(value)) {
+      throw new Error(`${label} missing ${value}`)
+    }
+  }
+
+  for (const value of actualSet) {
+    if (!expectedSet.has(value)) {
+      throw new Error(`${label} has unexpected ${value}`)
+    }
+  }
+}
+
+function pwaSourceIncludesM28Registry(source, requiredPath) {
+  if (requiredPath.startsWith('/assets/m28/')) {
+    return source.includes('M28_REQUIRED_VISUAL_ASSET_PATHS')
+  }
+
+  if (requiredPath.startsWith('/audio/')) {
+    return source.includes('LOCAL_AUDIO_ASSET_REGISTRY')
+  }
+
+  return source.includes(requiredPath)
+}
+
+function extractCacheName(source, pattern) {
+  const match = source.match(pattern)
+  if (!match?.[1]) {
+    throw new Error('missing PWA cache name')
+  }
+  return match[1]
+}
+
+function extractServiceWorkerCacheUrls(source) {
+  const match = source.match(/const APP_SHELL_CACHE_URLS = \[([\s\S]*?)\]/)
+  if (!match?.[1]) {
+    throw new Error('missing APP_SHELL_CACHE_URLS')
+  }
+  return extractQuotedPaths(match[1], /^\//)
+}
+
+function assertCacheUrlExists(urlPath) {
+  if (urlPath === '/') {
+    return
+  }
+
+  const publicPath = path.join(repoRoot, 'public', urlPath)
+  if (!fs.existsSync(publicPath)) {
+    throw new Error(`service worker cache URL ${urlPath} points to missing ${path.relative(repoRoot, publicPath)}`)
+  }
 }
