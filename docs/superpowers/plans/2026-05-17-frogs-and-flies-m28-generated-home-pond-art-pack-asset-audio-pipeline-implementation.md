@@ -208,7 +208,7 @@ In all paths, final runtime assets must be local static PNGs under `public/asset
 - Read: `tests/unit/audioManager.test.ts`
 - Read: `tests/e2e/m27-campaign-flow.spec.ts`
 
-- [ ] **Step 1: Confirm branch, sync, and worktree**
+- [x] **Step 1: Confirm branch, sync, and worktree**
 
 Run:
 
@@ -220,7 +220,7 @@ git log --oneline --decorate -5
 
 Expected: branch is `ff2-m0-pixijs`; HEAD includes `5444761 docs: add m28 asset pipeline spec`; worktree is clean and synced with origin. If unrelated dirty files exist, stop and ask consolidation how to proceed.
 
-- [ ] **Step 2: Confirm spec scope**
+- [x] **Step 2: Confirm spec scope**
 
 Run:
 
@@ -231,7 +231,7 @@ sed -n '260,620p' docs/superpowers/specs/2026-05-17-frogs-and-flies-m28-generate
 
 Expected: spec requires the exact M2.8 visual/audio asset set, PWA cache bump, manifest/tests/deploy evidence, and strict non-goals.
 
-- [ ] **Step 3: Confirm scripts and dependencies**
+- [x] **Step 3: Confirm scripts and dependencies**
 
 Run:
 
@@ -244,7 +244,7 @@ command -v ffprobe || true
 
 Expected: npm scripts include `build`, `test`, `test:unit`, `test:e2e`, `dev`, `preview`, and `start`; `pngjs ok` prints. `ffmpeg`/`ffprobe` are optional but record availability in the worker status because Task 4 may use them.
 
-- [ ] **Step 4: Run baseline unit tests**
+- [x] **Step 4: Run baseline unit tests**
 
 Run:
 
@@ -254,7 +254,7 @@ npm run test:unit
 
 Expected: PASS. Current M2.7 baseline is 29 files / 145 tests passing. If counts differ before M2.8 starts, record the new baseline.
 
-- [ ] **Step 5: Run baseline build**
+- [x] **Step 5: Run baseline build**
 
 Run:
 
@@ -264,7 +264,7 @@ npm run build
 
 Expected: `tsc && vite build` exits `0`; `dist/` is generated but not committed.
 
-- [ ] **Step 6: Check verification ports**
+- [x] **Step 6: Check verification ports**
 
 Run:
 
@@ -275,7 +275,7 @@ lsof -iTCP:18080 -sTCP:LISTEN || true
 
 Expected: no listeners. If occupied, choose another explicit port and record it.
 
-- [ ] **Step 7: Clean generated output**
+- [x] **Step 7: Clean generated output**
 
 Run:
 
@@ -286,7 +286,7 @@ git status --short
 
 Expected: no source changes from baseline verification.
 
-- [ ] **Step 8: Commit boundary**
+- [x] **Step 8: Commit boundary**
 
 No source commit is expected for Task 1 unless the executing worker is updating this plan's checkboxes.
 
