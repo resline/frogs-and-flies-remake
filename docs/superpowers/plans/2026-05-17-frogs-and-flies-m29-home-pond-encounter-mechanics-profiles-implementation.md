@@ -933,7 +933,7 @@ Task 6 evidence, 2026-05-17:
 - Modify: `tests/unit/saveManager.test.ts`
 - Modify: `tests/unit/campaignProgress.test.ts` only if existing assertions need stronger no-schema-change coverage.
 
-- [ ] **Step 1: Add failing SaveManager no-schema-change assertions**
+- [x] **Step 1: Add failing SaveManager no-schema-change assertions**
 
 In `tests/unit/saveManager.test.ts`, ensure M2.9 does not change persistence:
 
@@ -945,7 +945,7 @@ expect(JSON.stringify(save)).not.toContain('encounterProfile')
 expect(JSON.stringify(save)).not.toContain('home-pond-nightfall-pressure')
 ```
 
-- [ ] **Step 2: Add focused campaign marker persistence E2E**
+- [x] **Step 2: Add focused campaign marker persistence E2E**
 
 In `tests/e2e/m29-encounter-profiles.spec.ts`, after a campaign pass/reload:
 
@@ -954,7 +954,7 @@ In `tests/e2e/m29-encounter-profiles.spec.ts`, after a campaign pass/reload:
 - Saved JSON does not contain encounter profile ids.
 - Reopening campaign shows unlock/pass state exactly as M2.7 did.
 
-- [ ] **Step 3: Run save/campaign tests red or green**
+- [x] **Step 3: Run save/campaign tests red or green**
 
 Run:
 
@@ -965,7 +965,7 @@ npx playwright test tests/e2e/m29-encounter-profiles.spec.ts tests/e2e/m27-campa
 
 Expected: PASS after previous tasks if no schema changes were made. If FAIL, use systematic-debugging before patching.
 
-- [ ] **Step 4: Patch only if the tests reveal a real regression**
+- [x] **Step 4: Patch only if the tests reveal a real regression**
 
 Allowed fixes:
 
@@ -980,7 +980,7 @@ Disallowed fixes:
 - New migration.
 - Persisting profile ids in `SaveData`.
 
-- [ ] **Step 5: Run broader focused regression green**
+- [x] **Step 5: Run broader focused regression green**
 
 Run:
 
@@ -993,7 +993,7 @@ git diff --check
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -1003,6 +1003,15 @@ git commit -m "test: guard m29 campaign persistence regressions"
 ```
 
 Expected: commit contains save/schema/campaign regression guardrails only. Omit unchanged files.
+
+### Task 7 Evidence
+
+- Added SaveManager no-schema-change assertions that keep `SAVE_SCHEMA_VERSION`/save data at v2 and reject encounter profile fields/ids in default saves.
+- Added M2.9 campaign persistence E2E covering full Home Pond pass, `frogs-and-flies.save.v2`, saved `"version":2`, no encounter profile ids in saved JSON, and pass/unlock state after reload.
+- Step 3 result: `npm run test:unit -- tests/unit/saveManager.test.ts tests/unit/campaignProgress.test.ts` passed green on first run with 2 files and 25 tests; `npx playwright test tests/e2e/m29-encounter-profiles.spec.ts tests/e2e/m27-campaign-flow.spec.ts --project=chromium` passed green on first run with 10 tests. No runtime patch was needed.
+- Step 5 result: focused unit gate passed with 5 files and 38 tests; focused Chromium E2E gate passed with 16 tests; `npm run build` passed; `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`.
+- Scope: changed only Task 7 tests and this Task 7 evidence; no save schema bump, migration, persisted encounter profile ids, `src/runtime/**` patch, `src/game/**` change, assets, audio, backend, localization, monetization, or Task 8+ docs.
 
 ## Task 8: Documentation And Scope Guard Tests
 

@@ -76,6 +76,10 @@ describe('SaveManager defaults', () => {
     expect(save.campaign.levels['home-pond-1-2-quick-tongue'].unlocked).toBe(false)
     expect(save.campaign.levels['home-pond-1-3-nightfall-feast'].unlocked).toBe(false)
     expect(save.campaign.lastSelectedLevelId).toBe('home-pond-1-1-first-hunt')
+
+    const serialized = JSON.stringify(save)
+    expect(serialized).not.toContain('encounterProfile')
+    expect(serialized).not.toContain('home-pond-nightfall-pressure')
   })
 })
 
