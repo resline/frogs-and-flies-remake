@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import {
   LEGACY_GAMEPLAY_ASSET_PATHS,
@@ -54,5 +55,9 @@ describe('M2.8 asset path contract', () => {
       ...Object.values(M28_PROLOGUE_ASSET_PATH_BY_TONE),
       ...M28_CAMPAIGN_UI_ASSET_PATHS,
     ])
+  })
+
+  it('validates the M2.8 visual asset files and manifest provenance', () => {
+    expect(() => execFileSync('node', ['scripts/check-m28-assets.mjs', '--images'], { stdio: 'pipe' })).not.toThrow()
   })
 })

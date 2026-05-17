@@ -416,7 +416,7 @@ Expected: commit created. Remove `dist/` before handoff.
 - Modify: `tests/unit/m28AssetPipeline.test.ts`
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing filesystem/dimension/alpha tests**
+- [x] **Step 1: Write failing filesystem/dimension/alpha tests**
 
 Extend `tests/unit/m28AssetPipeline.test.ts` to run the validation script:
 
@@ -439,7 +439,7 @@ Create `scripts/check-m28-assets.mjs` with exported `M28_IMAGE_ASSETS` containin
 - fail if `ASSET_MANIFEST.md` omits the final output path,
 - print `verified <path> <width>x<height> <transparency>`.
 
-- [ ] **Step 2: Run image validator red**
+- [x] **Step 2: Run image validator red**
 
 Run:
 
@@ -450,7 +450,7 @@ node scripts/check-m28-assets.mjs --images
 
 Expected: FAIL because `public/assets/m28/*.png` and manifest entries do not exist.
 
-- [ ] **Step 3: Choose and record the image generation path**
+- [x] **Step 3: Choose and record the image generation path**
 
 Use one of the policy paths:
 
@@ -460,7 +460,7 @@ Use one of the policy paths:
 
 Do not add any runtime API keys, external URLs, subscription identifiers, or browser session data to the repo.
 
-- [ ] **Step 4: Generate or fallback-author the exact visual set**
+- [x] **Step 4: Generate or fallback-author the exact visual set**
 
 Use the shared style prefix from the spec:
 
@@ -470,7 +470,7 @@ Premium hand-painted 2D game art for an original Frogs and Flies spiritual succe
 
 Generate or fallback-author all 27 final PNG files listed in "Required M2.8 Visual Asset Contract". Preserve exact final dimensions. Keep transparent sprites/icons on stable canvases; do not tight-trim frog/VFX canvases.
 
-- [ ] **Step 5: Post-process transparent assets if needed**
+- [x] **Step 5: Post-process transparent assets if needed**
 
 If chroma key cleanup is required, use:
 
@@ -488,7 +488,7 @@ python "${CODEX_HOME:-$HOME/.codex}/skills/.system/imagegen/scripts/remove_chrom
 
 Expected: transparent images have clean alpha edges and still match required canvases.
 
-- [ ] **Step 6: Update `ASSET_MANIFEST.md` visual section**
+- [x] **Step 6: Update `ASSET_MANIFEST.md` visual section**
 
 Add an M2.8 section with:
 
@@ -498,7 +498,7 @@ Add an M2.8 section with:
 - no-runtime-live-API note,
 - table for every visual asset with output, source/raw workspace, prompt/provenance, dimensions, transparency, post-processing, file size, and QA notes.
 
-- [ ] **Step 7: Run image validator green**
+- [x] **Step 7: Run image validator green**
 
 Run:
 
@@ -509,7 +509,7 @@ npm run test:unit -- tests/unit/m28AssetPipeline.test.ts
 
 Expected: PASS and validator prints every final image path.
 
-- [ ] **Step 8: Check size target**
+- [x] **Step 8: Check size target**
 
 Run:
 
@@ -519,7 +519,7 @@ du -ch public/assets/m28/*.png | tail -n 1
 
 Expected: total is under `6 MB` when practical. If larger, record the reason and run the performance gates in Task 8/Task 11 before accepting.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 Run:
 
