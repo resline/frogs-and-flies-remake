@@ -13,7 +13,7 @@
 - Work only in `/mnt/disk/Home/work/app/frog/frog-m0-pixijs`.
 - Do not touch sibling repo `/mnt/disk/Home/work/app/frog/app`.
 - Do not revert edits made by other workers.
-- Do not push unless a later release/deploy task has explicit approval and all local gates have passed.
+- The user's standing approval `Zatwierdzamy ten etap i wszystkie przyszłe` satisfies M2.10 push/deploy approval. It does not bypass the required local, Docker, Coolify deploy, production smoke, or mandatory consolidation gates; complete them in the order below.
 - Use `git status --short --branch` before every task and before every commit.
 - Use `git diff --check` before every commit.
 - Remove generated `dist/`, `test-results/`, and `playwright-report/` unless a task explicitly asks to preserve an artifact.
@@ -1535,9 +1535,9 @@ docker stop frogs-and-flies-m210
 
 Expected: container stops. If already exited, confirm no `frogs-and-flies-m210` container remains.
 
-- [ ] **Step 5: Push only if release approval is explicit**
+- [ ] **Step 5: Push using standing release approval after Docker gates**
 
-If the parent/release owner has not explicitly approved push, stop here and return `BLOCKED_RELEASE_APPROVAL_REQUIRED` with Docker evidence. If approval is explicit, run:
+The user's standing approval `Zatwierdzamy ten etap i wszystkie przyszłe` satisfies M2.10 push/deploy approval. Do not require a new approval before M2.10 push/deploy. After all preceding local and Docker gates have passed, run:
 
 ```bash
 git status --short --branch
@@ -1617,7 +1617,7 @@ git log --oneline --decorate -8
 git diff --check
 ```
 
-Expected: consolidator records deployment UUID/status, deployed commit, production smoke results, generated-file cleanup, and any release approval used for push/deploy.
+Expected: consolidator records deployment UUID/status, deployed commit, production smoke results, generated-file cleanup, and the standing approval `Zatwierdzamy ten etap i wszystkie przyszłe` used for M2.10 push/deploy.
 
 ## Acceptance Criteria
 
