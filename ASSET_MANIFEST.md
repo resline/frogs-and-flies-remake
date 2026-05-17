@@ -169,3 +169,13 @@ Normalization/compression notes: short mono MP3 SFX are low-volume sine cues wit
 | `public/audio/sfx/pause.mp3` | `ffmpeg` sine 260 Hz, 0.12s, fade out, volume 0.16. | 0.156735s | `audio/mpeg` | 1,480 bytes | Mono MP3, low-volume cue. | Procedural `pause` SFX remains available if the file fails. |
 | `public/audio/sfx/results.mp3` | `ffmpeg` sine 700 Hz, 0.45s, fade out, volume 0.18. | 0.496327s | `audio/mpeg` | 4,197 bytes | Mono MP3, low-volume cue. | Procedural `results` SFX remains available if the file fails. |
 | `public/audio/music/home-pond-loop.mp3` | `ffmpeg` mixed sine 196 Hz + 294 Hz, 24s, 1s fade in/out, volume 0.12. | 24.032653s | `audio/mpeg` | 192,488 bytes | Mono MP3, quiet ambient loop placeholder. | Procedural/no-music fallback remains safe if the file fails. |
+
+## M2.8 Verification Commands
+
+Run these checks after changing any M2.8 asset, audio, manifest, runtime path, or PWA cache entry:
+
+```bash
+node scripts/check-m28-assets.mjs --images
+node scripts/check-m28-assets.mjs --audio
+node scripts/check-m28-assets.mjs --parity
+```

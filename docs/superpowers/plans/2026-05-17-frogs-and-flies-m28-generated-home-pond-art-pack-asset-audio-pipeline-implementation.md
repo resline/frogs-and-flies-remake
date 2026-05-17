@@ -1087,7 +1087,7 @@ Expected: commit created. Omit unchanged files from `git add`.
 - Modify: `ASSET_MANIFEST.md` only for missing M2.8 verification notes
 - Modify: this plan file
 
-- [ ] **Step 1: Write failing README gate**
+- [x] **Step 1: Write failing README gate**
 
 Update `tests/unit/readmeControls.test.ts` to require README coverage for:
 
@@ -1104,7 +1104,7 @@ Update `tests/unit/readmeControls.test.ts` to require README coverage for:
 
 Keep existing M2.7 campaign docs gate expectations unless they conflict with M2.8 wording.
 
-- [ ] **Step 2: Run README gate red**
+- [x] **Step 2: Run README gate red**
 
 Run:
 
@@ -1114,7 +1114,7 @@ npm run test:unit -- tests/unit/readmeControls.test.ts
 
 Expected: FAIL because README still documents M2.7 as the latest milestone.
 
-- [ ] **Step 3: Update README**
+- [x] **Step 3: Update README**
 
 In `README.md`, document:
 
@@ -1129,7 +1129,7 @@ In `README.md`, document:
 
 Do not claim new levels, biomes, bosses, insect roster, backend, localization, or monetization.
 
-- [ ] **Step 4: Ensure manifest has verification notes**
+- [x] **Step 4: Ensure manifest has verification notes**
 
 Check `ASSET_MANIFEST.md` includes commands:
 
@@ -1141,7 +1141,7 @@ node scripts/check-m28-assets.mjs --parity
 
 Add them if missing.
 
-- [ ] **Step 5: Run docs gates green**
+- [x] **Step 5: Run docs gates green**
 
 Run:
 
@@ -1154,7 +1154,7 @@ node scripts/check-m28-assets.mjs --parity
 
 Expected: PASS.
 
-- [ ] **Step 6: Run full unit and build**
+- [x] **Step 6: Run full unit and build**
 
 Run:
 
@@ -1165,7 +1165,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Run:
 

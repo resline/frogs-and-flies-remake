@@ -1,37 +1,42 @@
 # Frogs & Flies Remake
 
-M2.7 adds the Home Pond Campaign Prologue on top of the M2.6 local product foundation and the M2.5 Home Pond Classic vertical slice. The browser game now has a first campaign path, a typed level/content registry, three Home Pond levels, results with unlocks and stars, and local SaveManager v2 migration. It is not the finished full product: additional biomes, bosses, achievements, skins, localization, online leaderboard, backend services, accounts, monetization, and final asset/audio pipelines are still outside this milestone.
+M2.8 adds the Generated Home Pond Art Pack v1 and asset/audio pipeline hardening on top of the M2.7 Home Pond Campaign Prologue, the M2.6 local product foundation, and the M2.5 Home Pond Classic vertical slice. The browser game now has a first campaign path, typed level/content registry, three Home Pond levels, results with unlocks and stars, local SaveManager v2 migration, a richer local Home Pond visual pack, fulfilled local audio paths, manifest/cache validation, and offline asset/audio availability. It is not the finished full product: additional biomes, bosses, achievements, skins, localization, online leaderboard, backend services, accounts, monetization, and final production pipelines are still outside this milestone.
 
-## Current M2.7
+## Current M2.8
 
 - PixiJS v8 runtime mounted from Vite with deterministic fixed 1/60 second gameplay.
 - Default 180 second round: `start` -> `gameplay` -> `the-end` -> `results`.
 - Day, dusk, night, and THE END visual states are driven by remaining time.
 - Home Pond Campaign Prologue adds a Campaign entry from Main menu, the Dawn At Home Pond prologue, and three registered levels: 1-1 First Hunt, 1-2 Quick Tongue, and 1-3 Nightfall Feast.
 - The typed registry contains one Home Pond campaign, one replayable prologue, three level definitions, and three existing-Classic content profiles. It deliberately avoids broad content expansion.
-- Campaign gameplay reuses `Classic Single` Home Pond rules and existing generated assets. `Local Versus` remains available as a separate local mode.
+- Campaign gameplay reuses `Classic Single` Home Pond rules. `Local Versus` remains available as a separate local mode.
+- Generated Home Pond Art Pack v1 lives in `public/assets/m28/` and is loaded before the legacy M2.5 Home Pond assets, with procedural rendering still available as final fallback.
+- M2.8 player-visible polish includes richer Home Pond gameplay art, prologue dawn/day/dusk visuals, campaign star/lock/cleared icons, result stars, and fulfilled local audio files for existing registered paths.
+- The runtime exposes `data-assets-pack="m28-v1"` when the M2.8 gameplay pack loads and preserves legacy `data-assets-loaded` markers for older smoke tests.
 - `Classic Single` starts with `P1` as human and `P2` as `cpu-opponent`; `Local Versus` supports two local human frogs.
 - Campaign results evaluate objectives, award 0-3 stars, persist best score/objective stats, unlock the next level on pass, and expose Replay Level, Next Level, Campaign, Classic Modes, and Main Menu.
 - Product shell flow covers Splash, Main menu, Mode select, Campaign, Prologue, Settings, High Scores, Gameplay, Pause, and Results.
 - Local SaveManager v2 stores settings, input profiles, local high scores, local stats, round tracking, campaign progress, prologue seen state, level unlocks, stars, best scores, and selected campaign level.
 - SaveManager keeps `frogs-and-flies.save.v1` as a preserved rollback/migration key while `frogs-and-flies.save.v2` is the primary key.
 - Input foundation keeps keyboard defaults, pointer/canvas play, Touch zones, Gamepad foundation markers and P1 mapper, Remapping, conflict detection, and Reset Defaults.
-- Web Audio v1 handles autoplay-safe unlock, mute, master/SFX/music buses, mono audio preference, optional local asset paths, and procedural missing audio fallback.
-- PWA metadata and a static service worker provide a local offline shell for Classic, Campaign, and Prologue screens.
-- Multi-browser Playwright coverage, accessibility checks, no-overlap shell screenshots, PWA offline smoke, and performance smoke are part of the M2.7 verification gates.
+- Web Audio v1 handles autoplay-safe unlock, mute, master/SFX/music buses, mono audio preference, local MP3 asset paths, and procedural missing audio fallback.
+- PWA metadata and the static service worker use cache name `frogs-and-flies-m28-v1`; PWA cache `m28` covers the app shell, M2.8 visual pack, local audio paths, and legacy fallback assets.
+- Multi-browser Playwright coverage, accessibility checks, no-overlap shell screenshots, PWA offline smoke, asset MIME/offline checks, and performance smoke are part of the M2.8 verification gates.
+- M2.8 has no runtime OpenAI, ChatGPT, or API dependency. All shipped images and audio are local static files.
 
 ## Shell Flow
 
 - Splash boots into Main menu after runtime readiness.
 - Main menu exposes Campaign, Play, Settings, and High Scores.
 - Campaign opens Home Pond with 1-1 First Hunt unlocked by default, 1-2 Quick Tongue and 1-3 Nightfall Feast locked until previous passes, and native buttons for Start Prologue, Continue, Replay Prologue, and Main Menu.
-- Prologue shows Dawn At Home Pond panels with Back, Next, Skip, Start 1-1 First Hunt, and Main Menu controls.
+- Prologue shows Dawn At Home Pond panels with Back, Next, Skip, Start 1-1 First Hunt, and Main Menu controls. M2.8 maps the `dawn`, `day`, and `dusk` visual tones to local prologue images.
 - Mode select offers Classic Single and Local Versus, then Start.
 - Settings owns difficulty, display options, audio options, input profile selection, remap buttons, and Reset Defaults.
 - High Scores shows local-only Classic Single and Local Versus best entries.
 - Gameplay shows HUD, canvas, touch controls, and Pause.
 - Pause exposes Resume, Restart, Settings, and Main Menu.
 - Results shows winner, P1/P2 or CPU scores, catch/attempt/accuracy/combo stats, local high-score status, Replay, Change Mode, and Main Menu. Campaign results additionally show objective status, stars, Replay Level, Next Level when available, Campaign, and Classic Modes.
+- Campaign level select and campaign results use decorative campaign star/lock/cleared icons while keeping text labels as the accessible source of truth.
 
 ## Controls
 
@@ -58,14 +63,39 @@ M2.7 adds the Home Pond Campaign Prologue on top of the M2.6 local product found
 - `exportJson` and `importJson` cover the whole SaveManager v2 schema for local JSON round trips. The current shell does not upload, sync, or provide a remote import/export service.
 - Save/privacy scope: no backend, account, cloud save, analytics, online leaderboard, ads, payments, telemetry, or live network dependency is required for saves, stats, or campaign progress.
 
+## Assets
+
+Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md).
+
+- Current gameplay pack: `public/assets/m28/`.
+- Editable fallback source art: `public/assets/source/m28/`.
+- M2.8 fallback provenance summary: the OpenAI Image API path was unavailable in the worker environment because `OPENAI_API_KEY` was not set, so the shipped M2.8 visuals are local SVG fallback stand-ins rendered to PNG with Playwright Chromium.
+- No runtime image generation occurs. The app loads local static files only and has no runtime OpenAI, ChatGPT, or API dependency.
+- Gameplay art includes `/assets/m28/m28-home-pond-background-v1.png`, frog poses, lily staging, fly/firefly art, and VFX sprites.
+- Prologue visuals include `/assets/m28/m28-prologue-dawn-v1.png`, `/assets/m28/m28-prologue-day-v1.png`, and `/assets/m28/m28-prologue-dusk-v1.png`.
+- Campaign UI art includes `/assets/m28/m28-ui-star-filled-v1.png`, `/assets/m28/m28-ui-star-empty-v1.png`, `/assets/m28/m28-ui-lock-v1.png`, and `/assets/m28/m28-ui-cleared-v1.png`.
+- Legacy fallback files remain available at `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, `/assets/fly-wing-a.png`, and the other M2.5 paths.
+- `public/favicon.png` is referenced by the app shell.
+
+M2.8 asset verification:
+
+```bash
+node scripts/check-m28-assets.mjs --images
+node scripts/check-m28-assets.mjs --audio
+node scripts/check-m28-assets.mjs --parity
+```
+
 ## Audio
 
-- Audio uses Web Audio v1 directly; Howler is not part of M2.7.
+- Audio uses Web Audio v1 directly; Howler is not part of M2.8.
 - `Enable Audio` performs the explicit browser unlock gesture. Gameplay SFX queue while locked and flush only after unlock.
 - Settings persist mute, `masterVolume`, `sfxVolume`, `musicVolume`, and `monoAudio`.
-- Optional local authored placeholder paths are registered for `/audio/sfx/jump.mp3`, `/audio/sfx/tongue.mp3`, `/audio/sfx/catch.mp3`, `/audio/sfx/miss.mp3`, `/audio/sfx/splash.mp3`, `/audio/sfx/power.mp3`, `/audio/sfx/start.mp3`, `/audio/sfx/pause.mp3`, `/audio/sfx/results.mp3`, and `/audio/music/home-pond-loop.mp3`.
-- Those audio files are optional in this milestone. Missing files use procedural oscillator SFX and must not block gameplay.
-- No live OpenAI audio API calls are made by the app or required for local verification.
+- M2.8 fulfills the existing local audio registry with `public/audio/sfx/*.mp3` and `public/audio/music/home-pond-loop.mp3`.
+- Registered local paths include `public/audio/sfx/jump.mp3`, `public/audio/sfx/tongue.mp3`, `public/audio/sfx/catch.mp3`, `public/audio/sfx/miss.mp3`, `public/audio/sfx/splash.mp3`, `public/audio/sfx/power.mp3`, `public/audio/sfx/start.mp3`, `public/audio/sfx/pause.mp3`, `public/audio/sfx/results.mp3`, and `public/audio/music/home-pond-loop.mp3`.
+- Runtime URLs include `/audio/sfx/jump.mp3`, `/audio/sfx/tongue.mp3`, `/audio/sfx/catch.mp3`, `/audio/sfx/miss.mp3`, `/audio/sfx/splash.mp3`, `/audio/sfx/power.mp3`, `/audio/sfx/start.mp3`, `/audio/sfx/pause.mp3`, `/audio/sfx/results.mp3`, and `/audio/music/home-pond-loop.mp3`.
+- The audio files are minimal local `ffmpeg` sine-source placeholders for path fulfillment, MIME/cache testing, and offline behavior, not a final authored audio production pass.
+- The audio unlock/fallback behavior remains safe: if unlock is denied or a local file fails to load/decode, missing audio fallback uses procedural oscillator SFX and gameplay continues.
+- No live OpenAI, ChatGPT, image API, or audio API calls are made by the app or required for local verification.
 
 ## Determinism And Smoke Parameters
 
@@ -80,7 +110,7 @@ M2.7 adds the Home Pond Campaign Prologue on top of the M2.6 local product found
 - Supported smoke params: `mode`, `seed`, `smokeElapsedSeconds`, `smokeState`, `durationSeconds`, `theEndSeconds`, `simulationSpeed`, `campaignSmokeScore`, and `campaignSmokeCatches`.
 - `campaignSmokeScore` and `campaignSmokeCatches` are focused E2E helpers used only when a campaign context is active; they do not change ordinary Classic Single or Local Versus scoring/high-score semantics.
 - Supported option params: `difficulty=classic-assist|classic-standard|classic-expert`, `showTimer=0|1`, `reducedMotion=0|1`, `highContrast=0|1`, `mute=0|1`, and `volume=0..1`.
-- Runtime markers include `data-shell-screen`, `data-save-status`, `data-round-recorded`, `data-active-input-device`, `data-gamepad-connected`, `data-reduced-motion`, `data-high-contrast`, `data-audio-unlocked`, `data-audio-muted`, `data-audio-master-volume`, `data-audio-sfx-volume`, `data-audio-music-volume`, `data-audio-mono`, `data-pwa-registration`, `data-pwa-runtime-cache-ready`, `data-campaign-id`, `data-prologue-seen`, `data-last-selected-campaign-level`, `data-active-campaign-level`, `data-campaign-result-level`, `data-campaign-result-passed`, and `data-campaign-result-stars`.
+- Runtime markers include `data-shell-screen`, `data-save-status`, `data-round-recorded`, `data-active-input-device`, `data-gamepad-connected`, `data-reduced-motion`, `data-high-contrast`, `data-audio-unlocked`, `data-audio-muted`, `data-audio-master-volume`, `data-audio-sfx-volume`, `data-audio-music-volume`, `data-audio-mono`, `data-pwa-registration`, `data-pwa-runtime-cache-ready`, `data-assets-pack`, `data-campaign-id`, `data-prologue-seen`, `data-last-selected-campaign-level`, `data-active-campaign-level`, `data-campaign-result-level`, `data-campaign-result-passed`, and `data-campaign-result-stars`.
 
 ## Local Development
 
@@ -100,12 +130,22 @@ npm run test:e2e
 npm test
 ```
 
-`npm test` runs Vitest unit tests and Playwright E2E tests. M2.7 Playwright coverage includes Chromium, Firefox, and WebKit projects where the environment supports them, plus shell flow, persistence, input, audio, PWA/offline, accessibility, responsive layout, campaign flow, and performance smoke.
+`npm test` runs Vitest unit tests and Playwright E2E tests. M2.8 Playwright coverage includes Chromium, Firefox, and WebKit projects where the environment supports them, plus shell flow, persistence, input, audio, PWA/offline, accessibility, responsive layout, campaign flow, asset MIME/offline checks, and performance smoke.
 
 Focused README gate:
 
 ```bash
 npm run test:unit -- tests/unit/readmeControls.test.ts
+```
+
+Focused M2.8 asset/audio gates:
+
+```bash
+node scripts/check-m28-assets.mjs --images
+node scripts/check-m28-assets.mjs --audio
+node scripts/check-m28-assets.mjs --parity
+npm run test:unit -- tests/unit/m28AssetPipeline.test.ts tests/unit/pwaCache.test.ts tests/unit/audioManager.test.ts
+npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium
 ```
 
 Focused M2.7 campaign gates:
@@ -124,16 +164,17 @@ npm run preview -- --host 127.0.0.1 --port 5176 --strictPort
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-pwa-offline.spec.ts --project=chromium
 ```
 
-Full M2.7 browser gate:
+Full M2.8 browser gate:
 
 ```bash
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-shell.spec.ts tests/e2e/m26-persistence.spec.ts tests/e2e/m26-input.spec.ts tests/e2e/m26-audio.spec.ts tests/e2e/m26-pwa-offline.spec.ts tests/e2e/m26-accessibility.spec.ts tests/e2e/m26-performance.spec.ts tests/e2e/m27-campaign-flow.spec.ts
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5176 npx playwright test tests/e2e/m26-shell.spec.ts tests/e2e/m26-persistence.spec.ts tests/e2e/m26-input.spec.ts tests/e2e/m26-audio.spec.ts tests/e2e/m26-pwa-offline.spec.ts tests/e2e/m26-accessibility.spec.ts tests/e2e/m26-performance.spec.ts tests/e2e/m27-campaign-flow.spec.ts tests/e2e/m28-asset-pipeline.spec.ts
 ```
 
-Production campaign smoke after deployment:
+Production campaign and asset smoke after deployment:
 
 ```bash
 PLAYWRIGHT_BASE_URL=https://frog.resline.net npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium
+PLAYWRIGHT_BASE_URL=https://frog.resline.net npx playwright test tests/e2e/m28-asset-pipeline.spec.ts --project=chromium
 ```
 
 ## Build
@@ -148,8 +189,9 @@ The build runs TypeScript and Vite, producing the static app in `dist`. Do not c
 
 - Manifest path: `/manifest.webmanifest`.
 - Service worker path: `/service-worker.js`.
-- Cache name: `frogs-and-flies-m26-v2`.
-- The app shell caches `/`, the manifest, favicon, Home Pond gameplay assets, and same-origin runtime JS/CSS assets.
+- Cache name: `frogs-and-flies-m28-v1`.
+- The app shell caches `/`, the manifest, favicon, M2.8 Home Pond gameplay assets, campaign UI/prologue images, local audio files, legacy fallback Home Pond assets, and same-origin runtime JS/CSS assets.
+- M2.8 explicitly verifies offline asset/audio availability for `public/assets/m28/`, `public/audio/sfx/*.mp3`, and `public/audio/music/home-pond-loop.mp3`.
 - Campaign and Prologue are bundled in the same static app shell and are available offline after the service worker has cached the shell.
 - Offline navigation falls back to the cached local shell. Gameplay remains local-only and does not require backend calls.
 - `/service-worker.js` and `/manifest.webmanifest` should be served without immutable long-term caching.
@@ -158,7 +200,7 @@ The build runs TypeScript and Vite, producing the static app in `dist`. Do not c
 
 ```bash
 docker build -t frogs-and-flies-remake .
-docker run --rm --name frogs-and-flies-m27 -p 18080:80 frogs-and-flies-remake
+docker run --rm --name frogs-and-flies-m28 -p 18080:80 frogs-and-flies-remake
 ```
 
 The Docker image builds with the repository `Dockerfile`, uses Node 22 Alpine for the build, and serves `dist` from nginx 1.27 Alpine on container port `80` using `nginx.conf`. Use host port `18080` when `8080` is occupied; the important mapping is `18080:80`.
@@ -168,25 +210,17 @@ Coolify and Docker gates:
 - Build with the repository `Dockerfile`.
 - Publish container port `80`.
 - Configure the health check to load `/`.
-- Required smoke URLs should return `200`: `/`, `/manifest.webmanifest`, `/service-worker.js`, `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, and `/assets/fly-wing-a.png`.
-- The service worker should return JavaScript content type.
+- Required smoke URLs should return `200`: `/`, `/manifest.webmanifest`, `/service-worker.js`, `/assets/m28/m28-home-pond-background-v1.png`, `/assets/m28/m28-ui-star-filled-v1.png`, `/audio/music/home-pond-loop.mp3`, `/assets/home-pond-background.png`, `/assets/frog-p1-idle.png`, and `/assets/fly-wing-a.png`.
+- The service worker should return JavaScript content type and MP3 assets should return an MP3-compatible MIME such as `audio/mpeg`.
 - Verify `data-pwa-registration` reports `registered` or a documented non-blocking failure, and an offline reload reaches the local offline shell.
 - Verify production campaign flow with `PLAYWRIGHT_BASE_URL=https://frog.resline.net`.
-- No backend, account, cloud save, analytics, online leaderboard, or optional audio service is required.
-
-## Assets
-
-Generated bitmap assets and their provenance are tracked in [ASSET_MANIFEST.md](ASSET_MANIFEST.md). M2.7 adds no new assets: Home Pond Campaign Prologue reuses existing generated local PNG assets such as `public/assets/home-pond-background.png`, `public/assets/frog-p1-idle.png`, and `public/assets/fly-wing-a.png` through Pixi `Assets`; procedural rendering remains available as fallback and for overlays. `public/favicon.png` is referenced by the app shell.
-
-No `public/audio/**` files are present in M2.7. Optional audio paths are registered in code for future local files, and missing audio uses procedural fallback.
+- Verify production asset/audio flow with `PLAYWRIGHT_BASE_URL=https://frog.resline.net`.
+- No backend, account, cloud save, analytics, online leaderboard, optional audio service, or runtime generation service is required.
 
 ## Non-Goals
 
-- No new biome beyond Home Pond.
-- No boss encounters.
-- No new insect/hazard roster beyond the existing Classic fly/Rush rules.
-- No achievements, skins, shop, FrogCoins, monetization, ads, or payments.
-- No backend, account, cloud save, analytics, telemetry, online leaderboard, or live API.
-- No full PL/EN localization pass.
-- No final Spine, TexturePacker, or authored audio pipeline.
+- No new gameplay rules, levels, biomes, bosses, insect roster, hazards, or power-ups.
+- No save schema bump beyond the existing SaveManager v2 campaign progress.
+- No backend, account, cloud save, analytics, telemetry, online leaderboard, live API, localization, or monetization.
+- No Howler, Spine, TexturePacker, final audio sprite, or full authored audio production pipeline.
 - No new Survival, Time Attack, Daily, or Atari Mode.
