@@ -1257,7 +1257,7 @@ Expected: plan-only commit.
 - Read: `nginx.conf`
 - Read: `README.md`
 
-- [ ] **Step 1: Verify clean local HEAD before Docker**
+- [x] **Step 1: Verify clean local HEAD before Docker**
 
 Run:
 
@@ -1268,7 +1268,7 @@ git log --oneline --decorate -5
 
 Expected: branch is clean and contains all M2.9 implementation/doc commits.
 
-- [ ] **Step 2: Docker build**
+- [x] **Step 2: Docker build**
 
 Run:
 
@@ -1278,7 +1278,7 @@ docker build -t frogs-and-flies-m29-encounter-profiles .
 
 Expected: image builds successfully.
 
-- [ ] **Step 3: Docker static smoke**
+- [x] **Step 3: Docker static smoke**
 
 Run in one terminal:
 
@@ -1302,7 +1302,7 @@ Expected:
 - HTTP `200` for app shell, manifest, service worker, representative M2.8 asset/audio files.
 - M2.9, M2.7, and M2.8 Chromium smoke PASS against Docker.
 
-- [ ] **Step 4: Stop Docker container**
+- [x] **Step 4: Stop Docker container**
 
 Run:
 
@@ -1312,7 +1312,7 @@ docker stop frogs-and-flies-m29
 
 Expected: container stops. If it already exited, confirm no `frogs-and-flies-m29` container remains.
 
-- [ ] **Step 5: Push branch after local/Docker gates**
+- [x] **Step 5: Push branch after local/Docker gates**
 
 Run:
 
@@ -1323,7 +1323,7 @@ git push origin ff2-m0-pixijs
 
 Expected: branch pushes successfully and local HEAD equals `origin/ff2-m0-pixijs`.
 
-- [ ] **Step 6: Coolify production deploy**
+- [x] **Step 6: Coolify production deploy**
 
 Use the Coolify deployment workflow for app `frogs-and-flies-remake` on server `cx32-hell`, URL `https://frog.resline.net`.
 
@@ -1334,7 +1334,7 @@ Required evidence:
 - app health `running:healthy`,
 - production URL responds with current app shell.
 
-- [ ] **Step 7: Production static smoke**
+- [x] **Step 7: Production static smoke**
 
 Run:
 
@@ -1369,7 +1369,7 @@ Expected:
 - M2.7 campaign flow passes on production.
 - M2.8 asset/audio smoke passes on production.
 
-- [ ] **Step 9: Cleanup production smoke artifacts**
+- [x] **Step 9: Cleanup production smoke artifacts**
 
 Run:
 
@@ -1379,6 +1379,22 @@ git status --short --branch
 ```
 
 Expected: branch clean and synced to origin. Report commit hash, deployment UUID, production URL, and verification counts to parent/consolidation.
+
+Task 10 evidence from 2026-05-17:
+
+- Local pre-Docker HEAD was clean on `ff2-m0-pixijs` at `1d5625a8f5bd7e3eaf93c28755ba248c21962b60`.
+- Docker image `frogs-and-flies-m29-encounter-profiles` built successfully.
+- Docker static smoke on `http://127.0.0.1:18080` returned `200` for `/`, `/manifest.webmanifest`, `/service-worker.js`, `/assets/m28/m28-home-pond-background-v1.png`, and `/audio/music/home-pond-loop.mp3`; MIME types were `text/html`, `application/manifest+json`, `application/javascript`, `image/png`, and `audio/mpeg`.
+- Docker Playwright smoke passed: `20 passed` for `tests/e2e/m29-encounter-profiles.spec.ts`, `tests/e2e/m27-campaign-flow.spec.ts`, and `tests/e2e/m28-asset-pipeline.spec.ts` on Chromium.
+- Docker container `frogs-and-flies-m29` was stopped and no matching container remained.
+- `git push origin ff2-m0-pixijs` returned `Everything up-to-date`; pushed/deployed code commit was `1d5625a8f5bd7e3eaf93c28755ba248c21962b60`.
+- Coolify health probe returned `OK`; authenticated version probe returned `4.0.0`.
+- Coolify deployment id `1178`, UUID `cl0uuhwgn1xbzqmqtc20k4ku`, finished at `2026-05-17T07:43:23.000000Z` on `cx32-hell` for app `frogs-and-flies-remake`.
+- Coolify deployment API reported commit `1d5625a8f5bd7e3eaf93c28755ba248c21962b60`, matching pushed HEAD at deployment time. App detail reported `ff2-m0-pixijs`, `git_commit_sha: HEAD`, and `status: running:healthy`.
+- Production static smoke at `https://frog.resline.net` returned `200` for `/`, `/manifest.webmanifest`, `/service-worker.js`, `/assets/m28/m28-home-pond-background-v1.png`, `/assets/m28/m28-ui-star-filled-v1.png`, and `/audio/music/home-pond-loop.mp3`; MIME types were `text/html`, `application/manifest+json`, `application/javascript`, `image/png`, `image/png`, and `audio/mpeg`.
+- Production Playwright smoke passed for `tests/e2e/m29-encounter-profiles.spec.ts` (`4 passed`) and `tests/e2e/m27-campaign-flow.spec.ts` (`6 passed`).
+- Production Playwright smoke for `tests/e2e/m28-asset-pipeline.spec.ts` did not pass: required command returned `9 passed, 1 failed`. The failing test was `falls back when the M2.8 gameplay art pack is unavailable`, where `data-assets-pack` was still unset at the 5 second assertion timeout. A focused rerun reproduced the failure. Diagnostic evidence showed the route abort happened at about `1.3s`, fallback began, and `data-assets-pack` became `legacy` at about `6.3s`, after the assertion window. No source/test edits were made in this Task 10 scope.
+- Cleanup removed `test-results` and `playwright-report`; no `frogs-and-flies-m29` container remained.
 
 ## Final Completion Criteria
 
