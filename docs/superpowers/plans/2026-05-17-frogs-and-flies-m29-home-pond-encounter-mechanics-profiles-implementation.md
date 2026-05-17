@@ -788,6 +788,17 @@ Task 5 handoff evidence, 2026-05-17:
 - Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`; verified they are absent.
 - Scope: changed runtime handoff/DOM marker sync, focused unit/E2E coverage, and this Task 5 evidence only; `tests/e2e/m27-campaign-flow.spec.ts` did not need edits; no `src/game/**` changes, no new entities/assets/audio/save schema/backend/localization/monetization work.
 
+Task 5 consolidation follow-up evidence, 2026-05-17:
+
+- RED: `npx playwright test tests/e2e/m29-encounter-profiles.spec.ts --project=chromium` failed after adding `mode shortcuts clear active campaign encounter markers`; after `Digit2`, `data-mode` changed to `local-versus` while `data-active-campaign-level` was still present.
+- GREEN: `npx playwright test tests/e2e/m29-encounter-profiles.spec.ts --project=chromium` passed with 3 tests after clearing active campaign context in the global mode action path.
+- GREEN: `npx playwright test tests/e2e/m27-campaign-flow.spec.ts --project=chromium` passed with 6 tests.
+- GREEN: `npm run test:unit -- tests/unit/encounterProfiles.test.ts tests/unit/campaignRegistry.test.ts` passed with 2 files and 14 tests.
+- Typecheck/build: `npm run build` passed.
+- Whitespace guard: `git diff --check` passed.
+- Cleanup: removed generated `dist/`, `test-results/`, and `playwright-report`; verified they are absent.
+- Scope: changed only the runtime mode-action clear, focused M2.9 E2E coverage, and this Task 5 evidence; no `src/game/**`, content registry, assets, audio, save schema, backend, or Task 6+ behavior changes.
+
 - [x] **Step 8: Commit**
 
 Run:

@@ -438,6 +438,7 @@ export async function startRuntime(
       return
     }
 
+    clearActiveCampaignContext()
     resetGame(withoutCampaignEncounterParams({ ...currentRuntimeParams, mode: action.mode }))
   }
 
