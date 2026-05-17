@@ -1021,7 +1021,7 @@ Expected: commit contains save/schema/campaign regression guardrails only. Omit 
 - Modify: `docs/superpowers/plans/2026-05-17-frogs-and-flies-m29-home-pond-encounter-mechanics-profiles-implementation.md`
 - Do Not Modify: `ASSET_MANIFEST.md` unless consolidation explicitly requests a no-assets note.
 
-- [ ] **Step 1: Write failing README documentation gate**
+- [x] **Step 1: Write failing README documentation gate**
 
 Update `tests/unit/readmeControls.test.ts` to require README text for:
 
@@ -1043,7 +1043,7 @@ Add negative assertions against false claims such as:
 - `M2.9 bumps SaveManager`.
 - `M2.9 adds assets`.
 
-- [ ] **Step 2: Run README gate red**
+- [x] **Step 2: Run README gate red**
 
 Run:
 
@@ -1053,7 +1053,7 @@ npm run test:unit -- tests/unit/readmeControls.test.ts
 
 Expected: FAIL before README is updated.
 
-- [ ] **Step 3: Update README**
+- [x] **Step 3: Update README**
 
 Edit `README.md`:
 
@@ -1073,11 +1073,11 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts tests/unit/encounterPro
 npx playwright test tests/e2e/m29-encounter-profiles.spec.ts tests/e2e/m27-campaign-flow.spec.ts --project=chromium
 ```
 
-- [ ] **Step 4: Update this plan checkboxes only for executed tasks**
+- [x] **Step 4: Update this plan checkboxes only for executed tasks**
 
 If future workers update checkbox status in this plan, only mark steps that have actually been completed with evidence. Do not mark deployment checkboxes done until deployment smoke has finished.
 
-- [ ] **Step 5: Run docs gate green**
+- [x] **Step 5: Run docs gate green**
 
 Run:
 
@@ -1089,7 +1089,7 @@ git diff --check
 
 Expected: PASS; TypeScript build PASS; no whitespace errors.
 
-- [ ] **Step 6: Run scope guard commands**
+- [x] **Step 6: Run scope guard commands**
 
 Run:
 
@@ -1110,7 +1110,14 @@ Expected:
 - No `public/assets/m29` directory.
 - No new audio files from this milestone.
 
-- [ ] **Step 7: Commit**
+Task 8 evidence:
+
+- RED: `npm run test:unit -- tests/unit/readmeControls.test.ts` failed before README update with the expected missing `Current M2.9` assertion.
+- GREEN: `npm run test:unit -- tests/unit/readmeControls.test.ts` passed 5 tests; `npm run build` passed; `git diff --check` passed.
+- Scope guards: pre-commit `git diff --name-only HEAD` listed only `README.md`, this plan, and `tests/unit/readmeControls.test.ts`; `EntityKind` remained `'fly' | 'power'`; `PowerKind` remained `'rush'`; `SAVE_SCHEMA_VERSION` remained `2`; no `public/assets/m29` directory or new `public/audio` files were found.
+- Commit: local commit created with message `docs: document m29 encounter profiles`; no push performed.
+
+- [x] **Step 7: Commit**
 
 Run:
 

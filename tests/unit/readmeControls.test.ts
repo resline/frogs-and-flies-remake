@@ -3,10 +3,25 @@ import { describe, expect, it } from 'vitest'
 
 const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
 
-describe('README M2.8 asset pipeline docs', () => {
-  it('documents the current M2.8 asset/audio milestone, campaign flow, controls, and verification gates', () => {
+describe('README M2.9 encounter profile docs', () => {
+  it('documents the current M2.9 encounter profile milestone and scope', () => {
     for (const text of [
-      'Current M2.8',
+      'Current M2.9',
+      'Home Pond Encounter Mechanics Profiles',
+      'home-pond-baseline-gentle',
+      'home-pond-quick-tongue',
+      'home-pond-nightfall-pressure',
+      'data-campaign-encounter-profile',
+      'Classic Single and Local Versus keep the M2.8 default pacing',
+      'No save schema bump',
+      'No new insects, hazards, power-ups, levels, biomes, bosses, assets, audio, backend, localization, or monetization',
+    ]) {
+      expect(readme).toContain(text)
+    }
+  })
+
+  it('documents the current M2.8 asset/audio baseline, campaign flow, controls, and verification gates', () => {
+    for (const text of [
       'Generated Home Pond Art Pack v1',
       'public/assets/m28/',
       'prologue dawn/day/dusk',
@@ -151,6 +166,11 @@ describe('README M2.8 asset pipeline docs', () => {
       'M2.8 adds a backend',
       'M2.8 adds localization',
       'M2.8 adds monetization',
+      'M2.9 adds new insects',
+      'M2.9 adds a new biome',
+      'M2.9 adds bosses',
+      'M2.9 bumps SaveManager',
+      'M2.9 adds assets',
     ]) {
       expect(readme).not.toContain(staleText)
     }
