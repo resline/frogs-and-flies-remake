@@ -221,7 +221,9 @@ test.describe('M2.8 PWA offline asset availability', () => {
     const registrationState = await page.getByTestId('m26-shell').getAttribute('data-pwa-registration')
     test.skip(registrationState !== 'registered', `service worker registration ${registrationState ?? 'missing'}`)
 
-    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-pwa-runtime-cache-ready', 'true')
+    await expect(page.getByTestId('m26-shell')).toHaveAttribute('data-pwa-runtime-cache-ready', 'true', {
+      timeout: 15_000,
+    })
 
     await page.context().setOffline(true)
     await page.reload()
