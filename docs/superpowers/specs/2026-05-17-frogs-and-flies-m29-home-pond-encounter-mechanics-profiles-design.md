@@ -12,7 +12,7 @@
 
 - The user has approved current and future stages, so this design-doc step proceeds without additional questions even though the brainstorming workflow normally asks for clarification before writing the spec.
 - This document is the design step only. It does not implement code, change gameplay, alter assets, or update deployment state.
-- M2.8 is complete at current HEAD and deployed to `https://frog.resline.net` as the baseline for M2.9.
+- M2.8 is complete and deployed to `https://frog.resline.net`; this local M2.9 design commit builds on that baseline without changing deployment state.
 - M2.9 intentionally rejects new insect kinds for now. The project documentation eventually targets many insect species, hazards, power-ups, bosses, and biomes, but the current codebase has one gameplay fly entity, one Rush power entity, one scoring path, and one M2.8 common-fly art set.
 - Campaign levels `1-1`, `1-2`, and `1-3` already exist and should remain the only campaign levels in this milestone.
 - SaveManager remains v2. M2.9 must not introduce a save schema bump because encounter profiles are static content/runtime parameters, not player-owned persistent data.
