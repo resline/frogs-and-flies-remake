@@ -1202,7 +1202,7 @@ Expected: commit created. Omit unchanged files from `git add`.
 - Modify: `ASSET_MANIFEST.md` only if assets were added, which should not happen.
 - Modify: this plan file only to check off completed task boxes if executing workers are maintaining it.
 
-- [ ] **Step 1: Write failing README gate**
+- [x] **Step 1: Write failing README gate**
 
 In `tests/unit/readmeControls.test.ts`, update title/expectations from M2.6 to M2.7. Assert README contains:
 
@@ -1235,7 +1235,7 @@ Assert stale wording is absent:
 - `Save key: \`frogs-and-flies.save.v1\`` as the sole primary save key
 - any claim that campaign remains out of scope
 
-- [ ] **Step 2: Run README gate red**
+- [x] **Step 2: Run README gate red**
 
 Run:
 
@@ -1245,7 +1245,7 @@ npm run test:unit -- tests/unit/readmeControls.test.ts
 
 Expected: FAIL until README is updated.
 
-- [ ] **Step 3: Update README**
+- [x] **Step 3: Update README**
 
 Update `README.md` sections:
 
@@ -1262,7 +1262,7 @@ Update `README.md` sections:
 - Assets: no new assets added for M2.7.
 - Non-goals: no broad content expansion.
 
-- [ ] **Step 4: Confirm ASSET_MANIFEST**
+- [x] **Step 4: Confirm ASSET_MANIFEST**
 
 Run:
 
@@ -1273,7 +1273,7 @@ git diff --name-only -- public/assets public/audio ASSET_MANIFEST.md
 
 Expected: no new M2.7 assets. If no assets were added, do not edit `ASSET_MANIFEST.md`.
 
-- [ ] **Step 5: Run README gate green**
+- [x] **Step 5: Run README gate green**
 
 Run:
 
@@ -1283,7 +1283,7 @@ npm run test:unit -- tests/unit/readmeControls.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 6: Run full unit tests**
+- [x] **Step 6: Run full unit tests**
 
 Run:
 
@@ -1293,7 +1293,7 @@ npm run test:unit
 
 Expected: PASS; count increased from the M2.6 128-test baseline.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Run:
 
