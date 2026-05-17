@@ -328,4 +328,57 @@ describe('PWA cache contract', () => {
     expect(attributes.get('data-pwa-runtime-cache-ready')).toBe('true')
     expect(attributes.get('data-pwa-registration')).toBe('registered')
   })
+
+  it('marks successful service worker registration before slow runtime cache warming completes', async () => {
+    const attributes = new Map<string, string>()
+    const markerElement = {
+      setAttribute: (name: string, value: string) => attributes.set(name, value),
+    } as HTMLElement
+    const root = {
+      querySelectorAll: () => [
+        {
+          getAttribute: (name: string) => (name === 'src' ? '/assets/index.js' : null),
+        },
+      ],
+    } as unknown as ParentNode
+    const serviceWorker = {
+      controller: {},
+      ready: Promise.resolve({}),
+      register: async () => ({}),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    } as unknown as ServiceWorkerContainer
+    const cacheStorage = {
+      open: async () => ({
+        put: async () => undefined,
+      }),
+    }
+    let resolveRuntimeFetch: ((response: Response) => void) | undefined
+    let registrationPromise: Promise<string> | undefined
+    const runtimeFetchStarted = new Promise<void>((resolve) => {
+      const fetcher = async () =>
+        new Promise<Response>((resolveFetch) => {
+          resolveRuntimeFetch = resolveFetch
+          resolve()
+        })
+
+      registrationPromise = registerServiceWorker({
+        markerElement,
+        serviceWorker,
+        documentRoot: root,
+        fetcher,
+        origin: 'https://game.example',
+        cacheStorage,
+      } as ServiceWorkerRegistrationOptions & { cacheStorage: typeof cacheStorage })
+    })
+
+    await runtimeFetchStarted
+
+    expect(attributes.get('data-pwa-registration')).toBe('registered')
+    expect(attributes.get('data-pwa-runtime-cache-ready')).toBeUndefined()
+
+    resolveRuntimeFetch?.(new Response('runtime asset'))
+    await expect(registrationPromise).resolves.toBe('registered')
+    expect(attributes.get('data-pwa-runtime-cache-ready')).toBe('true')
+  })
 })

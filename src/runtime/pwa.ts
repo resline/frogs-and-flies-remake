@@ -63,8 +63,9 @@ export async function registerServiceWorker(options: ServiceWorkerRegistrationOp
 
   try {
     await serviceWorker.register(serviceWorkerPath)
+    markPwaRegistration(options.markerElement, 'registered')
     markPwaRuntimeCacheReady(options.markerElement, await warmPwaRuntimeAssets(options))
-    return markPwaRegistration(options.markerElement, 'registered')
+    return 'registered'
   } catch (error) {
     console.warn('Service worker registration failed.', error)
     markPwaRuntimeCacheReady(options.markerElement, false)
