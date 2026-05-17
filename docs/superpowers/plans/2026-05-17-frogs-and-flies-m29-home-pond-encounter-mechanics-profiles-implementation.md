@@ -1133,7 +1133,7 @@ Expected: commit contains docs and docs-gate tests only.
 **Files:**
 - No source edits expected unless tests reveal a regression.
 
-- [ ] **Step 1: Run focused M2.9 unit gate**
+- [x] **Step 1: Run focused M2.9 unit gate**
 
 Run:
 
@@ -1143,7 +1143,9 @@ npm run test:unit -- tests/unit/campaignRegistry.test.ts tests/unit/encounterPro
 
 Expected: PASS.
 
-- [ ] **Step 2: Run full unit gate**
+Result (2026-05-17): PASS. Vitest reported 8 test files passed and 56 tests passed.
+
+- [x] **Step 2: Run full unit gate**
 
 Run:
 
@@ -1153,7 +1155,9 @@ npm run test:unit
 
 Expected: PASS for all Vitest suites.
 
-- [ ] **Step 3: Run build**
+Result (2026-05-17): PASS. Vitest reported 31 test files passed and 177 tests passed.
+
+- [x] **Step 3: Run build**
 
 Run:
 
@@ -1163,7 +1167,9 @@ npm run build
 
 Expected: PASS and `dist/` generated.
 
-- [ ] **Step 4: Run focused campaign/assets/PWA E2E gate**
+Result (2026-05-17): PASS. `tsc && vite build` completed, transformed 748 modules, and generated `dist/`.
+
+- [x] **Step 4: Run focused campaign/assets/PWA E2E gate**
 
 Run:
 
@@ -1173,7 +1179,9 @@ npx playwright test tests/e2e/m29-encounter-profiles.spec.ts tests/e2e/m27-campa
 
 Expected: PASS.
 
-- [ ] **Step 5: Run full E2E gate**
+Result (2026-05-17): PASS. Playwright Chromium reported 35 tests passed.
+
+- [x] **Step 5: Run full E2E gate**
 
 Run:
 
@@ -1183,7 +1191,9 @@ npm run test:e2e
 
 Expected: PASS, with only already-documented browser-specific skips if present.
 
-- [ ] **Step 6: Run combined test gate**
+Result (2026-05-17): PASS. Playwright reported 270 passed and 3 skipped; skips were the documented WebKit offline/PWA asset-availability cases.
+
+- [x] **Step 6: Run combined test gate**
 
 Run:
 
@@ -1193,7 +1203,9 @@ npm test
 
 Expected: `npm run test:unit` and `npm run test:e2e` both PASS.
 
-- [ ] **Step 7: Cleanup generated artifacts**
+Result (2026-05-17): PASS. Combined gate reported Vitest 31 files/177 tests passed, then Playwright 270 passed and 3 documented WebKit skips.
+
+- [x] **Step 7: Cleanup generated artifacts**
 
 Run:
 
@@ -1204,7 +1216,9 @@ git status --short --branch
 
 Expected: no generated artifacts remain; worktree contains only intentional tracked changes, or is clean after commits.
 
-- [ ] **Step 8: Final local scope audit**
+Result (2026-05-17): PASS. Removed `dist`, `test-results`, and `playwright-report`; `git status --short --branch` reported only `## ff2-m0-pixijs...origin/ff2-m0-pixijs`.
+
+- [x] **Step 8: Final local scope audit**
 
 Run:
 
@@ -1222,7 +1236,9 @@ Expected:
 - No whitespace errors.
 - Worktree clean after final commit.
 
-- [ ] **Step 9: Commit final plan checkbox update if changed**
+Result (2026-05-17): PASS. Scope-term matches were limited to plan/README guard text, content invalid-scope ids, and unit-test invalid fixtures; no accidental source-scope expansion was found. `src/game` content/campaign import audit returned no matches. `git diff --check` passed, and status was clean before this plan evidence update.
+
+- [x] **Step 9: Commit final plan checkbox update if changed**
 
 Run only if the plan checkbox evidence changed:
 
