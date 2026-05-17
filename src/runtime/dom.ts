@@ -814,7 +814,9 @@ function syncCampaignResultActions(dom: DomState, shellSync: ShellDomSyncState):
   dom.campaignResultStatus.setAttribute('data-campaign-result-level', result.levelId)
   dom.campaignResultStatus.setAttribute('data-campaign-result-passed', String(result.passed))
   dom.campaignResultStatus.setAttribute('data-campaign-result-stars', String(result.stars))
-  renderStarStrip(dom.campaignResultStars, result.stars)
+  if (dom.campaignResultStars.getAttribute('data-stars') !== String(result.stars)) {
+    renderStarStrip(dom.campaignResultStars, result.stars)
+  }
   if (result.nextLevelId) {
     dom.campaignNextLevelButton.setAttribute('data-next-campaign-level', result.nextLevelId)
   } else {

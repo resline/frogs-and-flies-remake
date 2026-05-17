@@ -972,7 +972,7 @@ Expected: commit created. Remove generated test artifacts.
 - Modify: `tests/e2e/m26-shell.spec.ts` if no-overlap helpers need to include images
 - Modify: this plan file
 
-- [ ] **Step 1: Add failing URL/MIME E2E checks**
+- [x] **Step 1: Add failing URL/MIME E2E checks**
 
 In `tests/e2e/m28-asset-pipeline.spec.ts`, add request checks:
 
@@ -997,7 +997,7 @@ for (const path of ['/audio/sfx/jump.mp3', '/audio/music/home-pond-loop.mp3']) {
 
 Run once before any missing MIME/cache fix if the test is newly added; it should pass if previous tasks are complete. If it fails, fix static serving or paths before continuing.
 
-- [ ] **Step 2: Add offline asset availability test**
+- [x] **Step 2: Add offline asset availability test**
 
 Add an offline test in `m28-asset-pipeline.spec.ts` or extend `m26-pwa-offline.spec.ts`:
 
@@ -1012,7 +1012,7 @@ Add an offline test in `m28-asset-pipeline.spec.ts` or extend `m26-pwa-offline.s
 
 Keep the documented WebKit offline reload skip.
 
-- [ ] **Step 3: Add no-overlap/screenshot smoke**
+- [x] **Step 3: Add no-overlap/screenshot smoke**
 
 Use existing helpers or add local helpers to check visible controls/images:
 
@@ -1031,7 +1031,7 @@ Screens to check:
 
 Expected: no visible controls/images outside viewport, no zero-size required images, no text clipped inside buttons.
 
-- [ ] **Step 4: Add audio unlock/fallback E2E**
+- [x] **Step 4: Add audio unlock/fallback E2E**
 
 In `m28-asset-pipeline.spec.ts`:
 
@@ -1043,7 +1043,7 @@ In `m28-asset-pipeline.spec.ts`:
 
 Do not require autoplaying music before unlock.
 
-- [ ] **Step 5: Run focused E2E**
+- [x] **Step 5: Run focused E2E**
 
 Run:
 
@@ -1056,7 +1056,7 @@ npx playwright test tests/e2e/m26-shell.spec.ts --project=chromium
 
 Expected: PASS. Any WebKit offline skip remains documented only in full suite.
 
-- [ ] **Step 6: Run unit/build**
+- [x] **Step 6: Run unit/build**
 
 Run:
 
@@ -1067,7 +1067,7 @@ npm run build
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Run:
 
