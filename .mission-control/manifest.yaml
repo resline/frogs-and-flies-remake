@@ -1,0 +1,41 @@
+version: 1
+name: frogs-and-flies-remake
+tagline: Przeglądarkowy remake gry Frogs and Flies z celowanymi językami, power-upem Rush i trybem PvCPU.
+description: >
+  Nowoczesny przeglądarkowy remake klasycznej gry Frogs and Flies, zbudowany w TypeScript z użyciem silnika Phaser. Dwie żaby na liliach rywalizują o złapanie much za pomocą celowanych języków, a rundy rozgrywane są na czas (60, 90 lub 120 sekund).
+
+  Gra oferuje tryb Player vs CPU z trzema poziomami trudności (Rookie, Pro, Elite) oraz tryb Player vs Player sterowany lokalnie z klawiatury. W rozgrywce pojawiają się elite muchy o wyższej wartości oraz power-up Rush, który daje większy zasięg języka, szybsze odzyskiwanie i podwójne punkty.
+
+  Projekt zawiera menu główne, opcje (tryb, trudność CPU, długość rundy, dźwięk, podpowiedzi celowania) oraz samouczek. Dźwięki generowane są przez WebAudio, a assety graficzne powstały w workflow image_gen z post-processingiem chroma-key. Wdrożenie odbywa się przez wieloetapowy Dockerfile z serwerem nginx.
+features:
+  - name: Tryb Player vs CPU
+    description: Prawa żaba sterowana przez komputer z trzema poziomami trudności (Rookie, Pro, Elite) i adaptacyjnym wyborem celów.
+    status: done
+  - name: Tryb Player vs Player
+    description: Obie żaby sterowane lokalnie z klawiatury, z osobnymi klawiszami celowania i strzału dla każdej strony.
+    status: done
+  - name: Celowanie językiem po pięciu liniach
+    description: Żaba celuje po pięciu liniach aim z rysowanymi podpowiedziami i animowanym wyrzutem języka z detekcją trafień.
+    status: done
+  - name: Power-up Rush
+    description: Złota świetlik daje większy zasięg, szybsze odzyskiwanie, podwójne punkty i możliwość złapania do trzech much jednym strzałem.
+    status: done
+  - name: Rundy na czas i menu opcji
+    description: Rozgrywka na 60, 90 lub 120 sekund z pauzą, ekranem końcowym oraz menu opcji i samouczkiem dostępnym z ekranu głównego.
+    status: done
+  - name: Dźwięk WebAudio
+    description: Efekty dźwiękowe generowane proceduralnie przez AudioContext z możliwością wyciszenia z menu opcji.
+    status: done
+  - name: Wdrożenie Docker z nginx
+    description: Wieloetapowy Dockerfile budujący aplikację Vite i serwujący statyczne pliki przez nginx z cacheowaniem assetów.
+    status: done
+stack:
+  languages: [TypeScript, CSS, HTML]
+  frameworks: [Phaser, Vite]
+  infra: [Docker, nginx, Node.js]
+status: active
+tags: [game, arcade, phaser, browser, remake]
+ai:
+  generated_at: "2026-07-19T00:00:00Z"
+  source_commit: "43640a0bc5c4c4917f4777cc1b57a646836d1f64"
+locked: []
